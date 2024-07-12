@@ -24,11 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->group('api', [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\AuthGates::class,
-            \App\Http\Middleware\CheckUserStatus::class,
+            // \App\Http\Middleware\AuthGates::class,
         ]);
 
         $middleware->alias([
@@ -39,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.device' => \App\Http\Middleware\LogoutUserFromOtherDevice::class,
             'role' => \App\Http\Middleware\CheckRole::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'auth.jwt' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
+            'jwt.refresh' => \Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

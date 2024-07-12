@@ -47,6 +47,8 @@ return [
                 'invalid_token_email'   => 'Invalid Token or Email!',
             ],
         ],
+
+        'could_not_create_token' => 'Could not create token. Please try again later.',
     ],
 
     'unauthorize'  => 'You are not authorized to perform this action.',

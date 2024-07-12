@@ -158,7 +158,7 @@ return [
     'url' => 'The :attribute field must be a valid URL.',
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
-    'invalid' => 'The Enter :attribute is invalid.',
+    'invalid' => 'The enter :attribute is invalid.',
 
 
     /*

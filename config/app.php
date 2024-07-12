@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'site_url' => env('SITE_URL', 'http://127.0.0.1:3000'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

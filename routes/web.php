@@ -20,9 +20,10 @@ Route::get('/cache-clear', function () {
     return '<h1>All Cache cleared</h1>';
 });
 
+/*
 
 // Authentication Routes
-Route::group(['middleware' => 'guest'], function () {
+Route::group(['middleware' => ['guest','PreventBackHistory']], function () {
     Route::controller(LoginController::class)->group(function(){
 
         //Frontend 
@@ -59,38 +60,22 @@ Route::group(['middleware' => 'guest'], function () {
 });
 
 
-    Route::middleware(['auth','PreventBackHistory', 'userinactive','role:' . implode(',', [config('constant.roles.admin'), config('constant.roles.staff')])])->group(function () {
+Route::middleware(['auth','PreventBackHistory', 'userinactive','role:' . implode(',', [config('constant.role.system_admin')])])->group(function () {
 
-        Route::group(['as' => 'admin.', 'prefix' => 'admin','namespace' => 'App\Http\Controllers\Backend'], function () {
+    Route::group(['as' => 'admin.', 'prefix' => 'admin','namespace' => 'App\Http\Controllers\Backend'], function () {
 
-            Route::get('admin/logout',[LoginController::class,'logout'])->name('logout');
+        Route::get('admin/logout',[LoginController::class,'logout'])->name('logout');
 
-            Route::get('dashboard', 'DashboardController@index')->name('dashboard');
+        Route::get('dashboard', 'DashboardController@index')->name('dashboard');
 
-            Route::get('profile', 'ProfileController@showProfile')->name('show.profile');
-            Route::post('profile', 'ProfileController@updateProfile')->name('update.profile');
+        Route::get('profile', 'ProfileController@showProfile')->name('show.profile');
+        Route::post('profile', 'ProfileController@updateProfile')->name('update.profile');
 
-            // Route::get('change-password', 'ProfileController@showChangePassword')->name('show.change.password');
-            Route::post('change-password', 'ProfileController@updateChangePassword')->name('update.change.password');
-
-            Route::get('companies/step-form/{step_no}', 'CompanyController@stepForms')->name('companies.stepForm');
-
-            // Route::get('/countries', [CompanyController::class, 'getCountries'])->name('getCountries');
-            // Route::post('/cities', [CompanyController::class, 'getCities'])->name('getCities');
-
-            Route::resource('companies', CompanyController::class)->parameters([
-                'userUuid' => 'uuid'
-            ]);
-
-            Route::get('services/generate-slug', 'ServiceController@generateSlug')->name('services.generateSlug');
-
-            Route::resource('services', ServiceController::class);
-
-            Route::get('industries/generate-slug', 'IndustryController@generateSlug')->name('industries.generateSlug');
-
-            Route::resource('industries', IndustryController::class);
-
-        });
-
-
+        // Route::get('change-password', 'ProfileController@showChangePassword')->name('show.change.password');
+        Route::post('change-password', 'ProfileController@updateChangePassword')->name('update.change.password');
+        
     });
+
+
+});
+*/

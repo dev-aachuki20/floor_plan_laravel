@@ -39,7 +39,7 @@
                     <i class="ri-group-2-line widget-icon"></i>
                 </div>
                 <h6 class="text-uppercase mt-0" title="Customers">Staffs</h6>
-                <h2 class="my-2">{{ $staffCount }}</h2>
+                <h2 class="my-2">0</h2>
             </div>
         </div>
     </div> <!-- end col-->
@@ -51,7 +51,7 @@
                     <i class="ri-group-2-line widget-icon"></i>
                 </div>
                 <h6 class="text-uppercase mt-0" title="Companies">Companies</h6>
-                <h2 class="my-2">{{ $companyCount }}</h2>
+                <h2 class="my-2">0</h2>
             </div>
         </div>
     </div> <!-- end col-->

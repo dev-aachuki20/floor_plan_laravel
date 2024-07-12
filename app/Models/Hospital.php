@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 
-class Role extends Model
+class Hospital extends Model
 {
 
-    public $table = 'roles';
+    public $table = 'hospital';
     public $timestamps = true;
 
     protected $dates = [
@@ -17,8 +17,8 @@ class Role extends Model
     ];
 
     protected $fillable = [
-        'role_name',
-        'role_description',
+        'hospital_name',
+        'hospital_description',
         'created_at',
         'updated_at',
     ];
@@ -26,6 +26,11 @@ class Role extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function trust()
+    {
+        return $this->belongsTo(Trust::class);
     }
 
 }
