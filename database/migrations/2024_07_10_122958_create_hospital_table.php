@@ -21,6 +21,7 @@ return new class extends Migration
             $table->longText('hospital_description')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

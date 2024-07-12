@@ -59,10 +59,36 @@ Route::group(['namespace' => 'Api'], function () {
 	Route::post('password/reset',[PasswordResetController::class,'resetPassword']);
 
 
+   /*
+    |--------------------------------------------------------------------------
+    | Register API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route 		: http://localhost:8000/api/register
+    | Parameter 	: Multiple
+    | Method 		: Post
+    |
+    */
+	Route::post('register',[RegisterController::class,'create']);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Open API Routes
+    |--------------------------------------------------------------------------
+    | Method        : Get
+    |
+    */
+
+    Route::get('get-trusts', [HomeController::class,'getTrusts']);
+
+    Route::get('get-hospitals/{trust}', [HomeController::class,'getHospitals']);
+
+
 
 });
 
-Route::group(['namespace' => 'Api','middleware' => ['jwt.auth']], function () {
+Route::group(['namespace' => 'Api','middleware' => ['auth:api']], function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -77,7 +103,21 @@ Route::group(['namespace' => 'Api','middleware' => ['jwt.auth']], function () {
     */
     Route::post('logout', [LoginController::class,'logout']);
 
-    Route::get('user', [LoginController::class, 'getAuthenticatedUser']);
+    /*
+    |--------------------------------------------------------------------------
+    |  User Details API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/me
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Method        : Get
+    |
+    */
+    Route::get('me', [LoginController::class, 'getAuthenticatedUser']);
+
+
+
 
     
 });
