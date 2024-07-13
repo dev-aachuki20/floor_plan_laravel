@@ -157,5 +157,20 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         return $this->belongsTo(Hospital::class,'hospital','id');
     }
 
+
+   
+    public function specialities()
+    {
+        return $this->belongsToMany(Speciality::class, 'user_sub_speciality')
+                    ->withPivot('sub_speciality_id');
+    }
+
+ 
+    public function subSpecialities()
+    {
+        return $this->belongsToMany(SubSpeciality::class, 'user_sub_speciality')
+                    ->withPivot('speciality_id');
+    }
+
     
 }

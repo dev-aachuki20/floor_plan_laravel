@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users_meta', function (Blueprint $table) {
-            $table->id();
-
+        Schema::create('user_sub_speciality', function (Blueprint $table) {
+          
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users');
 
-            $table->string('meta_name');
-            $table->string('meta_value')->nullable();
+            $table->unsignedBigInteger('speciality_id');
+            $table->foreign('speciality_id')->references('id')->on('speciality');
 
-            $table->timestamps();
+            $table->unsignedBigInteger('sub_speciality_id');
+            $table->foreign('sub_speciality_id')->references('id')->on('sub_speciality');
+
         });
     }
 
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users_meta');
+        Schema::dropIfExists('user_sub_speciality');
     }
 };

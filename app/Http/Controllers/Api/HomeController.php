@@ -7,6 +7,8 @@ use App\Models\User;
 
 use App\Models\Trust;
 use App\Models\Hospital;
+use App\Models\Speciality;
+use App\Models\Subspeciality;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
@@ -34,6 +36,28 @@ class HomeController extends APIController
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),
             'data'      => $hospitals,
+        ])->setStatusCode(Response::HTTP_OK);
+    }
+
+    public function getSpecialities($hospital){
+
+        $specialities = Speciality::where('hospital_id',$hospital)->pluck('speciality_name','id');
+        
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $specialities,
+        ])->setStatusCode(Response::HTTP_OK);
+    }
+
+    public function getSubSpecialities($speciality){
+
+        $subSpecialities = Subspeciality::where('parent_speciality_id',$speciality)->pluck('sub_speciality_name','id');
+        
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $subSpecialities,
         ])->setStatusCode(Response::HTTP_OK);
     }
 

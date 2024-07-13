@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users_meta', function (Blueprint $table) {
+        Schema::create('rooms', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('hospital_id');
+            $table->foreign('hospital_id')->references('id')->on('hospital');
 
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
-
-            $table->string('meta_name');
-            $table->string('meta_value')->nullable();
+            $table->string('room_name');
+            $table->longText('room_description')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users_meta');
+        Schema::dropIfExists('rooms');
     }
 };

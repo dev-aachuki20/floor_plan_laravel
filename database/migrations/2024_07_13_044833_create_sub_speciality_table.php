@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hospital', function (Blueprint $table) {
+        Schema::create('sub_speciality', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('trust');
-            $table->foreign('trust')->references('id')->on('trust');
+            $table->unsignedBigInteger('parent_speciality_id');
+            $table->foreign('parent_speciality_id')->references('id')->on('speciality');
 
-            $table->string('hospital_name');
-            $table->longText('hospital_description')->nullable();
+            $table->string('sub_speciality_name');
+            $table->longText('sub_speciality_description')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('hospital');
+        Schema::dropIfExists('sub_speciality');
     }
 };

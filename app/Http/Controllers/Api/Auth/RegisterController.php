@@ -22,15 +22,15 @@ class RegisterController extends APIController
     {
         $request->validate([
             'full_name'         => ['required','string','max:255'],
-            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,email,NULL,id,deleted_at,NULL'],
-            'password'          => ['required', 'string', 'min:8','confirmed'],
+            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,NULL,id,deleted_at,NULL'],
+            'password'          => ['required', 'string', 'min:8'],
             'trust'             => ['required','exists:trust,id'],
-            'role'              => ['required','exists:roles,id']
-        ],[
-            'profile_image.image' =>'Please upload image.',
-            'profile_image.mimes' =>'Please upload image with extentions: jpeg,png,jpg.',
-            'profile_image.max' =>'The image size must equal or less than '.config('constant.profile_max_size_in_mb'),
-        ],[
+            'role'              => ['required','exists:roles,id'],
+            'hospital'          => ['required','exists:hospital,id,deleted_at,NULL'],
+            'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
+            'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
+
+        ],[],[
             'full_name'  => 'name',
             'user_email' => 'email'
         ]);
@@ -41,23 +41,19 @@ class RegisterController extends APIController
 
             $user = User::create([
                 'primary_role' => $request->role,
+                'hospital'     => $request->hospital,
                 'full_name'    => $request->full_name,
                 'user_email'   => $request->user_email,
                 'password'     => Hash::make($request->password),
             ]);
             
-         /*
-            if($request->has('profile_image')){
-                $uploadId = null;
-                $actionType = 'save';
-                if($profileImageRecord = $user->profileImage){
-                    $uploadId = $profileImageRecord->id;
-                    $actionType = 'update';
-                }
-                uploadImage($user, $request->profile_image, 'user/profile-images',"user_profile", 'original', $actionType, $uploadId);
-            }
-          */
+            $specialities = [
+                $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+            ];
             
+            // Sync specialities with additional pivot data
+            $user->specialities()->sync($specialities);
+
             DB::commit();
             
             return $this->respondOk([
@@ -67,9 +63,9 @@ class RegisterController extends APIController
             
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());
+            // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());
             // return $this->throwValidation([$e->getMessage()]);
-            return $this->throwValidation([trans('messages.error_message')]);
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 

@@ -18,10 +18,10 @@ class UsersTableSeeder extends Seeder
             [
                 'primary_role'        => config('constant.roles.system_admin'), 
                 'full_name'           => 'System Admin',
-                'user_email'          => 'sytemadmin@gmail.com',
+                'user_email'          => 'systemadmin@gmail.com',
                 'password'            => bcrypt('12345678'),
                 'remember_token'      => null,
-                'email_verified_at'    => date('Y-m-d H:i:s'),
+                'email_verified_at'   => date('Y-m-d H:i:s'),
             ],
         ];
         foreach($users as $key=>$user){

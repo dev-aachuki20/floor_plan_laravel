@@ -35,7 +35,7 @@ return [
     'verified_otp'=> 'OTP successfully Verified.',
     'invalid_token_email'=> 'Invalid Token or Email!',
     'success'=>'Success',
-    'register_success'=>'Your account created successfully! Please wait for the approval!',
+    'register_success'=>'Your account created successfully!',
     'login_success'=>'You have logged in successfully!',
     'logout_success'=>'Logged out successfully!',
     'warning_select_record'=> 'Please select at least one record',
