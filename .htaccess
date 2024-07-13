@@ -1,11 +1,19 @@
 <IfModule mod_rewrite.c>
+    <Files .env>
+        Order allow,deny
+        Deny from all
+    </Files>
+    
+    <FilesMatch "^.*\.env.*$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+
     <IfModule mod_negotiation.c>
         Options -MultiViews
     </IfModule>
 
     RewriteEngine On
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ /public/$1 [L,QSA]
 
     # Set the HTTP_AUTHORIZATION environment variable for API requests
     SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
@@ -19,10 +27,10 @@
 
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    
+
     # Handle Authorization Header
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    # RewriteCond %{HTTP:Authorization} .
+    # RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     RewriteRule ^ server.php
 </IfModule>
