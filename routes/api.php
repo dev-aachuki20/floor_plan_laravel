@@ -74,6 +74,19 @@ Route::group(['namespace' => 'Api'], function() {
 
     /*
     |--------------------------------------------------------------------------
+    | Verify Email API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route 		: http://localhost:8000/api/email/verify/{id}/{hash}
+    | Parameter 	: Multiple
+    | Method 		: Post
+    |
+    */
+    Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class,'verifyEmail']);
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Open API Routes
     |--------------------------------------------------------------------------
     | Method        : Get

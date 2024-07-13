@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerifyEmailMail;
 
 class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 {
@@ -170,6 +172,17 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     {
         return $this->belongsToMany(SubSpeciality::class, 'user_sub_speciality')
                     ->withPivot('speciality_id');
+    }
+
+    public function NotificationSendToVerifyEmail()
+    {
+        $user = $this;
+
+        $url = config('app.site_url') . '/email/verify/'.$user->uuid.'/'.sha1($user->user_email);
+
+        $subject = 'Verify Email Address';
+
+        Mail::to($user->user_email)->queue(new VerifyEmailMail($user->full_name, $url, $subject));
     }
 
     

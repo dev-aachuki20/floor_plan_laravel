@@ -46,6 +46,9 @@ class RegisterController extends APIController
                 'user_email'   => $request->user_email,
                 'password'     => Hash::make($request->password),
             ]);
+
+            //Verification mail sent
+            $user->NotificationSendToVerifyEmail();
             
             $specialities = [
                 $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
@@ -64,11 +67,37 @@ class RegisterController extends APIController
         } catch (\Exception $e) {
             DB::rollBack();
             // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());
-            // return $this->throwValidation([$e->getMessage()]);
+         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
+
+    public function verifyEmail($uuid, $hash){
+        $user = User::where('uuid',$uuid)->first();
+        
+        if(!is_null($user->email_verified_at)){
+            
+            return $this->respondOk([
+                'status'   => true,
+                'message'  => 'Email is already verifed!',
+            ])->setStatusCode(Response::HTTP_OK);
+           
+        }
+
+        if ($user && $hash === sha1($user->user_email)) {
+            $user->update(['email_verified_at' => date('Y-m-d H:i:s')]);
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'  => 'Email verified successfully!',
+            ])->setStatusCode(Response::HTTP_OK);
+
+        }
+
+        return $this->setStatusCode(401)->respondWithError('Mail verification failed!');
+
+    }
    
 
 
