@@ -84,7 +84,32 @@ class LoginController extends APIController
             return response()->json(['token_absent'], $e->getStatusCode());
         }
 
-        return response()->json(compact('user'));
+        $user_details = [];
+
+        if($user){
+
+            $user_details['uuid']          = $user->uuid;
+            $user_details['full_name']     = ucwords($user->full_name);
+            $user_details['primary_role']  = $user->primary_role;
+            $user_details['role_name']     = $user->role->role_name;
+            $user_details['user_email']    = $user->user_email;
+            $user_details['phone']         = $user->phone;
+
+            $hospital = $user->hospital()->first();
+
+            $user_details['trust']         = $hospital ? $hospital->trust : null;
+            $user_details['trust_name']    = $hospital ? $hospital->trustDetails->trust_name : null;
+
+            $hospital = $user->hospital()->first();
+
+            $user_details['hospital']      = $hospital ? $hospital->id : null;
+            $user_details['hospital_name'] = $hospital ? $hospital->hospital_name : null;
+            $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
+
+
+        }
+
+        return response()->json(compact('user_details'));
     }
 
     public function logout(Request $request)

@@ -29,12 +29,12 @@ class Hospital extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class,'hospital');
     }
 
-    public function trust()
+    public function trustDetails()
     {
-        return $this->belongsTo(Trust::class);
+        return $this->belongsTo(Trust::class,'trust','id');
     }
 
 }
