@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->string('trust_name');
             $table->longText('trust_description')->nullable();
-            $table->string('chair');
+            $table->string('chair')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
