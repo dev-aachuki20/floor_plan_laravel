@@ -17,22 +17,13 @@ class CheckRole
      */
     public function handle($request, Closure $next, ...$roles)
     {
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
+       
+        if (!in_array(auth()->user()->role->id,$roles)) {
 
-        $user = Auth::user();
-        $userRoles = $user->roles->pluck('id')->toArray();
-
-        if (!array_intersect($roles, $userRoles)) {
-
-            if($user->is_admin || $user->is_staff){
-                return redirect()->route('admin.login');
-            }elseif($user->is_company){
-                return redirect()->route('login');
-            }else{
-                return abort(403);
-            }
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'You do not have permission to access this resource.'
+            ], 403);
            
         }
 

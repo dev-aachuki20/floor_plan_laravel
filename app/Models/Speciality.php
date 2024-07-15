@@ -35,7 +35,7 @@ class Speciality extends Model
 
     public function subSpeciality()
     {
-        return $this->hasMany(Subspeciality::class);
+        return $this->hasMany(SubSpeciality::class);
     }
 
   

@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\Trust;
 use App\Models\Hospital;
 use App\Models\Speciality;
-use App\Models\Subspeciality;
+use App\Models\SubSpeciality;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
@@ -61,7 +61,7 @@ class HomeController extends APIController
 
     public function getSubSpecialities($speciality){
 
-        $subSpecialities = Subspeciality::where('parent_speciality_id',$speciality)->pluck('sub_speciality_name','id');
+        $subSpecialities = SubSpeciality::where('parent_speciality_id',$speciality)->pluck('sub_speciality_name','id');
         
         return $this->respondOk([
             'status'   => true,
@@ -114,7 +114,7 @@ class HomeController extends APIController
             
             return $this->respondOk([
                 'status'   => true,
-                'message'   => trans('messages.register_success')
+                'message'   => trans('messages.profile_updated_successfully')
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {

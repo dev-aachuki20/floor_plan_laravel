@@ -15,11 +15,12 @@ return [
     'roles' =>[
         'system_admin'      => 1,
         'trust_admin'       => 2,
-        'speciality_lead'   => 3,
-        'staff_coordinator' => 4,
-        'anesthetic_lead'   => 5,
-        'booker'            => 6,
-        'chair'             => 7,
+        'hospital_admin'    => 3,
+        'speciality_lead'   => 4,
+        'staff_coordinator' => 5,
+        'anesthetic_lead'   => 6,
+        'booker'            => 7,
+        'chair'             => 8,
     ],
   
     'date_format' => [

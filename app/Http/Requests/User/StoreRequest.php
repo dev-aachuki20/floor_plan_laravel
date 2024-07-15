@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Industry;
+namespace App\Http\Requests\User;
 
 use App\Rules\NoMultipleSpacesRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,8 +25,8 @@ class StoreRequest extends FormRequest
     {
         $rules = [];
 
-        $rules['name']            = ['required', 'regex:/^[a-zA-Z\s]+$/','string',  new NoMultipleSpacesRule, Rule::unique('industries', 'name')->whereNull('deleted_at')];
-        $rules['slug']            = ['required', 'regex:/^[a-zA-Z0-9\-]+$/','string',  Rule::unique('industries', 'slug')->whereNull('deleted_at')];
+        $rules['name']            = ['required', 'regex:/^[a-zA-Z\s]+$/','string',  new NoMultipleSpacesRule, Rule::unique('services', 'name')->whereNull('deleted_at')];
+        $rules['slug']            = ['required', 'regex:/^[a-zA-Z0-9\-]+$/','string',  Rule::unique('services', 'slug')->whereNull('deleted_at')];
 
         return $rules;
     }

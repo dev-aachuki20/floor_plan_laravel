@@ -71,7 +71,7 @@ class DummyDataSeeder extends Seeder
 
                             foreach($sub_specialities as $sub_specialities_data){
 
-                                Subspeciality::create($sub_specialities_data);
+                                SubSpeciality:create($sub_specialities_data);
 
                             }
 

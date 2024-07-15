@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
-class Subspeciality extends Model
+class SubSpeciality extends Model
 {
     use SoftDeletes;
 

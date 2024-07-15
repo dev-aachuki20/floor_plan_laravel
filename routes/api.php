@@ -1,9 +1,13 @@
 <?php
 
-use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\Auth\LoginController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
+
+
+use App\Http\Controllers\Api\HomeController;
+
+
 
 use Illuminate\Support\Facades\Route;
 
@@ -105,7 +109,7 @@ Route::group(['namespace' => 'Api'], function() {
 
 });
 
-Route::group(['namespace' => 'Api','middleware' => ['auth:api']], function () {
+Route::group(['namespace' => 'App\Http\Controllers\Api','middleware' => ['auth:api']], function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -148,7 +152,27 @@ Route::group(['namespace' => 'Api','middleware' => ['auth:api']], function () {
     Route::post('update-profile', [HomeController::class, 'updateProfile']);
 
 
+    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])]], function () {
 
-    
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Get User Records API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/users
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |                 - filter_by,filter_value (optional): string (e.g., ?filter_by=value&filter_value=value)
+        |                 - search (optional): string (e.g., ?search=term)
+        |                 - page (optional): integer (e.g., ?page=1)
+        |                 - per_page (optional): integer (e.g., ?per_page=10)
+        | Method        : GET
+        |
+        */
+        Route::apiResource('users',UserController::class)->parameters(['users' => 'user']);
+
+    });
     
 });

@@ -55,7 +55,7 @@ class RegisterController extends APIController
             ];
             
             // Sync specialities with additional pivot data
-            $user->specialities()->sync($specialities);
+            $user->specialityDetail()->sync($specialities);
 
             DB::commit();
             

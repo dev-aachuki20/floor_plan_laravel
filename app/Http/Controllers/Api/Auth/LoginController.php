@@ -62,8 +62,9 @@ class LoginController extends APIController
                 'full_name'             => $user->full_name,
                 'user_email'            => $user->user_email,
                 'role'                  => $user->role->role_name,
-                'hospital'              => $user->hospital ? $user->hospital->hospital_name : null,
-                
+                'hospital'              => $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null,
+                'speciality'            => $user->specialityDetail()->value('speciality_name'),
+                'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),
             ]
         ];
 
@@ -95,15 +96,16 @@ class LoginController extends APIController
             $user_details['user_email']    = $user->user_email;
             $user_details['phone']         = $user->phone;
 
-            $hospital = $user->hospital()->first();
+           
+            $user_details['trust']         = $user->hospitalDetail ? $user->hospitalDetail->trust : null;
+            $user_details['trust_name']    = $user->hospitalDetail ? $user->hospitalDetail->trustDetails->trust_name : null;
 
-            $user_details['trust']         = $hospital ? $hospital->trust : null;
-            $user_details['trust_name']    = $hospital ? $hospital->trustDetails->trust_name : null;
+            $user_details['hospital']      = $user->hospital;
+            $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
 
-            $hospital = $user->hospital()->first();
+            $user_details['speciality'] = $user->specialityDetail()->value('speciality_name');
+            $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('sub_speciality_name');
 
-            $user_details['hospital']      = $hospital ? $hospital->id : null;
-            $user_details['hospital_name'] = $hospital ? $hospital->hospital_name : null;
             $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
 
 
