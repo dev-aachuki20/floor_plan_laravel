@@ -12,10 +12,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('notify-staff-before-shift-clockin')->everyMinute()->withoutOverlapping();
-
-        $schedule->command('notify-staff-after-shift-clockout')->everyMinute()->withoutOverlapping();
-        
         $schedule->command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
     }
 

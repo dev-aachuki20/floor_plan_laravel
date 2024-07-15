@@ -73,6 +73,7 @@ class HomeController extends APIController
     public function updateProfile(Request $request){
 
         $request->validate([
+            
             'full_name'         => ['required','string','max:255'],
             // 'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,NULL,id,deleted_at,NULL'],
             'password'          => ['required', 'string', 'min:8'],
