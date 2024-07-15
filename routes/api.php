@@ -93,6 +93,8 @@ Route::group(['namespace' => 'Api'], function() {
     |
     */
 
+    Route::get('get-roles', [HomeController::class,'getRoles']);
+
     Route::get('get-trusts', [HomeController::class,'getTrusts']);
 
     Route::get('get-hospitals/{trust}', [HomeController::class,'getHospitals']);
@@ -131,8 +133,22 @@ Route::group(['namespace' => 'Api','middleware' => ['auth:api']], function () {
     */
     Route::get('me', [LoginController::class, 'getAuthenticatedUser']);
 
+    /*
+    |--------------------------------------------------------------------------
+    |  Update Auth User Profile API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/update-profile
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameter 	: Multiple
+    | Method        : POST
+    |
+    */
+    Route::post('update-profile', [HomeController::class, 'updateProfile']);
 
 
 
+    
     
 });
