@@ -23,6 +23,22 @@ class UsersTableSeeder extends Seeder
                 'remember_token'      => null,
                 'email_verified_at'   => date('Y-m-d H:i:s'),
             ],
+            [
+                'primary_role'        => config('constant.roles.system_admin'), 
+                'full_name'           => 'Speciality Lead',
+                'user_email'          => 'specialitylead@gmail.com',
+                'password'            => bcrypt('12345678'),
+                'remember_token'      => null,
+                'email_verified_at'   => date('Y-m-d H:i:s'),
+            ],
+            [
+                'primary_role'        => config('constant.roles.system_admin'), 
+                'full_name'           => 'Booker',
+                'user_email'          => 'booker@gmail.com',
+                'password'            => bcrypt('12345678'),
+                'remember_token'      => null,
+                'email_verified_at'   => date('Y-m-d H:i:s'),
+            ],
         ];
         foreach($users as $key=>$user){
             $createdUser =  User::create($user);

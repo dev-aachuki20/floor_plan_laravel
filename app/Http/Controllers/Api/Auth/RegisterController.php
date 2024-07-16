@@ -45,10 +45,11 @@ class RegisterController extends APIController
                 'full_name'    => $request->full_name,
                 'user_email'   => $request->user_email,
                 'password'     => Hash::make($request->password),
+                'email_verified_at' => now(),
             ]);
 
             //Verification mail sent
-            $user->NotificationSendToVerifyEmail();
+            // $user->NotificationSendToVerifyEmail();
             
             $specialities = [
                 $request->speciality => ['sub_speciality_id' => $request->sub_speciality],

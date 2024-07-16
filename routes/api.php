@@ -6,9 +6,7 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 
 
 use App\Http\Controllers\Api\HomeController;
-
-
-
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::group(['namespace' => 'Api'], function() {
+Route::group(['namespace' => 'Api'], function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +32,7 @@ Route::group(['namespace' => 'Api'], function() {
     | Method 		: Post
     |
     */
-	Route::post('login',[LoginController::class,'login']);
+    Route::post('login', [LoginController::class, 'login']);
 
 
     /*
@@ -47,9 +45,9 @@ Route::group(['namespace' => 'Api'], function() {
     | Method 		: Post
     |
     */
-	Route::post('forgot-password',[PasswordResetController::class,'sendResetLinkEmail']);
+    Route::post('forgot-password', [PasswordResetController::class, 'sendResetLinkEmail']);
 
-  
+
     /*
     |--------------------------------------------------------------------------
     | Reset Password API Routes
@@ -60,10 +58,10 @@ Route::group(['namespace' => 'Api'], function() {
     | Method 		: Post
     |
     */
-	Route::post('password/reset',[PasswordResetController::class,'resetPassword']);
+    Route::post('password/reset', [PasswordResetController::class, 'resetPassword']);
 
 
-   /*
+    /*
     |--------------------------------------------------------------------------
     | Register API Routes
     |--------------------------------------------------------------------------
@@ -73,7 +71,7 @@ Route::group(['namespace' => 'Api'], function() {
     | Method 		: Post
     |
     */
-	Route::post('register',[RegisterController::class,'create']);
+    Route::post('register', [RegisterController::class, 'create']);
 
 
     /*
@@ -86,7 +84,7 @@ Route::group(['namespace' => 'Api'], function() {
     | Method 		: Post
     |
     */
-    Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class,'verifyEmail']);
+    Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class, 'verifyEmail']);
 
 
     /*
@@ -97,19 +95,18 @@ Route::group(['namespace' => 'Api'], function() {
     |
     */
 
-    Route::get('get-roles', [HomeController::class,'getRoles']);
+    Route::get('get-roles', [HomeController::class, 'getRoles']);
 
-    Route::get('get-trusts', [HomeController::class,'getTrusts']);
+    Route::get('get-trusts', [HomeController::class, 'getTrusts']);
 
-    Route::get('get-hospitals/{trust}', [HomeController::class,'getHospitals']);
+    Route::get('get-hospitals/{trust}', [HomeController::class, 'getHospitals']);
 
-    Route::get('get-specialities/{hospital}', [HomeController::class,'getSpecialities']);
+    Route::get('get-specialities/{hospital}', [HomeController::class, 'getSpecialities']);
 
-    Route::get('get-sub-specialities/{speciality}', [HomeController::class,'getSubSpecialities']);
-
+    Route::get('get-sub-specialities/{speciality}', [HomeController::class, 'getSubSpecialities']);
 });
 
-Route::group(['namespace' => 'App\Http\Controllers\Api','middleware' => ['auth:api']], function () {
+Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -122,7 +119,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api','middleware' => ['auth:a
     | Method        : Get
     |
     */
-    Route::post('logout', [LoginController::class,'logout']);
+    Route::post('logout', [LoginController::class, 'logout']);
 
     /*
     |--------------------------------------------------------------------------
@@ -152,8 +149,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api','middleware' => ['auth:a
     Route::post('update-profile', [HomeController::class, 'updateProfile']);
 
 
-    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])]], function () {
 
+    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])]], function () {
 
         /*
         |--------------------------------------------------------------------------
@@ -171,8 +168,64 @@ Route::group(['namespace' => 'App\Http\Controllers\Api','middleware' => ['auth:a
         | Method        : GET
         |
         */
-        Route::apiResource('users',UserController::class)->parameters(['users' => 'user']);
+        Route::get('users', [UserController::class, 'index']);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Get Single User Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/user/show/{uuid}
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Method        : GET        
+        */
+        Route::get('user/show/{uuid}', [UserController::class, 'show']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Add User Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/user/create
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Method        : POST        
+        */
+        Route::post('user/create', [UserController::class, 'store']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Update User Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/user/update/{uuid}
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        | Method        : PUT        
+        */
+        Route::put('user/update/{uuid}', [UserController::class, 'update']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Delete User Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/user/delete/uuid
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        | Method        : DELETE
+        */
+        Route::delete('user/delete/{uuid}', [UserController::class, 'destroy']);
+
+
+
+        // Route::apiResource('users',UserController::class)->parameters(['users' => 'user']);
 
     });
-    
 });

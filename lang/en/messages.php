@@ -60,5 +60,12 @@ return [
     'account_deactivate'            => 'Your account has been deactivated. Please contact the admin.',
     'staff_account_deactivate'      => 'Your account has been deactivated.',
 
+    'user_not_found'                => 'User Not Fund',
+    'user_created_successfully'     => 'User created successfully',
+    'user_deleted_successfully'     => 'User deleted successfully',
+    'user_updated_successfully'     => 'User updated successfully',
+    'user_record_retrieved_successfully'     => 'User data retrieved successfully',
+
+
     
 ];
