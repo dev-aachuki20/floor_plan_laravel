@@ -149,8 +149,12 @@ class UserController extends APIController
                 $user_details['hospital']      = $user->hospital;
                 $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
 
-                $user_details['speciality'] = $user->specialityDetail()->value('speciality_name');
-                $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('sub_speciality_name');
+                
+                $user_details['speciality']      = $user->specialityDetail()->value('id');
+                $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
+
+                $user_details['sub_speciality']      =  $user->subSpecialityDetail()->value('id');
+                $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
 
                 $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
             }
@@ -158,7 +162,7 @@ class UserController extends APIController
             return $this->respondOk([
                 'status'   => true,
                 'message'   => trans('messages.user_record_retrieved_successfully'),
-                'data'      => $user,
+                'data'      => $user_details,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
