@@ -24,7 +24,7 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name'         => ['required', 'string','min:50', 'max:100'],
+            'full_name'         => ['required', 'string','max:100'],
             'user_email'        => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
             'password'          => ['required', 'string', 'min:8'],
             'trust'             => ['required', 'exists:trust,id'],
@@ -40,7 +40,6 @@ class StoreRequest extends FormRequest
         return [
             'full_name.required'  => __('validation.required', ['attribute' => __('cruds.user.fields.name')]),
             'full_name.string'    => __('validation.string', ['attribute' => __('cruds.user.fields.name')]),
-            'full_name.min'       => __('validation.min', ['attribute' => __('cruds.user.fields.name')]),
             'full_name.max'       => __('validation.max', ['attribute' => __('cruds.user.fields.name')]),
             'user_email.required' => __('validation.required', ['attribute' => __('cruds.user.fields.email')]),
             'user_email.email'    => __('validation.email', ['attribute' => __('cruds.user.fields.email')]),
