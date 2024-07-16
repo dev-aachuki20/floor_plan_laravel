@@ -179,7 +179,6 @@ class UserController extends APIController
             $user = User::where('uuid', $uuid)->firstOrFail();
 
             $user->update([
-                'primary_role' => $request->role ?? $user->role,
                 'hospital'     => $request->hospital ?? $user->hospital,
                 'full_name'    => $request->full_name ?? $user->full_name,
                 'password'     => $request->password ? Hash::make($request->password) : $user->password,
@@ -201,7 +200,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }

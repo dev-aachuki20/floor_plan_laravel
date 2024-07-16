@@ -24,14 +24,12 @@ class UpdateRequest extends FormRequest
     {
         $userId = $this->uuid;
         return [
-            'full_name'      => ['nullable', 'string', 'max:100'],
-            'user_email'     => ['nullable', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users', 'user_email')->ignore($userId, 'uuid')->whereNull('deleted_at')],
-            'password'       => ['nullable', 'string', 'min:8'],
-            'trust'          => ['nullable', 'exists:trust,id'],
-            'role'           => ['nullable', 'exists:roles,id'],
-            'hospital'       => ['nullable', 'exists:hospital,id,deleted_at,NULL'],
-            'speciality'     => ['nullable', 'exists:speciality,id,deleted_at,NULL'],
-            'sub_speciality' => ['nullable', 'exists:sub_speciality,id,deleted_at,NULL'],
+            'full_name'      => ['required', 'string', 'max:100'],
+            'password'       => ['required', 'string', 'min:8'],
+            'trust'          => ['required', 'exists:trust,id'],
+            'hospital'       => ['required', 'exists:hospital,id,deleted_at,NULL'],
+            'speciality'     => ['required', 'exists:speciality,id,deleted_at,NULL'],
+            'sub_speciality' => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];
     }
 
@@ -40,8 +38,6 @@ class UpdateRequest extends FormRequest
         return [
             'full_name.string'    => __('validation.string', ['attribute' => __('cruds.user.fields.name')]),
             'full_name.max'       => __('validation.max', ['attribute' => __('cruds.user.fields.name')]),
-            'user_email.email'    => __('validation.email', ['attribute' => __('cruds.user.fields.email')]),
-            'user_email.regex'    => __('validation.not_regex', ['attribute' => __('cruds.user.fields.email')]),
         ];
     }
 
