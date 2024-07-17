@@ -22,12 +22,13 @@ class UpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->uuid;
+        // $userId = $this->uuid;
         return [
             'full_name'      => ['required', 'string', 'max:100'],
-            'password'       => ['required', 'string', 'min:8'],
+            'password'       => ['nullable', 'string', 'min:8'],
             'trust'          => ['required', 'exists:trust,id'],
-            'hospital'       => ['required', 'exists:hospital,id,deleted_at,NULL'],
+            'hospital'       => ['required', 'array'],
+            'hospital.*'     => ['exists:hospital,id,deleted_at,NULL'],
             'speciality'     => ['required', 'exists:speciality,id,deleted_at,NULL'],
             'sub_speciality' => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];

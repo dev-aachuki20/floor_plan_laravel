@@ -27,14 +27,19 @@ class Hospital extends Model
         'deleted_at',
     ];
 
-    public function users()
-    {
-        return $this->hasMany(User::class,'hospital');
-    }
+    // public function users()
+    // {
+    //     return $this->hasMany(User::class,'hospital');
+    // }
 
     public function trustDetails()
     {
-        return $this->belongsTo(Trust::class,'trust','id');
+        return $this->belongsTo(Trust::class, 'trust', 'id');
     }
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_hospital')
+            ->withPivot('trust_id');
+    }
 }

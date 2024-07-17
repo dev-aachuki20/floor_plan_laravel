@@ -20,7 +20,6 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     protected $fillable = [
         'uuid',
         'primary_role',
-        'hospital',
         'user_email',
         'password',
         'full_name',
@@ -56,10 +55,10 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     }
 
 
-    protected static function boot ()
+    protected static function boot()
     {
         parent::boot();
-        static::creating(function(User $model) {
+        static::creating(function (User $model) {
 
             $model->uuid = Str::uuid();
 
@@ -94,7 +93,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 
     public function role()
     {
-        return $this->belongsTo(Role::class,'primary_role','id');
+        return $this->belongsTo(Role::class, 'primary_role', 'id');
     }
 
 
@@ -150,40 +149,45 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     }
 
 
-    public function createdBy(){
-        return $this->belongsTo(User::class,'created_by','id');
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
     public function hospitalDetail()
     {
-        return $this->belongsTo(Hospital::class,'hospital','id');
+        return $this->belongsTo(Hospital::class, 'hospital', 'id');
     }
 
 
-   
+
     public function specialityDetail()
     {
         return $this->belongsToMany(Speciality::class, 'user_sub_speciality')
-                    ->withPivot('sub_speciality_id');
+            ->withPivot('sub_speciality_id');
     }
 
- 
+
     public function subSpecialityDetail()
     {
         return $this->belongsToMany(SubSpeciality::class, 'user_sub_speciality')
-                    ->withPivot('speciality_id');
+            ->withPivot('speciality_id');
     }
 
     public function NotificationSendToVerifyEmail()
     {
         $user = $this;
 
-        $url = config('app.site_url') . '/email/verify/'.$user->uuid.'/'.sha1($user->user_email);
+        $url = config('app.site_url') . '/email/verify/' . $user->uuid . '/' . sha1($user->user_email);
 
         $subject = 'Verify Email Address';
 
         Mail::to($user->user_email)->queue(new VerifyEmailMail($user->full_name, $url, $subject));
     }
 
-    
+    public function hospitals()
+    {
+        return $this->belongsToMany(Hospital::class, 'user_hospital')
+            ->withPivot('trust_id');
+    }
 }

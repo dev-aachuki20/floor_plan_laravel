@@ -24,12 +24,13 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name'         => ['required', 'string','max:100'],
+            'full_name'         => ['required', 'string', 'max:100'],
             'user_email'        => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
             'password'          => ['required', 'string', 'min:8'],
             'trust'             => ['required', 'exists:trust,id'],
             'role'              => ['required', 'exists:roles,id'],
-            'hospital'          => ['required', 'exists:hospital,id,deleted_at,NULL'],
+            'hospital'          => ['required', 'array'],
+            'hospital.*'       => ['exists:hospital,id,deleted_at,NULL'],
             'speciality'        => ['required', 'exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];

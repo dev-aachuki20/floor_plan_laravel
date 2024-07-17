@@ -95,7 +95,6 @@ class UserController extends APIController
 
             $user = User::create([
                 'primary_role' => $request->role,
-                'hospital'     => $request->hospital,
                 'full_name'    => $request->full_name,
                 'user_email'   => $request->user_email,
                 'password'     => Hash::make($request->password),
@@ -104,6 +103,10 @@ class UserController extends APIController
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
+
+            // Attach hospitals and trust to the user
+            $user->hospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
+
 
             $specialities = [
                 $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
@@ -143,13 +146,13 @@ class UserController extends APIController
                 $user_details['phone']         = $user->phone;
 
 
-                $user_details['trust']         = $user->hospitalDetail ? $user->hospitalDetail->trust : null;
-                $user_details['trust_name']    = $user->hospitalDetail ? $user->hospitalDetail->trustDetails->trust_name : null;
+                // $user_details['trust']         = $user->hospitalDetail ? $user->hospitalDetail->trust : null;
+                // $user_details['trust_name']    = $user->hospitalDetail ? $user->hospitalDetail->trustDetails->trust_name : null;
 
-                $user_details['hospital']      = $user->hospital;
-                $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
+                // $user_details['hospital']      = $user->hospitals;
+                // $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
 
-                
+
                 $user_details['speciality']      = $user->specialityDetail()->value('id');
                 $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
 
@@ -166,7 +169,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -183,18 +186,18 @@ class UserController extends APIController
             $user = User::where('uuid', $uuid)->firstOrFail();
 
             $user->update([
-                'hospital'     => $request->hospital ?? $user->hospital,
                 'full_name'    => $request->full_name ?? $user->full_name,
-                'password'     => $request->password ? Hash::make($request->password) : $user->password,
+                'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
-            if ($request->speciality && $request->sub_speciality) {
-                $specialities = [
-                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
-                ];
-                // Sync specialities with additional pivot data
-                $user->specialityDetail()->sync($specialities);
-            }
+            $user->hospitals()->detach();
+            $user->hospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
+
+            // Sync speciality and sub_speciality
+            $specialities = [
+                $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+            ];
+            $user->specialityDetail()->sync($specialities);
 
             DB::commit();
 
@@ -204,7 +207,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -216,6 +219,7 @@ class UserController extends APIController
     {
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
+            $user->hospitals()->detach();
             $user->delete();
             return $this->respondOk([
                 'status'   => true,
