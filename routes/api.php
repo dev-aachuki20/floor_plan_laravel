@@ -101,7 +101,7 @@ Route::group(['namespace' => 'Api'], function () {
 
     Route::get('get-hospitals/{trust}', [HomeController::class, 'getHospitals']);
 
-    Route::get('get-specialities/{hospital}', [HomeController::class, 'getSpecialities']);
+    Route::get('get-specialities', [HomeController::class, 'getSpecialities']);
 
     Route::get('get-sub-specialities/{speciality}', [HomeController::class, 'getSubSpecialities']);
 });

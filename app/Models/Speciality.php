@@ -20,7 +20,6 @@ class Speciality extends Model
     ];
 
     protected $fillable = [
-        'hospital_id',
         'speciality_name',
         'speciality_description',
         'created_at',

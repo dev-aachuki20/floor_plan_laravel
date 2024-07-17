@@ -48,9 +48,8 @@ class HomeController extends APIController
         ])->setStatusCode(Response::HTTP_OK);
     }
 
-    public function getSpecialities($hospital){
-
-        $specialities = Speciality::where('hospital_id',$hospital)->pluck('speciality_name','id');
+    public function getSpecialities(){
+        $specialities = Speciality::pluck('speciality_name','id');
         
         return $this->respondOk([
             'status'   => true,
