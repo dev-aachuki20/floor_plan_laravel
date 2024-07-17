@@ -43,25 +43,38 @@ class DummyDataSeeder extends Seeder
 
                 // $created_hospital = Hospital::create($hospitals);
 
-                $hospitals = [
-                    [
+                // $hospitals = [
+                //     [
+                //         'trust' => $created_trust->id,
+                //         'hospital_name' => 'Hospital ' . $key + 1,
+                //         'hospital_description' => null
+                //     ],
+                //     [
+                //         'trust' => $created_trust->id,
+                //         'hospital_name' => 'Hospital ' . $key + 1,
+                //         'hospital_description' => null
+                //     ],
+                //     [
+                //         'trust' => $created_trust->id,
+                //         'hospital_name' => 'Hospital ' . $key + 1,
+                //         'hospital_description' => null
+                //     ],
+                // ];
+                // foreach ($hospitals as $key => $hospital) {
+                //     $created_hospital =  Hospital::create($hospital);
+                // }
+                
+                $hospitals = [];
+                for ($key = 0; $key < 3; $key++) {
+                    $hospitals[] = [
                         'trust' => $created_trust->id,
-                        'hospital_name' => 'Hospital ' . $key + 1,
+                        'hospital_name' => 'Hospital ' . ($key + 1),
                         'hospital_description' => null
-                    ],
-                    [
-                        'trust' => $created_trust->id,
-                        'hospital_name' => 'Hospital ' . $key + 1,
-                        'hospital_description' => null
-                    ],
-                    [
-                        'trust' => $created_trust->id,
-                        'hospital_name' => 'Hospital ' . $key + 1,
-                        'hospital_description' => null
-                    ],
-                ];
-                foreach ($hospitals as $key => $hospital) {
-                    $created_hospital =  Hospital::create($hospital);
+                    ];
+                }
+
+                foreach ($hospitals as $hospital) {
+                    $created_hospital = Hospital::create($hospital);
                 }
 
 

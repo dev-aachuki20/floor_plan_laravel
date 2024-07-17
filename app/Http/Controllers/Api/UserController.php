@@ -146,9 +146,10 @@ class UserController extends APIController
                 $user_details['user_email']    = $user->user_email;
                 $user_details['phone']         = $user->phone;
 
-
-                $user_details['trust'] = $user->trusts()->pluck('trust_name', 'id')->toArray();
                 $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
+                
+                $user_details['trust'] = $user->trusts()->value('id');
+                $user_details['trust_name'] = $user->trusts()->value('trust_name');
 
                 $user_details['speciality']      = $user->specialityDetail()->value('id');
                 $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
