@@ -185,9 +185,14 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         Mail::to($user->user_email)->queue(new VerifyEmailMail($user->full_name, $url, $subject));
     }
 
-    public function hospitals()
+    public function getHospitals()
     {
         return $this->belongsToMany(Hospital::class, 'user_hospital')
             ->withPivot('trust_id');
+    }
+
+    public function trusts()
+    {
+        return $this->belongsToMany(Trust::class, 'user_hospital', 'user_id', 'trust_id');
     }
 }

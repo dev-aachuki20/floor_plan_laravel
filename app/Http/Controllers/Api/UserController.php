@@ -20,8 +20,7 @@ class UserController extends APIController
     public function index(Request $request)
     {
         try {
-
-            $model = User::query()->with(['role:id,role_name', 'hospitalDetail:id,hospital_name'])->select('id', 'uuid', 'full_name', 'primary_role', 'hospital');
+            $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role');
 
             //Start Apply filters
             if ($request->search) {
@@ -34,7 +33,8 @@ class UserController extends APIController
                         ->orWhereRelation('role', 'role_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('specialityDetail', 'speciality_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('subSpecialityDetail', 'sub_speciality_name', 'like', '%' . $searchValue . '%')
-                        ->orWhereRelation('hospitalDetail', 'hospital_name', 'like', '%' . $searchValue . '%');
+                        ->orWhereRelation('trusts', 'trust_name', 'like', '%' . $searchValue . '%')
+                        ->orWhereRelation('getHospitals', 'hospital_name', 'like', '%' . $searchValue . '%');
                 });
             }
 
@@ -53,8 +53,6 @@ class UserController extends APIController
             }
             //End Apply filters
 
-
-
             $getAllRecords = $model->where(function ($qu) {
 
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
@@ -67,8 +65,11 @@ class UserController extends APIController
                     $record->full_name = ucwords($record->full_name);
                     // $record->role_name = $record->role->role_name;
                     // $record->hospital  = $record->hospitalDetail ? $record->hospitalDetail->hospital_name : null;
-                    $record->speciality = $record->specialityDetail()->value('speciality_name');
+                    $record->speciality =   $record->specialityDetail()->value('speciality_name');
                     $record->sub_speciality = $record->subSpecialityDetail()->value('sub_speciality_name');
+
+                    $record->trust = $record->trusts()->pluck('trust_name', 'id')->toArray();
+                    $record->hospitals = $record->getHospitals()->pluck('hospital_name', 'id')->toArray();
                 }
             }
 
@@ -105,7 +106,7 @@ class UserController extends APIController
             // $user->NotificationSendToVerifyEmail();
 
             // Attach hospitals and trust to the user
-            $user->hospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
+            $user->getHospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
 
 
             $specialities = [
@@ -146,12 +147,8 @@ class UserController extends APIController
                 $user_details['phone']         = $user->phone;
 
 
-                // $user_details['trust']         = $user->hospitalDetail ? $user->hospitalDetail->trust : null;
-                // $user_details['trust_name']    = $user->hospitalDetail ? $user->hospitalDetail->trustDetails->trust_name : null;
-
-                // $user_details['hospital']      = $user->hospitals;
-                // $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
-
+                $user_details['trust'] = $user->trusts()->pluck('trust_name', 'id')->toArray();
+                $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
 
                 $user_details['speciality']      = $user->specialityDetail()->value('id');
                 $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
@@ -169,7 +166,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -190,8 +187,8 @@ class UserController extends APIController
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
-            $user->hospitals()->detach();
-            $user->hospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
+            $user->getHospitals()->detach();
+            $user->getHospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
 
             // Sync speciality and sub_speciality
             $specialities = [
@@ -219,7 +216,7 @@ class UserController extends APIController
     {
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
-            $user->hospitals()->detach();
+            $user->getHospitals()->detach();
             $user->delete();
             return $this->respondOk([
                 'status'   => true,

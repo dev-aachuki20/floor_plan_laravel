@@ -71,7 +71,7 @@ Route::group(['namespace' => 'Api'], function () {
     | Method 		: Post
     |
     */
-    Route::post('register', [RegisterController::class, 'create']);
+    // Route::post('register', [RegisterController::class, 'create']);
 
 
     /*
@@ -84,7 +84,7 @@ Route::group(['namespace' => 'Api'], function () {
     | Method 		: Post
     |
     */
-    Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class, 'verifyEmail']);
+    // Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class, 'verifyEmail']);
 
 
     /*
