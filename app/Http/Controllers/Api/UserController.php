@@ -41,35 +41,29 @@ class UserController extends APIController
             if ($request->filter_by) {
 
                 if ($request->filter_by == 'role' && $request->filter_value) {
-
                     $model = $model->whereRelation('role', 'id', '=', $request->filter_value);
                 } else if ($request->filter_by == 'speciality' && $request->filter_value) {
-
                     $model = $model->whereRelation('specialityDetail', 'id', '=', $request->filter_value);
                 } else if ($request->filter_by == 'sub_speciality' && $request->filter_value) {
-
                     $model = $model->whereRelation('subSpecialityDetail', 'id', '=', $request->filter_value);
+                } else if ($request->filter_by == 'hospital' && $request->filter_value) {
+                    $model = $model->whereRelation('getHospitals', 'id', '=', $request->filter_value);
                 }
             }
             //End Apply filters
 
             $getAllRecords = $model->where(function ($qu) {
-
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
                     ->whereRelation('role', 'id', '!=', auth()->user()->role->id);
             })->orderBy('created_at', 'desc')->paginate(10);
 
             if ($getAllRecords->count() > 0) {
-
                 foreach ($getAllRecords as $record) {
                     $record->full_name = ucwords($record->full_name);
-                    // $record->role_name = $record->role->role_name;
-                    // $record->hospital  = $record->hospitalDetail ? $record->hospitalDetail->hospital_name : null;
                     $record->speciality =   $record->specialityDetail()->value('speciality_name');
                     $record->sub_speciality = $record->subSpecialityDetail()->value('sub_speciality_name');
-
                     $record->trust = $record->trusts()->pluck('trust_name', 'id')->toArray();
-                    $record->hospitals = $record->getHospitals()->pluck('hospital_name', 'id')->toArray();
+                    $record->hospitals = $record->getHospitals()->pluck('hospital_name')->toArray();
                 }
             }
 
@@ -124,7 +118,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -147,9 +141,9 @@ class UserController extends APIController
                 $user_details['phone']         = $user->phone;
 
                 $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
-                
-                $user_details['trust'] = $user->trusts()->value('id');
-                $user_details['trust_name'] = $user->trusts()->value('trust_name');
+
+                $user_details['trust'] = $user->trusts ? $user->trusts()->value('id') : null;
+                $user_details['trust_name'] = $user->trusts ? $user->trusts()->value('trust_name') : null;
 
                 $user_details['speciality']      = $user->specialityDetail()->value('id');
                 $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
@@ -205,7 +199,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -213,6 +207,35 @@ class UserController extends APIController
     /**
      * Remove the specified resource from storage.
      */
+    // public function destroy(Request $request, $uuid)
+    // {
+    //     try {
+    //         $user = User::where('uuid', $uuid)->firstOrFail();
+
+    //         if ($request->type == 'confirm') { // confirmed and not confirmed
+    //             $request->validate([
+    //                 'password' => 'required|string',
+    //             ]);
+
+    //             if (!Hash::check($request->password, $user->password)) {
+    //                 return $this->setStatusCode(403)->respondWithError(trans('messages.invalid_password'));
+    //             }
+    //         } else {
+    //             $user->getHospitals()->detach();
+    //             $user->delete();
+    //         }
+
+    //         return $this->respondOk([
+    //             'status'   => true,
+    //             'message'   => trans('messages.user_deleted_successfully'),
+    //         ])->setStatusCode(Response::HTTP_OK);
+    //     } catch (\Exception $e) {
+    //         dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+    //         return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+    //     }
+    // }
+
+
     public function destroy($uuid)
     {
         try {

@@ -26,29 +26,28 @@ class LoginController extends APIController
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'user_email'    => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','exists:users,user_email,deleted_at,NULL'],
+            'user_email'    => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email,deleted_at,NULL'],
             'password' => 'required|min:8',
-        ],[
+        ], [
             'user_email.exists' => trans('validation.invalid'),
-        ],[
+        ], [
             'user_email' => 'email',
         ]);
 
 
         try {
-            if (! $token = JWTAuth::attempt($credentials)) {
+            if (!$token = JWTAuth::attempt($credentials)) {
                 return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
             }
         } catch (Exception $e) {
             // dd('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
-          
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
 
-        }catch (JWTException $e) {
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+        } catch (JWTException $e) {
             // dd('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('auth.messages.could_not_create_token'));
         }
-     
+
         $user = JWTAuth::user();
 
         $reponseData = [
@@ -62,7 +61,7 @@ class LoginController extends APIController
                 'full_name'             => $user->full_name,
                 'user_email'            => $user->user_email,
                 'role'                  => $user->role->role_name,
-                'hospital'              => $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null,
+                'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
                 'speciality'            => $user->specialityDetail()->value('speciality_name'),
                 'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),
             ]
@@ -74,7 +73,7 @@ class LoginController extends APIController
     public function getAuthenticatedUser()
     {
         try {
-            if (! $user = JWTAuth::parseToken()->authenticate()) {
+            if (!$user = JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['user_not_found'], 404);
             }
         } catch (Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
@@ -87,7 +86,7 @@ class LoginController extends APIController
 
         $user_details = [];
 
-        if($user){
+        if ($user) {
 
             $user_details['uuid']          = $user->uuid;
             $user_details['full_name']     = ucwords($user->full_name);
@@ -96,19 +95,16 @@ class LoginController extends APIController
             $user_details['user_email']    = $user->user_email;
             $user_details['phone']         = $user->phone;
 
-           
-            $user_details['trust']         = $user->hospitalDetail ? $user->hospitalDetail->trust : null;
-            $user_details['trust_name']    = $user->hospitalDetail ? $user->hospitalDetail->trustDetails->trust_name : null;
 
-            $user_details['hospital']      = $user->hospital;
-            $user_details['hospital_name'] = $user->hospitalDetail ? $user->hospitalDetail->hospital_name : null;
+            $user_details['trust'] =   $user->trusts ? $user->trusts()->value('id') : null;
+            $user_details['trust_name'] = $user->trusts ? $user->trusts()->value('trust_name') :  null;
 
+            $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
+            
             $user_details['speciality'] = $user->specialityDetail()->value('speciality_name');
             $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('sub_speciality_name');
 
             $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
-
-
         }
 
         return response()->json(compact('user_details'));
