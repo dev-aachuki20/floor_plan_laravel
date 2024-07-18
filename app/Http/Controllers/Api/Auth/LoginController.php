@@ -101,10 +101,14 @@ class LoginController extends APIController
 
             $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
             
-            $user_details['speciality'] = $user->specialityDetail()->value('speciality_name');
-            $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('sub_speciality_name');
+            $user_details['speciality'] = $user->specialityDetail()->value('id');
+            $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
+
+            $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('id');
+            $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
 
             $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
+            
         }
 
         return response()->json(compact('user_details'));

@@ -215,24 +215,22 @@ class UserController extends APIController
 
             $type = $request->get('type');
             $confirmPassword = $request->get('confirm_password');
+
             if ($user) {
                 if ($type == 'confirm') {
+
                     $request->validate([
-                        'confirm_password ' => ['required', 'string', 'min:8'],
+                        'confirm_password' => ['required', 'string', 'min:8'],
                     ]);
 
                     if (!Hash::check($confirmPassword, $user->password)) {
                         return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
                     }
+                } 
 
-                    $user->delete();
-                    // $user->tokens()->delete();
-                    auth()->logout();
-                    JWTAuth::invalidate(JWTAuth::getToken());
-                } else {
-                    // $user->getHospitals()->detach();
-                    $user->delete();
-                }
+                $user->delete();
+                auth()->logout();
+                JWTAuth::invalidate(JWTAuth::getToken());
             }
 
             return $this->respondOk([

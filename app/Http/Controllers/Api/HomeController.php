@@ -71,18 +71,20 @@ class HomeController extends APIController
 
     public function updateProfile(Request $request){
 
-        $request->validate([
-            
+        $authUser = auth()->user();
+
+        $validateData = [
             'full_name'         => ['required','string','max:255'],
-            // 'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,NULL,id,deleted_at,NULL'],
-            'password'          => ['required', 'string', 'min:8'],
-            'trust'             => ['required','exists:trust,id'],
-            // 'role'              => ['required','exists:roles,id'],
-            'hospital'          => ['required','exists:hospital,id,deleted_at,NULL'],
+            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id,deleted_at,NULL'],
             'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
+        ];
 
-        ],[],[
+        if($request->password){
+            $validateData['password']   = ['nullable', 'string', 'min:8'];
+        }
+
+        $request->validate($validateData,[],[
             'full_name'  => 'name',
             'user_email' => 'email'
         ]);
@@ -92,12 +94,13 @@ class HomeController extends APIController
             DB::beginTransaction();
 
             $updateRecords = [
-                // 'primary_role' => $request->role,
-                'hospital'     => $request->hospital,
                 'full_name'    => ucwords($request->full_name),
-                // 'user_email'   => $request->user_email,
-                'password'     => Hash::make($request->password),
+                'user_email'   => $request->user_email,
             ];
+
+            if($request->password){
+                $updateRecords['password'] = Hash::make($request->password);
+            }
 
             $user = User::where('id',auth()->user()->id)->update($updateRecords);
 
@@ -107,7 +110,7 @@ class HomeController extends APIController
             ];
             
             // Sync specialities with additional pivot data
-            auth()->user()->specialities()->sync($specialities);
+            auth()->user()->specialityDetail()->sync($specialities);
 
             DB::commit();
             
@@ -120,6 +123,8 @@ class HomeController extends APIController
             DB::rollBack();
             // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());
          
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
+
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
 
