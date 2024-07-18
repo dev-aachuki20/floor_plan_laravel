@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
-class Room extends Model
+class SessionStatus extends Model
 {
     use SoftDeletes;
 
-    public $table = 'rooms';
+    public $table = 'session_status';
     public $timestamps = true;
 
     protected $dates = [
@@ -20,17 +19,16 @@ class Room extends Model
     ];
 
     protected $fillable = [
-        'hospital_id',
-        'room_name',
-        'room_description',
+        'name',
+        'description',
         'created_at',
         'updated_at',
         'deleted_at',
     ];
 
-    public function hospital()
+    public function rotaSessions()
     {
-        return $this->belongsTo(Hospital::class,'hospital_id','id');
+        return $this->hasMany(RotaSession::class);
     }
 
 }

@@ -27,10 +27,10 @@ class Hospital extends Model
         'deleted_at',
     ];
 
-    // public function users()
-    // {
-    //     return $this->hasMany(User::class,'hospital');
-    // }
+    public function rotaSession()
+    {
+        return $this->hasMany(RotaSession::class,'hospital_id');
+    }
 
     public function trustDetails()
     {

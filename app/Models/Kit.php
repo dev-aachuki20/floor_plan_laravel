@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
-class Room extends Model
+class Kit extends Model
 {
     use SoftDeletes;
 
-    public $table = 'rooms';
+    public $table = 'kits';
     public $timestamps = true;
 
     protected $dates = [
@@ -20,17 +19,24 @@ class Room extends Model
     ];
 
     protected $fillable = [
+        'procedure_id',
         'hospital_id',
-        'room_name',
-        'room_description',
+        'kit_name',
+        'kit_status',
+        'kit_description',
         'created_at',
         'updated_at',
         'deleted_at',
     ];
 
-    public function hospital()
+    public function hospitalDetail()
     {
-        return $this->belongsTo(Hospital::class,'hospital_id','id');
+        return $this->belongsTo(Hospital::class, 'hospital_id', 'id');
+    }
+
+    public function procedure()
+    {
+        return $this->belongsTo(Procedure::class, 'procedure_id', 'id');
     }
 
 }
