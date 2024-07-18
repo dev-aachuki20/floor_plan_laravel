@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Exports\UsersExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class UserController extends APIController
@@ -101,7 +103,6 @@ class UserController extends APIController
     public function store(StoreRequest $request)
     {
         try {
-
             DB::beginTransaction();
 
             $user = User::create([
@@ -115,7 +116,7 @@ class UserController extends APIController
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
 
-            $trustId = $this->determineTrustId($request);
+            $trustId = $this->getTrustId($request);
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
             $specialities = [
@@ -196,7 +197,7 @@ class UserController extends APIController
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
-            $trustId = $this->determineEditUserTrustId($request, $user);
+            $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
@@ -255,34 +256,50 @@ class UserController extends APIController
         }
     }
 
-    private function determineTrustId(Request $request)
+    public function exportUserData(Request $request)
+    {
+        // return Excel::download(new UsersExport, 'users.xlsx');        
+        $user = auth()->user();
+
+        // Determine the role of the authenticated user
+        if ($user->is_system_admin) {
+            $role = 'system_admin';
+        } elseif ($user->is_trust_admin) {
+            $role = 'trust_admin';
+        } elseif ($user->is_hospital_admin) {
+            $role = 'hospital_admin';
+        } else {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Export users based on role
+        return Excel::download(new UsersExport($role), 'users.xlsx');
+    }
+
+    private function getTrustId(Request $request)
     {
         $user = Auth::user();
-        $userId = Auth::id();
-        $userRoleId = Auth::user()->role->id;
-        $trustId = null;
+        $tid = $user->getHospitals->value('trust');
 
-        if ($userRoleId == config('constant.roles.system_admin')) {
+        if ($user->is_system_admin) {
             $trustId = $request->trust;
-        } elseif ($userRoleId == config('constant.roles.trust_admin')) {
-            $trustId = $request->filled('trust') ? $request->trust : $userId;
-        } elseif ($userRoleId == config('constant.roles.hospital_admin')) {
-            $trustId = $user->getHospitals->value('trust');
+        } elseif ($user->is_trust_admin) {
+            $trustId = $request->filled('trust') ? $request->trust : $user->id;
+        } elseif ($user->is_hospital_admin) {
+            $trustId = $tid;
         }
 
         return $trustId;
     }
 
-    private function determineEditUserTrustId(Request $request, $user)
+    private function getEditUserTrustId(Request $request, $user)
     {
-        $AuthUserRoleId = Auth::user()->role->id;
-        $trustId = $user->getHospitals->value('trust');
-        if ($AuthUserRoleId == config('constant.roles.system_admin')) {
-            $trustId = $user ?  $request->trust : $user->getHospitals->value('trust');
-        } elseif ($AuthUserRoleId == config('constant.roles.trust_admin')) {
-            $trustId = $user ?  $request->trust : $user->getHospitals->value('trust');
-        } elseif ($AuthUserRoleId == config('constant.roles.hospital_admin')) {
-            $trustId = $user ? $request->trust : $user->getHospitals->value('trust');
+        $authUser = Auth::user();
+        $tid = $user->getHospitals->value('trust');
+        if ($authUser->is_system_admin) {
+            $trustId = $user ?  $request->trust : $tid;
+        } else {
+            $trustId = $tid;
         }
 
         return $trustId;

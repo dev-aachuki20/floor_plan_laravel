@@ -222,6 +222,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Method        : DELETE
         */
         Route::post('user/delete/{uuid}', [UserController::class, 'destroy']);
+        Route::get('users/export', [UserController::class, 'exportUserData']);
 
 
 
