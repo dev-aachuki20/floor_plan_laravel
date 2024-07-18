@@ -5,48 +5,82 @@
 namespace App\Exports;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 
-class UsersExport implements FromCollection, WithHeadings
+class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
 {
-    protected $role;
+    use Exportable;
+    protected $user;
 
-    public function __construct($role)
+    public function __construct($user)
     {
-        $this->role = $role;
+        $this->user = $user;
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 20,
+            'B' => 30,
+            'C' => 30,
+            'D' => 20,
+            'E' => 20,
+            'F' => 20,
+            'G' => 20,
+        ];
     }
 
     public function collection()
     {
-        $userId = Auth::id();
-
-        if ($this->role === 'system_admin') {
-            return User::all();
-        } elseif ($this->role === 'trust_admin') {
-            return User::whereHas('trusts', function ($query) use ($userId) {
-                $query->where('trust_id', $userId);
-            })->get();
-        } elseif ($this->role === 'hospital_admin') {
-            return User::whereHas('hospitals', function ($query) use ($userId) {
-                $query->where('hospital_id', $userId);
-            })->get();
+        $userId = $this->user->id;
+        if ($this->user->is_system_admin) {
+            return User::systemAdminUsers($userId)->get();
+        } elseif ($this->user->is_trust_admin) {
+            return User::trustAdminUsers($userId)->get();
+        } elseif ($this->user->is_hospital_admin) {
+            return User::hospitalAdminUsers($userId)->get();
         }
-
-        return collect([]);
     }
 
     public function headings(): array
     {
         return [
-            'ID',
-            'UUID',
-            'Full Name',
+            'Name',
             'Email',
+            'Trust',
             'Role',
-            // Add more headings as needed
+            'Speciality',
+            'Sub Speciality',
+            'Hospital',
         ];
     }
-}
 
+    public function map($row): array
+    {
+        $hospitals = $row->getHospitals->pluck('hospital_name')->implode(', ');
+        return [
+            $row->full_name,
+            $row->user_email,
+            $row->trusts->value('trust_name') ?? '',
+            $row->role->role_name,
+            $row->specialityDetail->value('speciality_name') ?? '',
+            $row->subSpecialityDetail->value('sub_speciality_name') ?? '',
+            $hospitals ?? '',
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+            ],
+        ]);
+    }
+}

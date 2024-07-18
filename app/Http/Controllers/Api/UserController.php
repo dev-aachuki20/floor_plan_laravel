@@ -257,23 +257,10 @@ class UserController extends APIController
     }
 
     public function exportUserData(Request $request)
-    {
-        // return Excel::download(new UsersExport, 'users.xlsx');        
+    {       
         $user = auth()->user();
-
-        // Determine the role of the authenticated user
-        if ($user->is_system_admin) {
-            $role = 'system_admin';
-        } elseif ($user->is_trust_admin) {
-            $role = 'trust_admin';
-        } elseif ($user->is_hospital_admin) {
-            $role = 'hospital_admin';
-        } else {
-            abort(403, 'Unauthorized action.');
-        }
-
         // Export users based on role
-        return Excel::download(new UsersExport($role), 'users.xlsx');
+        return Excel::download(new UsersExport($user), 'users.xlsx');
     }
 
     private function getTrustId(Request $request)
