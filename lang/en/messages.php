@@ -65,6 +65,7 @@ return [
     'user_deleted_successfully'     => 'User deleted successfully',
     'user_updated_successfully'     => 'User updated successfully',
     'user_record_retrieved_successfully'     => 'User data retrieved successfully',
+    'invalid_password'              => 'Password does not match',
 
 
     

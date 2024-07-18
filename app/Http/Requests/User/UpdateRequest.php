@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\User;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateRequest extends FormRequest
@@ -22,11 +24,25 @@ class UpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        // $userId = $this->uuid;
+        $editeUserDetail = User::where('uuid', $this->uuid)->first();
+        $editUserId = $editeUserDetail ? $editeUserDetail->id : null;
+
+        $userRoleId = Auth::user()->role->id;
+        $trustValidationRule = 'nullable';
+
+        if ($userRoleId == config('constant.roles.system_admin')) {
+            $trustValidationRule = 'required|';
+        } elseif ($userRoleId == config('constant.roles.trust_admin')) {
+            $trustValidationRule = 'nullable|';
+        } elseif ($userRoleId == config('constant.roles.hospital_admin')) {
+            $trustValidationRule = 'nullable|';
+        }
+
         return [
             'full_name'      => ['required', 'string', 'max:100'],
+            'user_email'     => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users')->ignore($editUserId)],
             'password'       => ['nullable', 'string', 'min:8'],
-            'trust'          => ['required', 'exists:trust,id'],
+            'trust'          => [$trustValidationRule . 'exists:trust,id'],
             'hospital'       => ['required', 'array'],
             'hospital.*'     => ['exists:hospital,id,deleted_at,NULL'],
             'speciality'     => ['required', 'exists:speciality,id,deleted_at,NULL'],
@@ -37,8 +53,13 @@ class UpdateRequest extends FormRequest
     public function messages()
     {
         return [
-            'full_name.string'    => __('validation.string', ['attribute' => __('cruds.user.fields.name')]),
-            'full_name.max'       => __('validation.max', ['attribute' => __('cruds.user.fields.name')]),
+            'full_name.required'    => __('validation.required', ['attribute' => __('cruds.user.fields.name')]),
+            'full_name.string'      => __('validation.string', ['attribute' => __('cruds.user.fields.name')]),
+            'full_name.max'         => __('validation.max', ['attribute' => __('cruds.user.fields.name')]),
+            'user_email.required'   => __('validation.required', ['attribute' => __('cruds.user.fields.email')]),
+            'user_email.email'      => __('validation.email', ['attribute' => __('cruds.user.fields.email')]),
+            'user_email.regex'      => __('validation.not_regex', ['attribute' => __('cruds.user.fields.email')]),
+            'user_email.unique'     => __('validation.unique', ['attribute' => __('cruds.user.fields.email')]),
         ];
     }
 

@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests\User\StoreRequest;
 use App\Http\Requests\User\UpdateRequest;
 use App\Http\Controllers\Api\APIController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 
 class UserController extends APIController
@@ -99,14 +101,12 @@ class UserController extends APIController
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
 
-            // Attach hospitals and trust to the user
-            $user->getHospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
-
+            $trustId = $this->determineTrustId($request);
+            $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
             $specialities = [
                 $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
             ];
-
             // Sync specialities with additional pivot data
             $user->specialityDetail()->sync($specialities);
 
@@ -118,7 +118,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -176,14 +176,15 @@ class UserController extends APIController
             DB::beginTransaction();
 
             $user = User::where('uuid', $uuid)->firstOrFail();
-
             $user->update([
                 'full_name'    => $request->full_name ?? $user->full_name,
+                'user_email'   => $request->user_email ?? $user->user_email,
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
+            $trustId = $this->determineEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
-            $user->getHospitals()->attach($request->hospital, ['trust_id' => $request->trust]);
+            $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
             // Sync speciality and sub_speciality
             $specialities = [
@@ -199,7 +200,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -207,47 +208,73 @@ class UserController extends APIController
     /**
      * Remove the specified resource from storage.
      */
-    // public function destroy(Request $request, $uuid)
-    // {
-    //     try {
-    //         $user = User::where('uuid', $uuid)->firstOrFail();
-
-    //         if ($request->type == 'confirm') { // confirmed and not confirmed
-    //             $request->validate([
-    //                 'password' => 'required|string',
-    //             ]);
-
-    //             if (!Hash::check($request->password, $user->password)) {
-    //                 return $this->setStatusCode(403)->respondWithError(trans('messages.invalid_password'));
-    //             }
-    //         } else {
-    //             $user->getHospitals()->detach();
-    //             $user->delete();
-    //         }
-
-    //         return $this->respondOk([
-    //             'status'   => true,
-    //             'message'   => trans('messages.user_deleted_successfully'),
-    //         ])->setStatusCode(Response::HTTP_OK);
-    //     } catch (\Exception $e) {
-    //         dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-    //         return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
-    //     }
-    // }
-
-
-    public function destroy($uuid)
+    public function destroy(Request $request, $uuid)
     {
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
-            $user->getHospitals()->detach();
-            $user->delete();
+
+            $type = $request->get('type');
+            $confirmPassword = $request->get('confirm_password');
+            if ($user) {
+                if ($type == 'confirm') {
+                    $request->validate([
+                        'confirm_password ' => ['required', 'string', 'min:8'],
+                    ]);
+
+                    if (!Hash::check($confirmPassword, $user->password)) {
+                        return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
+                    }
+
+                    $user->delete();
+                    // $user->tokens()->delete();
+                    auth()->logout();
+                    JWTAuth::invalidate(JWTAuth::getToken());
+                } else {
+                    // $user->getHospitals()->detach();
+                    $user->delete();
+                }
+            }
+
             return $this->respondOk([
                 'status'   => true,
                 'message'   => trans('messages.user_deleted_successfully'),
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
+    }
+
+    private function determineTrustId(Request $request)
+    {
+        $user = Auth::user();
+        $userId = Auth::id();
+        $userRoleId = Auth::user()->role->id;
+        $trustId = null;
+
+        if ($userRoleId == config('constant.roles.system_admin')) {
+            $trustId = $request->trust;
+        } elseif ($userRoleId == config('constant.roles.trust_admin')) {
+            $trustId = $request->filled('trust') ? $request->trust : $userId;
+        } elseif ($userRoleId == config('constant.roles.hospital_admin')) {
+            $trustId = $user->getHospitals->value('trust');
+        }
+
+        return $trustId;
+    }
+
+    private function determineEditUserTrustId(Request $request, $user)
+    {
+        $AuthUserRoleId = Auth::user()->role->id;
+        $trustId = $user->getHospitals->value('trust');
+        if ($AuthUserRoleId == config('constant.roles.system_admin')) {
+            $trustId = $user ?  $request->trust : $user->getHospitals->value('trust');
+        } elseif ($AuthUserRoleId == config('constant.roles.trust_admin')) {
+            $trustId = $user ?  $request->trust : $user->getHospitals->value('trust');
+        } elseif ($AuthUserRoleId == config('constant.roles.hospital_admin')) {
+            $trustId = $user ? $request->trust : $user->getHospitals->value('trust');
+        }
+
+        return $trustId;
     }
 }
