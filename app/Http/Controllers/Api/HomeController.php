@@ -37,10 +37,14 @@ class HomeController extends APIController
         ])->setStatusCode(Response::HTTP_OK);
     }
 
-    public function getHospitals($trust){
+    public function getHospitals($trust=null){
 
-        $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
-        
+        if(is_null($trust)){
+            $hospitals = Hospital::pluck('hospital_name','id');
+        }else{
+            $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
+        }
+
         return $this->respondOk([
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),
@@ -58,9 +62,17 @@ class HomeController extends APIController
         ])->setStatusCode(Response::HTTP_OK);
     }
 
-    public function getSubSpecialities($speciality){
+    public function getSubSpecialities($speciality=null){
 
-        $subSpecialities = SubSpeciality::where('parent_speciality_id',$speciality)->pluck('sub_speciality_name','id');
+        if(is_null($speciality)){
+
+            $subSpecialities = SubSpeciality::pluck('sub_speciality_name','id');
+
+        }else{
+
+            $subSpecialities = SubSpeciality::where('parent_speciality_id',$speciality)->pluck('sub_speciality_name','id');
+
+        }
         
         return $this->respondOk([
             'status'   => true,

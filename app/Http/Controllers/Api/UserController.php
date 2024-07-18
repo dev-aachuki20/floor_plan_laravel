@@ -23,11 +23,16 @@ class UserController extends APIController
      */
     public function index(Request $request)
     {
-        try {
-            $user = auth()->user();
-            $userRoleId = $user->role->id;
-            $userId = $user->id;
+        $request->validate([
+            'filter_value'   => 'nullable|array',
+            'filter_value.*' => 'integer', 
+        ]);
 
+        try {
+            DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+
+            $user = auth()->user();
+           
             $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role');
 
             //Start Apply filters
@@ -49,24 +54,47 @@ class UserController extends APIController
             if ($request->filter_by) {
 
                 if ($request->filter_by == 'role' && $request->filter_value) {
-                    $model = $model->whereRelation('role', 'id', '=', $request->filter_value);
+
+                    $model->whereRelation('role', function ($query) use ($request) {
+                        $query->whereIn('id', $request->filter_value);
+                    });
+
                 } else if ($request->filter_by == 'speciality' && $request->filter_value) {
-                    $model = $model->whereRelation('specialityDetail', 'id', '=', $request->filter_value);
+
+                    $model->whereRelation('specialityDetail', function ($query) use ($request) {
+                        $query->whereIn('id', $request->filter_value);
+                    });
+
                 } else if ($request->filter_by == 'sub_speciality' && $request->filter_value) {
-                    $model = $model->whereRelation('subSpecialityDetail', 'id', '=', $request->filter_value);
+
+                    $model->whereRelation('subSpecialityDetail', function ($query) use ($request) {
+                        $query->whereIn('id', $request->filter_value);
+                    });
+
                 } else if ($request->filter_by == 'hospital' && $request->filter_value) {
-                    $model = $model->whereRelation('getHospitals', 'id', '=', $request->filter_value);
+
+                    $model->whereRelation('getHospitals', function ($query) use ($request) {
+                        $query->whereIn('id', $request->filter_value);
+                    });
+
                 }
             }
             //End Apply filters
 
-            if ($userRoleId == config('constant.roles.trust_admin')) {
-                $model = $model->whereHas('trusts', function ($query) use ($userId) {
-                    $query->where('trust.id', $userId);
+            if ($user->is_trust_admin) {
+
+                $trustIds = $user->trusts()->select('trust_id')->groupBy('trust_id')->pluck('trust_id')->toArray();
+
+                $model = $model->whereRelation('trusts', function ($query) use ($trustIds) {
+                    $query->whereIn('trust.id', $trustIds);
                 });
-            } else if ($userRoleId == config('constant.roles.hospital_admin')) {
-                $model = $model->whereHas('getHospitals', function ($query) use ($userId) {
-                    $query->where('hospital.id', $userId);
+
+            } else if ($user->is_hospital_admin) {
+
+                $hospital_ids = $user->getHospitals()->select('hospital_id')->groupBy('hospital_id')->pluck('hospital_id')->toArray();
+
+                $model = $model->whereRelation('getHospitals', function ($query) use ($hospital_ids) {
+                    $query->whereIn('hospital.id', $hospital_ids);
                 });
             }
 
@@ -91,7 +119,7 @@ class UserController extends APIController
                 'data'      => $getAllRecords,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            // dd($e->getMessage().'->'.$e->getLine());
+            dd($e->getMessage().'->'.$e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }

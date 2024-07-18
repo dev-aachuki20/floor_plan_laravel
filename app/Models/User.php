@@ -186,7 +186,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 
     public function trusts()
     {
-        return $this->belongsToMany(Trust::class, 'user_hospital', 'user_id', 'trust_id');
+        return $this->belongsToMany(Trust::class, 'user_hospital', 'user_id', 'trust_id')->withPivot('hospital_id');
     }
 
     // Scope: Fetch users created by system admin

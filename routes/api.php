@@ -99,11 +99,11 @@ Route::group(['namespace' => 'Api'], function () {
 
     Route::get('get-trusts', [HomeController::class, 'getTrusts']);
 
-    Route::get('get-hospitals/{trust}', [HomeController::class, 'getHospitals']);
+    Route::get('get-hospitals/{trust?}', [HomeController::class, 'getHospitals']);
 
     Route::get('get-specialities', [HomeController::class, 'getSpecialities']);
 
-    Route::get('get-sub-specialities/{speciality}', [HomeController::class, 'getSubSpecialities']);
+    Route::get('get-sub-specialities/{speciality?}', [HomeController::class, 'getSubSpecialities']);
 });
 
 Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
@@ -165,10 +165,10 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |                 - search (optional): string (e.g., ?search=term)
         |                 - page (optional): integer (e.g., ?page=1)
         |                 - per_page (optional): integer (e.g., ?per_page=10)
-        | Method        : GET
+        | Method        : POST
         |
         */
-        Route::get('users', [UserController::class, 'index']);
+        Route::post('users', [UserController::class, 'index']);
 
 
         /*

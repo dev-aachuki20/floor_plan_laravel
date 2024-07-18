@@ -34,7 +34,11 @@ class StoreRequest extends FormRequest
             'full_name'         => ['required', 'string', 'max:100'],
             'user_email'        => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
             'password'          => ['required', 'string', 'min:8'],
-            'role'              => ['required', 'exists:roles,id'],
+            
+            'role'              => ['required', 
+                Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
+            ],
+
             'trust'             => [$trustValidationRule, 'exists:trust,id'],
             'hospital'          => ['required', 'array'],
             'hospital.*'        => ['exists:hospital,id,deleted_at,NULL'],
