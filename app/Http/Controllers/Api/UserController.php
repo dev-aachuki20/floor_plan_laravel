@@ -22,6 +22,10 @@ class UserController extends APIController
     public function index(Request $request)
     {
         try {
+            $user = auth()->user();
+            $userRoleId = $user->role->id;
+            $userId = $user->id;
+
             $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role');
 
             //Start Apply filters
@@ -53,6 +57,16 @@ class UserController extends APIController
                 }
             }
             //End Apply filters
+
+            if ($userRoleId == config('constant.roles.trust_admin')) {
+                $model = $model->whereHas('trusts', function ($query) use ($userId) {
+                    $query->where('trust.id', $userId);
+                });
+            } else if ($userRoleId == config('constant.roles.hospital_admin')) {
+                $model = $model->whereHas('getHospitals', function ($query) use ($userId) {
+                    $query->where('hospital.id', $userId);
+                });
+            }
 
             $getAllRecords = $model->where(function ($qu) {
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
@@ -210,23 +224,21 @@ class UserController extends APIController
      */
     public function destroy(Request $request, $uuid)
     {
+        $request->validate([
+            'confirm_password' => ['required', 'string', 'min:8'],
+        ]);
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
 
-            $type = $request->get('type');
-            $confirmPassword = $request->get('confirm_password');
+            $type = $request->type;
+            $confirmPassword = $request->confirm_password;
 
             if ($user) {
                 if ($type == 'confirm') {
-
-                    $request->validate([
-                        'confirm_password' => ['required', 'string', 'min:8'],
-                    ]);
-
                     if (!Hash::check($confirmPassword, $user->password)) {
                         return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
                     }
-                } 
+                }
 
                 $user->delete();
                 auth()->logout();

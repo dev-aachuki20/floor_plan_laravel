@@ -221,7 +221,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
         | Method        : DELETE
         */
-        Route::delete('user/delete/{uuid}', [UserController::class, 'destroy']);
+        Route::post('user/delete/{uuid}', [UserController::class, 'destroy']);
 
 
 
