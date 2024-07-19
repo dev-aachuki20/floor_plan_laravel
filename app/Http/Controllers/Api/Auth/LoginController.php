@@ -60,6 +60,7 @@ class LoginController extends APIController
                 'uuid'                  => $user->uuid,
                 'full_name'             => $user->full_name,
                 'user_email'            => $user->user_email,
+                'primary_role'          => $user->primary_role,
                 'role'                  => $user->role->role_name,
                 'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
                 'speciality'            => $user->specialityDetail()->value('speciality_name'),
