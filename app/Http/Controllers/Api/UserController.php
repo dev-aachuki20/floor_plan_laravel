@@ -119,7 +119,7 @@ class UserController extends APIController
                 'data'      => $getAllRecords,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            dd($e->getMessage().'->'.$e->getLine());
+            // dd($e->getMessage().'->'.$e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }

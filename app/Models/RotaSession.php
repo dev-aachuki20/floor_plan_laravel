@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -33,6 +34,17 @@ class RotaSession extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function (User $model) {
+
+            $model->uuid = Str::uuid();
+
+            $model->created_by = auth()->user() ? auth()->user()->id : null;
+        });
+    }
 
     public function hospitalDetail()
     {

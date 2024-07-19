@@ -42,4 +42,9 @@ class Hospital extends Model
         return $this->belongsToMany(User::class, 'user_hospital')
             ->withPivot('trust_id');
     }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class,'hospital_id');
+    }
 }

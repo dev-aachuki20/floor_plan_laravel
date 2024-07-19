@@ -35,6 +35,12 @@ return [
         'date_time' => '%d-%m-%Y %H:%i:%s'
     ],
 
+    'time_slots' =>[
+        'AM',
+        'PM',
+        'EVE',
+    ],
+
     
     
 

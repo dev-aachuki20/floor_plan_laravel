@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\RotaTableController;
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -219,14 +221,68 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |               : Authorization : Token
         | Parameters    : 
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-        | Method        : DELETE
+        | Method        : POST
         */
         Route::post('user/delete/{uuid}', [UserController::class, 'destroy']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Download Users Data API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/users/export
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |             
+        | Method        : GET
+        */
         Route::get('users/export', [UserController::class, 'exportUserData']);
 
 
+        /*
+        |--------------------------------------------------------------------------
+        |  Get Rota Table Records API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |                 - filter_by,filter_value (optional): string (e.g., ?filter_by=value&filter_value=value)
+        |                 - search (optional): string (e.g., ?search=term)
+        |                 - page (optional): integer (e.g., ?page=1)
+        |                 - per_page (optional): integer (e.g., ?per_page=10)
+        | Method        : POST
+        |
+        */
+        Route::post('rota-table', [RotaTableController::class, 'index']);
 
-        // Route::apiResource('users',UserController::class)->parameters(['users' => 'user']);
+        /*
+        |--------------------------------------------------------------------------
+        |  Add Rota Table Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/store
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Method        : POST        
+        */
+        Route::post('rota-table/store', [RotaTableController::class, 'store']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Update Rota Table Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/update/{uuid}
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        | Method        : PUT        
+        */
+        Route::put('rota-table/update/{uuid}', [RotaTableController::class, 'update']);
 
     });
 });

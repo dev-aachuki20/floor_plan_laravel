@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('rota_sessions', function (Blueprint $table) {
             $table->id();
+            
+            $table->uuid('uuid')->unique();
 
             $table->unsignedBigInteger('hospital_id');
             $table->foreign('hospital_id')->references('id')->on('hospital');
