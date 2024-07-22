@@ -6,6 +6,7 @@ use App\Rules\NoMultipleSpacesRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Rules\TitleValidationRule;
 
 class StoreRequest extends FormRequest
 {
@@ -31,7 +32,7 @@ class StoreRequest extends FormRequest
             $trustValidationRule = 'required';
         }
         return [
-            'full_name'         => ['required', 'string', 'max:100'],
+            'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
             'user_email'        => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
             'password'          => ['required', 'string', 'min:8'],
             

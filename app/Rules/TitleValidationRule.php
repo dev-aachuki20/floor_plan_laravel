@@ -18,15 +18,15 @@ class TitleValidationRule implements Rule
         }
 
         // // Only allow alphabetic characters (no numbers or special characters)
-        // if (!preg_match('/^[A-Za-z\s]+$/', $value)) {
-        //     return false;
-        // }
+        if (!preg_match('/^[A-Za-z\s]+$/', $value)) {
+            return false;
+        }
 
         return true;
     }
 
     public function message()
     {
-        return 'This name foramt is wrong.';
+        return 'The :attribute format is invalid.';
     }
 }
