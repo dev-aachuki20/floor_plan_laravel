@@ -258,6 +258,22 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         */
         Route::post('rota-table', [RotaTableController::class, 'index']);
 
+        
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Add Rota Table Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/get-details
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : hospital, 
+        | Method        : POST        
+        */
+        Route::post('rota-table/get-details', [RotaTableController::class, 'getDetails']);
+
+
         /*
         |--------------------------------------------------------------------------
         |  Add Rota Table Record API Route

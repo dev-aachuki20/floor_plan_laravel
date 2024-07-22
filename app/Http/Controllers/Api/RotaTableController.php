@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use App\Models\RotaSession;
 use App\Models\SessionStatus;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Requests\RotaTable\StoreRequest;
 use App\Http\Requests\RotaTable\UpdateRequest;
 use App\Http\Controllers\Api\APIController;
 
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,6 +29,10 @@ class RotaTableController extends APIController
             DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
 
           
+            // $hospital = Hospital::first();
+            
+            // dd($hospital->rooms()->get());
+
             $model = RotaSession::query();
 
             //Start Apply filters
@@ -71,6 +78,43 @@ class RotaTableController extends APIController
         }
 
    }
+
+   /**
+    * Get rota table details
+    */
+    public function getDetails(Request $request){
+
+        $request->validate([
+            'hospital' => ['required', 'integer'],
+        ]);
+
+        $hospital = $request->hospital;
+      
+        $hospital = Hospital::select('id','hospital_name')->where('id',$hospital)->first();
+        $hospital->rooms = $hospital->rooms()->select('id','room_name')->get();
+
+        foreach($hospital->rooms as $room){
+            $room->time_slots = config('constant.time_slots');
+
+            // Get current date and the next 7 days
+            $currentDate = Carbon::now();
+            $weekDates = [];
+            for ($i = 0; $i < 7; $i++) {
+                $weekDates[] = [
+                    'date' => $currentDate->copy()->addDays($i)->format('Y-m-d'),
+                    'day_name' => $currentDate->copy()->addDays($i)->format('l')
+                ];
+            }
+            $room->week_dates = $weekDates;
+        }
+
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $hospital,
+        ])->setStatusCode(Response::HTTP_OK);
+
+    }
 
     /**
      * Store a newly created resource in storage.
