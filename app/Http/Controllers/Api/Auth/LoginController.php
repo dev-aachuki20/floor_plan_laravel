@@ -62,6 +62,8 @@ class LoginController extends APIController
                 'user_email'            => $user->user_email,
                 'primary_role'          => $user->primary_role,
                 'role'                  => $user->role->role_name,
+                'trust'                 => $user->trusts ? $user->trusts()->value('id') : null,
+                'trust_name'            => $user->trusts ? $user->trusts()->value('trust_name') : null,
                 'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
                 'speciality'            => $user->specialityDetail()->value('speciality_name'),
                 'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),

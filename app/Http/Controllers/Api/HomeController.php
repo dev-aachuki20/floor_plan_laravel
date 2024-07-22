@@ -9,15 +9,24 @@ use App\Models\Trust;
 use App\Models\Hospital;
 use App\Models\Speciality;
 use App\Models\SubSpeciality;
+use Auth;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Hash;
 
 class HomeController extends APIController
 {
     public function getRoles(){
-        $roles = Role::where('id','!=',config('constant.roles.system_admin'))->pluck('role_name','id');
+        $user = Auth::User();
+        if ($user->is_trust_admin) {
+            $roles = Role::whereNotIn('id', [config('constant.roles.system_admin'), config('constant.roles.trust_admin')])->pluck('role_name', 'id');
+        }else if ($user->is_hospital_admin) {
+            $roles = Role::whereNotIn('id', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])->pluck('role_name', 'id');
+        } else {
+            $roles = Role::where('id', '!=', config('constant.roles.system_admin'))->pluck('role_name', 'id');
+        }
 
         return $this->respondOk([
             'status'   => true,
@@ -123,12 +132,37 @@ class HomeController extends APIController
             
             // Sync specialities with additional pivot data
             auth()->user()->specialityDetail()->sync($specialities);
+            
+            // Fetch the updated user data
+            $user = User::with([
+                'role:id,role_name',
+                'trusts:id,trust_name',
+                'getHospitals:id,hospital_name',
+                'specialityDetail:id,speciality_name',
+                'subSpecialityDetail:id,sub_speciality_name'
+            ])->findOrFail($authUser->id);
+
+            $reponseData = [
+                'data'          => [
+                    'uuid'                  => $user->uuid,
+                    'full_name'             => $user->full_name,
+                    'user_email'            => $user->user_email,
+                    'primary_role'          => $user->primary_role,
+                    'role'                  => $user->role->role_name,
+                    'trust'                 => $user->trusts ? $user->trusts()->value('id') : null,
+                    'trust_name'            => $user->trusts ? $user->trusts()->value('trust_name') : null,
+                    'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
+                    'speciality'            => $user->specialityDetail()->value('speciality_name'),
+                    'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),
+                ]
+            ];
 
             DB::commit();
             
             return $this->respondOk([
                 'status'   => true,
-                'message'   => trans('messages.profile_updated_successfully')
+                'message'   => trans('messages.profile_updated_successfully'),
+                'data'     => $reponseData
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {

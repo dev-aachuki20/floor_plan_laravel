@@ -97,8 +97,6 @@ Route::group(['namespace' => 'Api'], function () {
     |
     */
 
-    Route::get('get-roles', [HomeController::class, 'getRoles']);
-
     Route::get('get-trusts', [HomeController::class, 'getTrusts']);
 
     Route::get('get-hospitals/{trust?}', [HomeController::class, 'getHospitals']);
@@ -109,6 +107,8 @@ Route::group(['namespace' => 'Api'], function () {
 });
 
 Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
+    
+     Route::get('get-roles', [HomeController::class, 'getRoles']);
 
     /*
     |--------------------------------------------------------------------------

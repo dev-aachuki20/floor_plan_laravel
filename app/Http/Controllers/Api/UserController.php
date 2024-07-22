@@ -97,11 +97,23 @@ class UserController extends APIController
                     $query->whereIn('hospital.id', $hospital_ids);
                 });
             }
-
-            $getAllRecords = $model->where(function ($qu) {
-                $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
-                    ->whereRelation('role', 'id', '!=', auth()->user()->role->id);
+            
+            // Filter out system admins, trust admins, and hospital admins based on the authenticated user's role
+            $getAllRecords = $model->where(function ($qu) use ($user) {
+                $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'));
+                if ($user->is_trust_admin) {
+                    $qu->whereRelation('role', 'id', '!=', config('constant.roles.trust_admin'));
+                }
+                if ($user->is_hospital_admin) {
+                    $qu->whereRelation('role', 'id', '!=', config('constant.roles.trust_admin'))
+                        ->whereRelation('role', 'id', '!=', config('constant.roles.hospital_admin'));
+                }
             })->orderBy('created_at', 'desc')->paginate(10);
+
+            // $getAllRecords = $model->where(function ($qu) {
+            //     $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
+            //         ->whereRelation('role', 'id', '!=', auth()->user()->role->id);
+            // })->orderBy('created_at', 'desc')->paginate(10);
 
             if ($getAllRecords->count() > 0) {
                 foreach ($getAllRecords as $record) {
@@ -253,25 +265,31 @@ class UserController extends APIController
      */
     public function destroy(Request $request, $uuid)
     {
-        $request->validate([
-            'confirm_password' => ['required', 'string', 'min:8'],
-        ]);
+        $type = $request->type;
+        if ($type == 'confirm') {
+            $request->validate([
+                'confirm_password' => ['required', 'string', 'min:8'],
+            ]);
+        }
+
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
-
-            $type = $request->type;
-            $confirmPassword = $request->confirm_password;
-
+           
             if ($user) {
+        
                 if ($type == 'confirm') {
+                    $confirmPassword = $request->confirm_password;
                     if (!Hash::check($confirmPassword, $user->password)) {
                         return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
                     }
+                    $user->delete();
+                    auth()->logout();
+                    JWTAuth::invalidate(JWTAuth::getToken());
+                }else{
+                    $user->delete();
                 }
 
-                $user->delete();
-                auth()->logout();
-                JWTAuth::invalidate(JWTAuth::getToken());
+                
             }
 
             return $this->respondOk([
