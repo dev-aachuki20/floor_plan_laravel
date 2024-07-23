@@ -29,7 +29,7 @@ class LoginController extends APIController
             'user_email'    => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email,deleted_at,NULL'],
             'password' => 'required|min:8',
         ], [
-            'user_email.exists' => trans('validation.invalid'),
+            'user_email.exists' => trans('messages.wrong_credentials'),
         ], [
             'user_email' => 'email',
         ]);

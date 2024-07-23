@@ -159,6 +159,7 @@ return [
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
     'invalid' => 'The enter :attribute is invalid.',
+    'invalid_email' => 'Invalid email address.',
 
 
     /*
