@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Exports\UsersExport;
+use App\Mail\WelcomeEmail;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -25,14 +27,14 @@ class UserController extends APIController
     {
         $request->validate([
             'filter_value'   => 'nullable|array',
-            'filter_value.*' => 'integer', 
+            'filter_value.*' => 'integer',
         ]);
 
         try {
             DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
 
             $user = auth()->user();
-           
+
             $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role');
 
             //Start Apply filters
@@ -58,25 +60,21 @@ class UserController extends APIController
                     $model->whereRelation('role', function ($query) use ($request) {
                         $query->whereIn('id', $request->filter_value);
                     });
-
                 } else if ($request->filter_by == 'speciality' && $request->filter_value) {
 
                     $model->whereRelation('specialityDetail', function ($query) use ($request) {
                         $query->whereIn('id', $request->filter_value);
                     });
-
                 } else if ($request->filter_by == 'sub_speciality' && $request->filter_value) {
 
                     $model->whereRelation('subSpecialityDetail', function ($query) use ($request) {
                         $query->whereIn('id', $request->filter_value);
                     });
-
                 } else if ($request->filter_by == 'hospital' && $request->filter_value) {
 
                     $model->whereRelation('getHospitals', function ($query) use ($request) {
                         $query->whereIn('id', $request->filter_value);
                     });
-
                 }
             }
             //End Apply filters
@@ -88,7 +86,6 @@ class UserController extends APIController
                 $model = $model->whereRelation('trusts', function ($query) use ($trustIds) {
                     $query->whereIn('trust.id', $trustIds);
                 });
-
             } else if ($user->is_hospital_admin) {
 
                 $hospital_ids = $user->getHospitals()->select('hospital_id')->groupBy('hospital_id')->pluck('hospital_id')->toArray();
@@ -97,7 +94,7 @@ class UserController extends APIController
                     $query->whereIn('hospital.id', $hospital_ids);
                 });
             }
-            
+
             // Filter out system admins, trust admins, and hospital admins based on the authenticated user's role
             $getAllRecords = $model->where(function ($qu) use ($user) {
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'));
@@ -144,14 +141,17 @@ class UserController extends APIController
     {
         try {
             DB::beginTransaction();
-
+            $password = $request->password;
             $user = User::create([
                 'primary_role' => $request->role,
                 'full_name'    => $request->full_name,
                 'user_email'   => $request->user_email,
-                'password'     => Hash::make($request->password),
+                'password'     => Hash::make($password),
                 'email_verified_at' => now(),
             ]);
+
+            // Send welcome email
+            Mail::to($user->user_email)->send(new WelcomeEmail($user, $password));
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
@@ -169,7 +169,7 @@ class UserController extends APIController
 
             return $this->respondOk([
                 'status'   => true,
-                'message'   => trans('messages.user_created_successfully')
+                'message'   => trans('messages.user_created_and_welcome_email_sent')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -237,6 +237,9 @@ class UserController extends APIController
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
+            // Send welcome email
+            Mail::to($user->user_email)->send(new WelcomeEmail($user, $request->password));
+
             $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
@@ -251,7 +254,7 @@ class UserController extends APIController
 
             return $this->respondOk([
                 'status'   => true,
-                'message'  => trans('messages.user_updated_successfully')
+                'message'  => trans('messages.user_updated_and_email_sent')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -274,9 +277,9 @@ class UserController extends APIController
 
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
-           
+
             if ($user) {
-        
+
                 if ($type == 'confirm') {
                     $confirmPassword = $request->confirm_password;
                     if (!Hash::check($confirmPassword, $user->password)) {
@@ -285,11 +288,9 @@ class UserController extends APIController
                     $user->delete();
                     auth()->logout();
                     JWTAuth::invalidate(JWTAuth::getToken());
-                }else{
+                } else {
                     $user->delete();
                 }
-
-                
             }
 
             return $this->respondOk([
@@ -303,7 +304,7 @@ class UserController extends APIController
     }
 
     public function exportUserData(Request $request)
-    {       
+    {
         $user = auth()->user();
         // Export users based on role
         return Excel::download(new UsersExport($user), 'users.xlsx');

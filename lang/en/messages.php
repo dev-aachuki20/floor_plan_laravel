@@ -66,6 +66,8 @@ return [
     'user_updated_successfully'     => 'User updated successfully',
     'user_record_retrieved_successfully'     => 'User data retrieved successfully',
     'invalid_password'              => 'Password does not match',
+    'user_created_and_welcome_email_sent'  => 'User created successfully and a welcome email has been sent.',
+    'user_updated_and_email_sent'  => 'User updated successfully and email has been sent.',
 
 
     
