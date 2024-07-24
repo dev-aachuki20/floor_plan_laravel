@@ -27,11 +27,16 @@ class Procedure extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+        'hospital_id',
     ];
 
     public function finance()
     {
         return $this->belongsTo(Finance::class, 'finance_id', 'id');
     }
-  
+
+    public function hospital()
+    {
+        return $this->belongsTo(Hospital::class, 'hospital_id', 'id');
+    }
 }

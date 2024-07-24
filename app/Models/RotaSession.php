@@ -38,7 +38,8 @@ class RotaSession extends Model
     protected static function boot()
     {
         parent::boot();
-        static::creating(function (User $model) {
+
+        static::creating(function (RotaSession $model) {
 
             $model->uuid = Str::uuid();
 

@@ -23,9 +23,15 @@ class UpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-       
         return [
-            
+            'hospital_id'           => 'required|exists:hospital,id',
+            'user_id'               => 'required|exists:users,id',
+            'procedure_id'          => 'required|exists:procedures,id',
+            'time_slot'             => 'required|string',
+            'status_id'             => 'required|exists:session_status,id',
+            'scheduled'             => 'nullable|date',
+            'session_description'   => 'required|string',
+            'session_released'      => 'required|boolean',
         ];
     }
 
@@ -37,7 +43,10 @@ class UpdateRequest extends FormRequest
     public function attributes()
     {
         return [
-          
+            'hospital_id'   => 'hospital',
+            'user_id'       => 'user',
+            'procedure_id'  => 'procedure',
+            'status_id'     => 'status'
         ];
     }
 }
