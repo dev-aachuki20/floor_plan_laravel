@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Hash;
+use App\Rules\TitleValidationRule;
+
 
 class HomeController extends APIController
 {
@@ -95,7 +97,7 @@ class HomeController extends APIController
         $authUser = auth()->user();
 
         $validateData = [
-            'full_name'         => ['required','string','max:255'],
+            'full_name'         => ['required','string','max:255',new TitleValidationRule],
             'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id,deleted_at,NULL'],
             'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
