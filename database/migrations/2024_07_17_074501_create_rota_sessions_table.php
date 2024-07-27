@@ -13,34 +13,12 @@ return new class extends Migration
     {
         Schema::create('rota_sessions', function (Blueprint $table) {
             $table->id();
-            
-            $table->uuid('uuid')->unique();
-
-            $table->unsignedBigInteger('hospital_id');
-            $table->foreign('hospital_id')->references('id')->on('hospital');
-
-            $table->unsignedBigInteger('user_id');//owner_id
-            $table->foreign('user_id')->references('id')->on('users');
-
-            $table->unsignedBigInteger('procedure_id');
-            $table->foreign('procedure_id')->references('id')->on('procedures');
-
-            $table->string('time_slot')->nullable();
-
-            $table->unsignedBigInteger('status_id');
-            $table->foreign('status_id')->references('id')->on('session_status');
-
-            $table->datetime('scheduled')->nullable();
-
-            $table->longText('session_description')->nullable();
-
-            $table->boolean('session_released');
-
-            $table->unsignedBigInteger('created_by');
-            $table->foreign('created_by')->references('id')->on('users');
-            
+            $table->foreignId('rota_id')->constrained('rota');
+            $table->foreignId('room_id')->constrained('rooms'); // Assuming you have a rooms table
+            $table->enum('time_slot', ['AM', 'PM', 'EVE']);
+            $table->foreignId('speciality_id')->constrained('specialities'); // Assuming you have a specialities table
+            $table->date('week_day_date');
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

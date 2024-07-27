@@ -217,4 +217,88 @@ class RotaTableController extends APIController
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
+
+
+    public function getAvailableSessions()
+    {
+        try {
+            $user = auth()->user();
+
+            $query = RotaSession::query();
+
+            if ($user->is_speciality_lead) {
+                $query->where('procedure_id', $user->specialityDetail->value('id'));
+            }
+
+            $sessions = $query->get();
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'   => trans('messages.get_available_session_list'),
+                'data'      => $sessions,
+            ])->setStatusCode(Response::HTTP_OK);
+        } catch (\Exception $e) {
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+        }
+    }
+
+
+    public function updateAvailability(UpdateRotaSessionRequest $request)
+    {
+        $user = Auth::user();
+        $validatedData = $request->validated();
+        try {
+            DB::beginTransaction();
+            foreach ($validatedData['sessions'] as $session) {
+                $rotaSession = RotaSession::findOrFail($session['rota_session_id']);
+
+                // Ensure the user has access to the session
+                if ($user->is_speciality_lead && $rotaSession->speciality_id !== $user->specialityDetail->value('id')) {
+                    return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
+                }
+
+                // Check if the room, time slot, and date match the rota session
+                if (
+                    $rotaSession->room_id !== $session['room_id'] || $rotaSession->time_slot !== $session['time_slot'] || $rotaSession->scheduled->format('Y-m-d') !== $session['date']
+                ) {
+                    return $this->setStatusCode(500)->respondWithError(trans('messages.data_mismatch'));
+                }
+
+                // Validate date if 'scheduled' is not null
+                // Validate date if 'scheduled' is not null
+                if ($rotaSession->scheduled) {
+                    $scheduledDate = $rotaSession->scheduled->format('Y-m-d');
+                } else {
+                    $scheduledDate = null;
+                }
+
+                if ($scheduledDate !== $session['date']) {
+                    return $this->setStatusCode(500)->respondWithError(trans('messages.date_data_mismatch'));
+                }
+
+                // Check if the user is associated with the rota session
+                $exists = $rotaSession->users()->where('user_id', $user->id)->exists();
+                if (!$exists) {
+                    return $this->setStatusCode(500)->respondWithError(trans('messages.user_not_assign_to_session'));
+                }
+
+                $rotaSession->users()->updateExistingPivot($user->id, ['status' => $session['status'] ?? "pending"]);
+            }
+
+            DB::commit();
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'   => trans('messages.user_available_session_status')
+            ])->setStatusCode(Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while updating availability status'
+            ], 500);
+        }
+    }
 }

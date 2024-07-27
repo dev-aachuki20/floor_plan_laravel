@@ -301,4 +301,11 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         Route::put('rota-table/update/{uuid}', [RotaTableController::class, 'update']);
 
     });
+
+
+     // get all sessions
+     Route::get('rota-table/available-sessions', [RotaTableController::class, 'getAvailableSessions']);
+
+     // confirm availability session status .
+     Route::patch('/rota-table/availability', [RotaTableController::class, 'updateAvailability']);
 });
