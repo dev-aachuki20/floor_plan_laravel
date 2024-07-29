@@ -39,13 +39,7 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     public function collection()
     {
         $userId = $this->user->id;
-        if ($this->user->is_system_admin) {
-            return User::systemAdminUsers($userId)->get();
-        } elseif ($this->user->is_trust_admin) {
-            return User::trustAdminUsers($userId)->get();
-        } elseif ($this->user->is_hospital_admin) {
-            return User::hospitalAdminUsers($userId)->get();
-        }
+        return User::where('id',$userId)->get();
     }
 
     public function headings(): array

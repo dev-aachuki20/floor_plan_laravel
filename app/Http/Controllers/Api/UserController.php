@@ -48,7 +48,6 @@ class UserController extends APIController
                         ->orWhereRelation('role', 'role_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('specialityDetail', 'speciality_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('subSpecialityDetail', 'sub_speciality_name', 'like', '%' . $searchValue . '%')
-                        ->orWhereRelation('trusts', 'trust_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('getHospitals', 'hospital_name', 'like', '%' . $searchValue . '%');
                 });
             }
@@ -230,15 +229,24 @@ class UserController extends APIController
         try {
             DB::beginTransaction();
 
+            $isEmailChanged = false;
+
             $user = User::where('uuid', $uuid)->firstOrFail();
+
+            if($user->user_email != $request->user_email){
+                $isEmailChanged = true;
+            }
+
             $user->update([
                 'full_name'    => $request->full_name ?? $user->full_name,
                 'user_email'   => $request->user_email ?? $user->user_email,
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
-            // Send welcome email
-            Mail::to($user->user_email)->send(new WelcomeEmail($user, $request->password));
+            if($isEmailChanged){
+                // Send welcome email
+                Mail::to($user->user_email)->send(new WelcomeEmail($user, $request->password));
+            }
 
             $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
@@ -254,7 +262,7 @@ class UserController extends APIController
 
             return $this->respondOk([
                 'status'   => true,
-                'message'  => trans('messages.user_updated_and_email_sent')
+                'message'  => $isEmailChanged ? trans('messages.user_updated_and_email_sent') : trans('messages.user_updated_successfully')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -272,6 +280,8 @@ class UserController extends APIController
         if ($type == 'confirm') {
             $request->validate([
                 'confirm_password' => ['required', 'string', 'min:8'],
+            ],[],[
+                'confirm_password' => 'password',
             ]);
         }
 

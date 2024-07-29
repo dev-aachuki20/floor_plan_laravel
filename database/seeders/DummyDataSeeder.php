@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Trust;
 use App\Models\Hospital;
 use App\Models\Speciality;
-use App\Models\Subspeciality;
+use App\Models\SubSpeciality;
 
 
 use Illuminate\Database\Seeder;
@@ -29,95 +29,132 @@ class DummyDataSeeder extends Seeder
 
         ];
 
+        $hospital_index = 0;
         foreach ($trusts as $key => $data) {
 
             $created_trust = Trust::create($data);
 
             if ($created_trust) {
 
-                // $hospitals =[
-                //     'trust' => $created_trust->id,
-                //     'hospital_name' => 'Hospital '.$key+1,
-                //     'hospital_description' => null
-                // ];
-
-                // $created_hospital = Hospital::create($hospitals);
-
-                // $hospitals = [
-                //     [
-                //         'trust' => $created_trust->id,
-                //         'hospital_name' => 'Hospital ' . $key + 1,
-                //         'hospital_description' => null
-                //     ],
-                //     [
-                //         'trust' => $created_trust->id,
-                //         'hospital_name' => 'Hospital ' . $key + 1,
-                //         'hospital_description' => null
-                //     ],
-                //     [
-                //         'trust' => $created_trust->id,
-                //         'hospital_name' => 'Hospital ' . $key + 1,
-                //         'hospital_description' => null
-                //     ],
-                // ];
-                // foreach ($hospitals as $key => $hospital) {
-                //     $created_hospital =  Hospital::create($hospital);
-                // }
-                
                 $hospitals = [];
+             
                 for ($key = 0; $key < 3; $key++) {
+                    $hospital_index = $hospital_index + 1;
                     $hospitals[] = [
                         'trust' => $created_trust->id,
-                        'hospital_name' => 'Hospital ' . ($key + 1),
+                        'hospital_name' => 'Hospital ' . $hospital_index,
                         'hospital_description' => null
                     ];
                 }
 
                 foreach ($hospitals as $hospital) {
                     $created_hospital = Hospital::create($hospital);
-                }
 
-
-                //Speciality & Subspeciality
-                $specialities =
                     [
-                        // 'hospital_id' => $created_hospital->id,
-                        'speciality_name' => 'Speciality ' . $key + 1,
-                        'speciality_description' => null,
+                        'trust' => $created_trust->id,
+                        'hospital_name' => 'Hospital ' . $hospital_index,
+                        'hospital_description' => null
                     ];
 
-
-                $speciality = Speciality::create($specialities);
-
-
-                $sub_specialities = [
-                    [
-                        'parent_speciality_id' => $speciality->id,
-                        'sub_speciality_name' => 'Sub Speciality 1',
-                        'sub_speciality_description' => null,
-                    ],
-                    [
-                        'parent_speciality_id' => $speciality->id,
-                        'sub_speciality_name' => 'Sub Speciality 2',
-                        'sub_speciality_description' => null,
-                    ]
-                ];
-
-                foreach ($sub_specialities as $sub_specialities_data) {
-
-                    SubSpeciality::create($sub_specialities_data);
                 }
-
-
-                //End Speciality & Subspeciality
-
-
 
             }
         }
 
         //End Trust & Hospital
 
+
+        //Speciality & Subspeciality
+        $specialities = [
+            'Orthopaedics' => [
+                'Spine Surgery',
+                'Sports Medicine',
+                'Joint Replacement',
+                'Pediatric Orthopaedics',
+                'Hand Surgery',
+                'Orthopaedic Oncology',
+            ],
+            'Ophthalmology' => [
+                'Retina/Vitreous Surgery',
+                'Cornea/External Disease',
+                'Glaucoma',
+                'Pediatric Ophthalmology',
+                'Oculoplastics',
+                'Neuro-Ophthalmology',
+            ],
+            'ENT' => [
+                'Pediatric ENT',
+                'Head and Neck Surgery',
+                'Otology/Neurotology',
+                'Rhinology/Sinus Surgery',
+                'Laryngology',
+                'Facial Plastic and Reconstructive Surgery',
+            ],
+            'Gynaecology' => [
+                'Reproductive Endocrinology and Infertility',
+                'Gynecologic Oncology',
+                'Maternal-Fetal Medicine',
+                'Urogynecology',
+                'Pediatric and Adolescent Gynecology',
+            ],
+            'Urology' => [
+                'Pediatric Urology',
+                'Urologic Oncology',
+                'Female Pelvic Medicine and Reconstructive Surgery',
+                'Endourology/Stone Disease',
+                'Male Infertility',
+            ],
+            'General' => [
+                'Trauma Surgery',
+                'Critical Care Surgery',
+                'Colorectal Surgery',
+                'Endocrine Surgery',
+                'Minimally Invasive Surgery',
+            ],
+            'MFU' => [
+                'Physical Therapy',
+                'Sports Medicine',
+                'Orthopaedic Rehabilitation',
+                'Pain Management',
+            ],
+            'Breast' => [
+                'Breast Surgery',
+                'Breast Oncology',
+                'Breast Imaging',
+                'Reconstructive Breast Surgery',
+            ],
+            'Vascular' => [
+                'Vascular Surgery',
+                'Endovascular Surgery',
+                'Vascular Medicine',
+                'Vascular Imaging',
+            ],
+            'Unavailable' => [],
+        ];
+
+
+        foreach ($specialities as $speciality_key => $subSpecialities) {
+
+            $speciality_data = [
+                'speciality_name' => $speciality_key,
+                'speciality_description' => null,
+            ];
+
+            $speciality = Speciality::create($speciality_data);
+
+            foreach ($subSpecialities as $subSpeciality) {
+
+                $sub_specialities =
+                [
+                    'parent_speciality_id' => $speciality->id,
+                    'sub_speciality_name' => $subSpeciality,
+                    'sub_speciality_description' => null,
+                ];
+
+                SubSpeciality::create($sub_specialities);
+            }
+        }
+        //End Speciality & Subspeciality
 
 
 

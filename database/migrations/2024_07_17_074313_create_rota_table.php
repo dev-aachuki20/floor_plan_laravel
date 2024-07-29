@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('quarter_id')->constrained('quarters');
-            $table->foreignId('hospital_id')->constrained('hospitals'); // Assuming you have a hospitals table
+            $table->foreignId('hospital_id')->constrained('hospital'); // Assuming you have a hospitals table
             $table->integer('week_no');
             $table->date('week_start_date');
             $table->date('week_end_date');

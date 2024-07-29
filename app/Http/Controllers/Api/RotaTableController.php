@@ -95,9 +95,6 @@ class RotaTableController extends APIController
         foreach ($hospital->rooms as $room) {
             $room->time_slots = config('constant.time_slots');
 
-            // Fetched all procedures according to the hospital.
-            // $room->procedures = Procedure::where('hospital_id', $hospital->id)->select('id', 'procedures_name')->get();
-
             // Get current date and the next 7 days
             $currentDate = Carbon::now();
             $weekDates = [];

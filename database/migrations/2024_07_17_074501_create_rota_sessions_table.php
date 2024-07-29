@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('rota_id')->constrained('rota');
             $table->foreignId('room_id')->constrained('rooms'); // Assuming you have a rooms table
             $table->enum('time_slot', ['AM', 'PM', 'EVE']);
-            $table->foreignId('speciality_id')->constrained('specialities'); // Assuming you have a specialities table
+            $table->foreignId('speciality_id')->constrained('speciality'); // Assuming you have a specialities table
             $table->date('week_day_date');
             $table->timestamps();
         });
