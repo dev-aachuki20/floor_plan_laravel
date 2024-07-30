@@ -33,7 +33,8 @@ class StoreRequest extends FormRequest
         }
         return [
             'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
-            'user_email'        => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
+            'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
+
             'password'          => ['required', 'string', 'min:8'],
             
             'role'              => ['required', 

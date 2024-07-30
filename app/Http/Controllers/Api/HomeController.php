@@ -50,10 +50,18 @@ class HomeController extends APIController
 
     public function getHospitals($trust=null){
 
+        $hospitals = [];
+
         if(is_null($trust)){
             $hospitals = Hospital::pluck('hospital_name','id');
-        }else{
-            $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
+        }else if(auth()->user()){
+
+            if(auth()->user()->is_trust_admin || auth()->user()->is_hospital_admin){
+                $hospitals = auth()->user()->getHospitals()->pluck('hospital_name','id');
+            }else{
+                $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
+            } 
+            
         }
 
         return $this->respondOk([
@@ -98,7 +106,7 @@ class HomeController extends APIController
 
         $validateData = [
             'full_name'         => ['required','string','max:255',new TitleValidationRule],
-            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id,deleted_at,NULL'],
+            'user_email'        => ['required','email:dns','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id,deleted_at,NULL'],
             'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
         ];
