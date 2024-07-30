@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             RolesTableSeeder::class,
             UsersTableSeeder::class,
             DummyDataSeeder::class,
+            QuarterSeeder::class,
         ]);
     }
 }

@@ -4,72 +4,53 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class RotaSession extends Model
 {
-    use SoftDeletes;
-
     public $table = 'rota_sessions';
     public $timestamps = true;
 
     protected $dates = [
         'created_at',
         'updated_at',
-        'deleted_at',
     ];
 
     protected $fillable = [
-        'hospital_id',
-        'user_id',
-        'procedure_id',
+        'rota_id',
+        'room_id',
         'time_slot',
-        'status_id',
-        'scheduled',
-        'session_description',
-        'session_released',
-        'created_by',
+        'speciality_id',
+        'week_day_date',
         'created_at',
         'updated_at',
-        'deleted_at',
+       
     ];
 
-    protected static function boot()
+   
+    public function rotaDetail()
     {
-        parent::boot();
-
-        static::creating(function (RotaSession $model) {
-
-            $model->uuid = Str::uuid();
-
-            $model->created_by = auth()->user() ? auth()->user()->id : null;
-        });
+        return $this->belongsTo(Rota::class, 'rota_id', 'id');
     }
 
-    public function hospitalDetail()
+    public function roomDetail()
     {
-        return $this->belongsTo(Hospital::class, 'hospital_id', 'id');
+        return $this->belongsTo(Room::class, 'room_id', 'id');
     }
 
-    public function user()
+    
+    public function specialityDetail()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(Speciality::class, 'speciality_id', 'id');
     }
 
-    public function procedure()
+
+    public function users()
     {
-        return $this->belongsTo(Procedure::class, 'procedure_id', 'id');
+        return $this->belongsToMany(User::class, 'rota_session_users')
+                    ->withPivot(['role_id','status']);             
     }
 
-    public function sessionStatus()
-    {
-        return $this->belongsTo(SessionStatus::class, 'status_id', 'id');
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by', 'id');
-    }
+  
 
 }

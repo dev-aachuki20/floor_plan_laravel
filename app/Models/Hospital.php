@@ -52,4 +52,9 @@ class Hospital extends Model
     {
         return $this->hasMany(Procedure::class, 'procedure_id', 'id');
     }
+
+    public function rotaRecords()
+    {
+        return $this->hasMany(Rota::class, 'hospital_id');
+    }
 }

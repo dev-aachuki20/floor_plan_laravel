@@ -41,6 +41,12 @@ return [
         'EVE',
     ],
 
+    'availability_status' =>[
+        0 => 'Pending',
+        1 => 'Confirm', 
+        2 => 'Decline'
+    ]
+
     
     
 

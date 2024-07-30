@@ -189,24 +189,10 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         return $this->belongsToMany(Trust::class, 'user_hospital', 'user_id', 'trust_id')->withPivot('hospital_id');
     }
 
-    // Scope: Fetch users created by system admin
-    public function scopeSystemAdminUsers($query, $userId)
+    public function rotaSessions()
     {
-        return $query->where('created_by', $userId)
-                     ->where('created_by', config('constant.roles.system_admin'));
+        return $this->belongsToMany(RotaSession::class, 'rota_session_users')
+                    ->withPivot(['role_id','status']);             
     }
-
-    // Scope: Fetch users created by trust admin
-    public function scopeTrustAdminUsers($query, $userId)
-    {
-        return $query->where('created_by', $userId)
-                     ->where('created_by', config('constant.roles.trust_admin'));
-    }
-
-    // Scope: Fetch users created by hospital admin
-    public function scopeHospitalAdminUsers($query, $userId)
-    {
-        return $query->where('created_by', $userId)
-                     ->where('created_by', config('constant.roles.hospital_admin'));
-    }
+   
 }

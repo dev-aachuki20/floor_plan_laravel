@@ -4,15 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\User;
 use App\Models\RotaSession;
-use App\Models\SessionStatus;
+use App\Models\Quarter;
 use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Requests\RotaTable\StoreRequest;
 use App\Http\Requests\RotaTable\UpdateRequest;
 use App\Http\Controllers\Api\APIController;
-use App\Models\Procedure;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -84,28 +82,47 @@ class RotaTableController extends APIController
      */
     public function getDetails(Request $request)
     {
+        // Validate the input
         $request->validate([
-            'hospital' => ['required', 'integer'],
+            'week_days' => ['required', 'array'],
+            'hospital'  => ['required', 'integer'],
         ]);
 
-        $hospital = $request->hospital;
+        $hospitalId = $request->hospital;
+        $weekDays   = $request->week_days;
 
-        $hospital = Hospital::select('id', 'hospital_name')->where('id', $hospital)->first();
+       
+        $hospital = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
         $hospital->rooms = $hospital->rooms()->select('id', 'room_name')->get();
-        foreach ($hospital->rooms as $room) {
-            $room->time_slots = config('constant.time_slots');
 
-            // Get current date and the next 7 days
-            $currentDate = Carbon::now();
-            $weekDates = [];
-            for ($i = 0; $i < 7; $i++) {
-                $weekDates[] = [
-                    'date' => $currentDate->copy()->addDays($i)->format('Y-m-d'),
-                    'day_name' => $currentDate->copy()->addDays($i)->format('l')
-                ];
+        $timeSlots = config('constant.time_slots');
+
+        foreach ($hospital->rooms as $room) {
+           
+            $recordsByDateAndTimeSlot = [];
+
+            foreach ($weekDays as $date) {
+                $recordsByDateAndTimeSlot[$date] = [];
+
+                foreach ($timeSlots as $timeSlot) {
+                    
+                    RotaSession
+
+                    $record = DB::table('records_table') 
+                        ->where('room_id', $room->id)
+                        ->whereDate('created_at', $date)
+                        ->where('time_slot', $timeSlot) 
+                        ->first();
+
+                    // Add record or null to the array
+                    $recordsByDateAndTimeSlot[$date][$timeSlot] = $record ? $record : null;
+                }
             }
-            $room->week_dates = $weekDates;
+
+            // Assign the records to the room
+            $room->recordsByDateAndTimeSlot = $recordsByDateAndTimeSlot;
         }
+
 
         return $this->respondOk([
             'status'   => true,
@@ -213,6 +230,16 @@ class RotaTableController extends APIController
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
+    }
+
+    public function getQuarters(){
+    
+    $currentYear = date('Y');
+    
+    // Retrieve quarters for the current year
+    $quarters = Quarter::whereYear('start_date', $currentYear)
+                       ->whereYear('end_date', $currentYear)
+                       ->get();
     }
 
 
