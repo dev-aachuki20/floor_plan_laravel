@@ -106,8 +106,6 @@ class RotaTableController extends APIController
 
                 foreach ($timeSlots as $timeSlot) {
                     
-                    RotaSession
-
                     $record = DB::table('records_table') 
                         ->where('room_id', $room->id)
                         ->whereDate('created_at', $date)
@@ -234,12 +232,18 @@ class RotaTableController extends APIController
 
     public function getQuarters(){
     
-    $currentYear = date('Y');
-    
-    // Retrieve quarters for the current year
-    $quarters = Quarter::whereYear('start_date', $currentYear)
-                       ->whereYear('end_date', $currentYear)
-                       ->get();
+        $currentYear = date('Y');
+        
+        // Retrieve quarters for the current year
+        $quarters = Quarter::select('id','quarter_name','start_date','end_date')->whereYear('start_date', $currentYear)
+                        ->whereYear('end_date', $currentYear)
+                        ->get();
+
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $quarters,
+        ])->setStatusCode(Response::HTTP_OK);
     }
 
 

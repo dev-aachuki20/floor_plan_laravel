@@ -242,6 +242,20 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
         /*
         |--------------------------------------------------------------------------
+        |  Get All Quarters API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/get-quarter
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    : 
+        |             
+        | Method        : GET
+        */
+        Route::get('get-quarter', [RotaTableController::class, 'getQuarters']);
+
+        /*
+        |--------------------------------------------------------------------------
         |  Get Rota Table Records API Routes
         |--------------------------------------------------------------------------
         |
