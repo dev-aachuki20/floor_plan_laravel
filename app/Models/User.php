@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'phone',
         'email_verified_at',
         'created_by',
+        'deleted_by',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -63,6 +64,14 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
             $model->uuid = Str::uuid();
 
             $model->created_by = auth()->user() ? auth()->user()->id : null;
+        });
+
+        static::deleting(function ($user) {
+            // Check if the user is not being soft deleted
+            if (!method_exists($user, 'trashed') || !$user->trashed()) {
+                $user->deleted_by = auth()->user()->id;
+                $user->save();
+            }
         });
     }
 

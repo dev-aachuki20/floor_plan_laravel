@@ -45,6 +45,7 @@ class UserController extends APIController
                 $model = $model->where(function ($query) use ($searchValue) {
 
                     $query->where('full_name', 'like', '%' . $searchValue . '%')
+                        ->orWhere('user_email','like', '%' . $searchValue . '%')
                         ->orWhereRelation('role', 'role_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('specialityDetail', 'speciality_name', 'like', '%' . $searchValue . '%')
                         ->orWhereRelation('subSpecialityDetail', 'sub_speciality_name', 'like', '%' . $searchValue . '%')

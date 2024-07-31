@@ -48,7 +48,7 @@ class PasswordResetController  extends APIController
 
             $user = User::where('user_email',$email_id)->first();
 
-            $reset_password_url = config('app.site_url').'/reset-password/'.$token;
+            $reset_password_url = config('app.site_url').'/reset-password?token='.$token;
 
             DB::table('password_reset_tokens')
             ->where('email', $email_id)
