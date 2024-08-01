@@ -115,6 +115,11 @@ class HomeController extends APIController
             $validateData['password']   = ['nullable', 'string', 'min:8'];
         }
 
+        if($authUser->primary_role == config('constant.roles.booker')){
+            $validateData['speciality']        = ['nullable'];
+            $validateData['sub_speciality']    = ['nullable'];
+        }
+
         $request->validate($validateData,[],[
             'full_name'  => 'name',
             'user_email' => 'email'
@@ -136,35 +141,57 @@ class HomeController extends APIController
             $user = User::where('id',auth()->user()->id)->update($updateRecords);
 
 
-            $specialities = [
-                $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
-            ];
-            
-            // Sync specialities with additional pivot data
-            auth()->user()->specialityDetail()->sync($specialities);
+            if($authUser->primary_role != config('constant.roles.booker')){
+                $specialities = [
+                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+                ];
+                
+                // Sync specialities with additional pivot data
+                auth()->user()->specialityDetail()->sync($specialities);
+            }
+           
             
             // Fetch the updated user data
-            $user = User::with([
+            $withRelation = [
                 'role:id,role_name',
                 'trusts:id,trust_name',
                 'getHospitals:id,hospital_name',
                 'specialityDetail:id,speciality_name',
                 'subSpecialityDetail:id,sub_speciality_name'
-            ])->findOrFail($authUser->id);
+            ];
+
+            if($authUser->primary_role == config('constant.roles.booker')){
+
+                $withRelation = [
+                    'role:id,role_name',
+                    'trusts:id,trust_name',
+                    'getHospitals:id,hospital_name',
+                ];
+            }
+
+            $user = User::with($withRelation)->findOrFail($authUser->id);
+
+            $data = [
+                'uuid'                  => $user->uuid,
+                'full_name'             => $user->full_name,
+                'user_email'            => $user->user_email,
+                'primary_role'          => $user->primary_role,
+                'role'                  => $user->role->role_name,
+                'trust'                 => $user->trusts ? $user->trusts()->value('id') : null,
+                'trust_name'            => $user->trusts ? $user->trusts()->value('trust_name') : null,
+                'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
+                'speciality'            => $user->specialityDetail()->value('speciality_name'),
+                'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),
+            ];
+
+            if($authUser->primary_role != config('constant.roles.booker')){
+                $data['speciality'] = $user->specialityDetail()->value('speciality_name');
+                $data['sub_speciality'] = $user->subSpecialityDetail()->value('sub_speciality_name');
+            }
+
 
             $reponseData = [
-                'data'          => [
-                    'uuid'                  => $user->uuid,
-                    'full_name'             => $user->full_name,
-                    'user_email'            => $user->user_email,
-                    'primary_role'          => $user->primary_role,
-                    'role'                  => $user->role->role_name,
-                    'trust'                 => $user->trusts ? $user->trusts()->value('id') : null,
-                    'trust_name'            => $user->trusts ? $user->trusts()->value('trust_name') : null,
-                    'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
-                    'speciality'            => $user->specialityDetail()->value('speciality_name'),
-                    'sub_speciality'        => $user->subSpecialityDetail()->value('sub_speciality_name'),
-                ]
+                'data'          => $data
             ];
 
             DB::commit();

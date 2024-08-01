@@ -26,27 +26,36 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         $user = Auth::user();
-        $trustValidationRule = 'nullable';
 
-        if ($user->is_system_admin) {
-            $trustValidationRule = 'required';
-        }
-        return [
+        $rules = [
             'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
             'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
 
             'password'          => ['required', 'string', 'min:8'],
+            'password_confirmation'  => ['required', 'string', 'min:8','same:password'],
             
             'role'              => ['required', 
                 Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
             ],
 
-            'trust'             => [$trustValidationRule, 'exists:trust,id'],
+            'trust'             => ['nullable', 'exists:trust,id'],
             'hospital'          => ['required', 'array'],
             'hospital.*'        => ['exists:hospital,id,deleted_at,NULL'],
             'speciality'        => ['required', 'exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];
+
+        if ($user->is_system_admin) {
+            $rules['trust']  = ['required', 'exists:trust,id'];
+        }
+
+        if($this->role == config('constant.roles.booker')){
+            $rules['speciality']        = ['nullable'];
+            $rules['sub_speciality']    = ['nullable'];
+        }
+        
+
+        return  $rules;
     }
 
     public function messages()

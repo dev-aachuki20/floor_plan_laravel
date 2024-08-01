@@ -29,22 +29,33 @@ class UpdateRequest extends FormRequest
         $editUserId = $editeUserDetail ? $editeUserDetail->id : null;
 
         $user = Auth::user();
-        $trustValidationRule = 'nullable';
 
-        if ($user->is_system_admin) {
-            $trustValidationRule = 'required';
-        }
-
-        return [
+        $rules = [
             'full_name'      => ['required', 'string', 'max:255', new TitleValidationRule],
             'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users')->ignore($editUserId)->whereNull('deleted_at')],
             'password'       => ['nullable', 'string', 'min:8'],
-            'trust'          => [$trustValidationRule, 'exists:trust,id'],
+            'trust'          => ['nullable', 'exists:trust,id'],
             'hospital'       => ['required', 'array'],
             'hospital.*'     => ['exists:hospital,id,deleted_at,NULL'],
             'speciality'     => ['required', 'exists:speciality,id,deleted_at,NULL'],
             'sub_speciality' => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];
+
+        if ($user->is_system_admin) {
+            $rules['trust']  = ['required', 'exists:trust,id'];
+        }
+
+        if($editeUserDetail->primary_role == config('constant.roles.booker')){
+            $rules['speciality']        = ['nullable'];
+            $rules['sub_speciality']    = ['nullable'];
+        }
+
+        if($this->password){
+            $rules['password_confirmation']  = ['required', 'string', 'min:8','same:password'];
+        }
+
+        return $rules;
+       
     }
 
     public function messages()

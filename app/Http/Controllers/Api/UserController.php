@@ -95,7 +95,7 @@ class UserController extends APIController
                 });
             }
 
-            // Filter out system admins, trust admins, and hospital admins based on the authenticated user's role
+            // Filter based on the authenticated user's role
             $getAllRecords = $model->where(function ($qu) use ($user) {
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'));
                 if ($user->is_trust_admin) {
@@ -107,10 +107,6 @@ class UserController extends APIController
                 }
             })->orderBy('created_at', 'desc')->paginate(10);
 
-            // $getAllRecords = $model->where(function ($qu) {
-            //     $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'))
-            //         ->whereRelation('role', 'id', '!=', auth()->user()->role->id);
-            // })->orderBy('created_at', 'desc')->paginate(10);
 
             if ($getAllRecords->count() > 0) {
                 foreach ($getAllRecords as $record) {
@@ -159,11 +155,13 @@ class UserController extends APIController
             $trustId = $this->getTrustId($request);
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
-            $specialities = [
-                $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
-            ];
-            // Sync specialities with additional pivot data
-            $user->specialityDetail()->sync($specialities);
+            if(($user->primary_role != config('constant.roles.booker'))){
+                $specialities = [
+                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+                ];
+                // Sync specialities with additional pivot data
+                $user->specialityDetail()->sync($specialities);
+            }
 
             DB::commit();
 
@@ -200,12 +198,14 @@ class UserController extends APIController
                 $user_details['trust'] = $user->trusts ? $user->trusts()->value('id') : null;
                 $user_details['trust_name'] = $user->trusts ? $user->trusts()->value('trust_name') : null;
 
-                $user_details['speciality']      = $user->specialityDetail()->value('id');
-                $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
-
-                $user_details['sub_speciality']      =  $user->subSpecialityDetail()->value('id');
-                $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
-
+                if($user->primary_role != config('constant.roles.booker')){
+                    $user_details['speciality']      = $user->specialityDetail()->value('id');
+                    $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
+    
+                    $user_details['sub_speciality']      =  $user->subSpecialityDetail()->value('id');
+                    $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');    
+                }
+              
                 $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
             }
 
@@ -254,10 +254,12 @@ class UserController extends APIController
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
             // Sync speciality and sub_speciality
-            $specialities = [
-                $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
-            ];
-            $user->specialityDetail()->sync($specialities);
+            if($user->primary_role != config('constant.roles.booker')){
+                $specialities = [
+                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+                ];
+                $user->specialityDetail()->sync($specialities);
+            }
 
             DB::commit();
 
