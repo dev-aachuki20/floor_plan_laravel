@@ -18,8 +18,8 @@ class UsersTableSeeder extends Seeder
             [
                 'primary_role'        => config('constant.roles.system_admin'), 
                 'full_name'           => 'System Admin',
-                'user_email'          => 'systemadmin@gmail.com',
-                'password'            => bcrypt('12345678'),
+                'user_email'          => 'systemadmin@sobex.io',
+                'password'            => bcrypt('123123123'),
                 'remember_token'      => null,
                 'email_verified_at'   => date('Y-m-d H:i:s'),
             ],
