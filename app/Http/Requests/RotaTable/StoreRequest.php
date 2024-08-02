@@ -23,22 +23,20 @@ class StoreRequest extends FormRequest
      */
     public function rules(): array
     {
+        
         return [
-            'hospital_id'           => 'required|exists:hospital,id',
-            'user_id'               => 'required|exists:users,id',
-            'status_id'             => 'required|exists:session_status,id',
-            // 'procedure_id'          => 'required|exists:procedures,id',
-            // 'time_slot'             => 'required|string|in:AM,PM,EVE',
-            // 'scheduled'             => 'nullable|date',
-            // 'session_description'   => 'required|string',
-            // 'session_released'      => 'required|boolean',
-            'rooms' => 'required|array',
-            'rooms.*.session_description' => 'required|string',
-            'rooms.*.session_released' => 'required|boolean',
-            'rooms.*.time_slots' => 'required|array',
+            'quarter_id'            => 'required|exists:quarters,id',
+            'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
+            'rooms'                 => 'required|array',
+            'rooms.*.id'            => 'required|exists:rooms,id,deleted_at,NULL',
+           
+            'rooms.*.time_slots'    => 'required|array',
             'rooms.*.time_slots.AM.procedure_id' => 'nullable|integer|exists:procedures,id',
-            'rooms.*.time_slots.PM.procedure_id' => 'nullable|integer|exists:procedures,id',
-            'rooms.*.time_slots.EVE.procedure_id' => 'nullable|integer|exists:procedures,id',
+
+            'rooms.*.room_records.*.AM'  => 'nullable|string',
+            'rooms.*.room_records.*.PM'  => 'nullable|string',
+            'rooms.*.room_records.*.EVE' => 'nullable|string',
+
         ];
     }
 
@@ -50,6 +48,7 @@ class StoreRequest extends FormRequest
     public function attributes()
     {
         return [
+            'quarter_id'    => 'quarter',
             'hospital_id'   => 'hospital',
             'user_id'       => 'user',
             'procedure_id'  => 'procedure',

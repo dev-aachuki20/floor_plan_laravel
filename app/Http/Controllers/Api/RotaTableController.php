@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Models\Rota;
 use App\Models\RotaSession;
 use App\Models\Quarter;
 use App\Models\Hospital;
@@ -82,51 +83,53 @@ class RotaTableController extends APIController
      */
     public function getDetails(Request $request)
     {
-        // Validate the input
         $request->validate([
             'week_days' => ['required', 'array'],
-            'hospital'  => ['required', 'integer'],
+            'hospital'  => ['required', 'integer','exists:hospital,id,deleted_at,NULL'],
         ]);
 
-        $hospitalId = $request->hospital;
-        $weekDays   = $request->week_days;
+        try {
+            $hospitalId = $request->hospital;
+            $weekDays   = $request->week_days;
 
-       
-        $hospital = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
-        $hospital->rooms = $hospital->rooms()->select('id', 'room_name')->get();
+            $hospitalData = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
+            $hospitalData->rooms = $hospitalData->rooms()->select('id', 'room_name')->get();
 
-        $timeSlots = config('constant.time_slots');
+            $timeSlots = config('constant.time_slots');
 
-        foreach ($hospital->rooms as $room) {
-           
-            $recordsByDateAndTimeSlot = [];
+            foreach ($hospitalData->rooms as $room) {
+            
+                $room_records = [];
 
-            foreach ($weekDays as $date) {
-                $recordsByDateAndTimeSlot[$date] = [];
+                foreach ($weekDays as $date) {
+                    $room_records[$date] = [];
 
-                foreach ($timeSlots as $timeSlot) {
-                    
-                    $record = DB::table('records_table') 
-                        ->where('room_id', $room->id)
-                        ->whereDate('created_at', $date)
-                        ->where('time_slot', $timeSlot) 
-                        ->first();
+                    foreach ($timeSlots as $timeSlot) {
+                        
+                        $record = RotaSession:: where('room_id', $room->id)
+                            ->whereDate('created_at', $date)
+                            ->where('time_slot', $timeSlot) 
+                            ->first();
 
-                    // Add record or null to the array
-                    $recordsByDateAndTimeSlot[$date][$timeSlot] = $record ? $record : null;
+                        $room_records[$date][$timeSlot] = $record ? $record : null;
+                    }
                 }
+
+                // Assign the records to the room
+                $room->room_records = $room_records;
             }
 
-            // Assign the records to the room
-            $room->recordsByDateAndTimeSlot = $recordsByDateAndTimeSlot;
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'   => trans('messages.record_retrieved_successfully'),
+                'data'      => $hospitalData,
+            ])->setStatusCode(Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            // dd($e->getMessage() . '->' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
-
-
-        return $this->respondOk([
-            'status'   => true,
-            'message'   => trans('messages.record_retrieved_successfully'),
-            'data'      => $hospital,
-        ])->setStatusCode(Response::HTTP_OK);
     }
 
     /**
