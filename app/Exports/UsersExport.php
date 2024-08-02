@@ -44,29 +44,40 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
     public function headings(): array
     {
-        return [
+        $columnHeading = [
             'Name',
             'Email',
             'Trust',
             'Role',
-            'Speciality',
-            'Sub Speciality',
-            'Hospital',
         ];
+
+        if(!$this->user->is_booker){
+            $columnHeading[] =  'Speciality';
+            $columnHeading[] =  'Sub Speciality';
+        }
+
+        $columnHeading[] = 'Hospital';
+
+        return $columnHeading;
     }
 
     public function map($row): array
     {
         $hospitals = $row->getHospitals->pluck('hospital_name')->implode(', ');
-        return [
+        $rows = [
             $row->full_name,
             $row->user_email,
             $row->trusts->value('trust_name') ?? '',
             $row->role->role_name,
-            $row->specialityDetail->value('speciality_name') ?? '',
-            $row->subSpecialityDetail->value('sub_speciality_name') ?? '',
             $hospitals ?? '',
         ];
+
+        if(!$row->is_booker){
+            $rows[] = $row->specialityDetail->value('speciality_name') ?? '';
+            $rows[] = $row->subSpecialityDetail->value('sub_speciality_name') ?? '';
+        }
+
+        return $rows;
     }
 
     public function styles(Worksheet $sheet)
