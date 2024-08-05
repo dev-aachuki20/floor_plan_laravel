@@ -31,7 +31,7 @@ class PasswordResetController  extends APIController
             'required',
             'email',
             'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i',
-            'exists:users,user_email,deleted_at,NULL']
+            'exists:users,user_email']
         ], 
         getCommonValidationRuleMsgs(),
         [
@@ -43,8 +43,16 @@ class PasswordResetController  extends APIController
 
             DB::beginTransaction();
 
-            $token = generateRandomString(64);
             $email_id = $request->user_email;
+
+            //Check deleted User
+            $deletedUser = User::where('user_email', $email_id)->onlyTrashed()->first();
+            if ($deletedUser && $deletedUser->deleted_at) {
+                return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
+            }
+            //End Check deleted User
+
+            $token = generateRandomString(64);
 
             $user = User::where('user_email',$email_id)->first();
 
@@ -97,6 +105,13 @@ class PasswordResetController  extends APIController
             }else{
 
                 $email_id = $updatePassword->email;
+
+                //Check deleted User
+                $deletedUser = User::where('user_email', $email_id)->onlyTrashed()->first();
+                if ($deletedUser && $deletedUser->deleted_at) {
+                    return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
+                }
+                //End Check deleted User
                
                 $user = User::where('user_email', $email_id)
                 ->update(['password' => Hash::make($request->password)]);

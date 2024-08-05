@@ -22,7 +22,7 @@ class RegisterController extends APIController
     {
         $request->validate([
             'full_name'         => ['required','string','max:255'],
-            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,NULL,id,deleted_at,NULL'],
+            'user_email'        => ['required','email','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,NULL,id'],
             'password'          => ['required', 'string', 'min:8'],
             'trust'             => ['required','exists:trust,id'],
             'role'              => ['required','exists:roles,id'],
