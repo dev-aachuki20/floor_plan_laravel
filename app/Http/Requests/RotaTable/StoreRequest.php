@@ -23,21 +23,18 @@ class StoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        
         return [
             'quarter_id'            => 'required|exists:quarters,id',
+            'week_days'             => ['required', 'array'],
+            'week_days.*'           => ['required', 'date'],
             'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
             'rooms'                 => 'required|array',
             'rooms.*.id'            => 'required|exists:rooms,id,deleted_at,NULL',
-           
-            'rooms.*.time_slots'    => 'required|array',
-            'rooms.*.time_slots.AM.procedure_id' => 'nullable|integer|exists:procedures,id',
-
             'rooms.*.room_records.*.AM'  => 'nullable|string',
             'rooms.*.room_records.*.PM'  => 'nullable|string',
             'rooms.*.room_records.*.EVE' => 'nullable|string',
-
         ];
+
     }
 
     public function messages()

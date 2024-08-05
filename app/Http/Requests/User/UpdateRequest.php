@@ -34,6 +34,9 @@ class UpdateRequest extends FormRequest
             'full_name'      => ['required', 'string', 'max:255', new TitleValidationRule],
             'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users')->ignore($editUserId)],
             'password'       => ['nullable', 'string', 'min:8'],
+            'role'              => ['required', 
+                Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
+            ],
             'trust'          => ['nullable', 'exists:trust,id'],
             'hospital'       => ['required', 'array'],
             'hospital.*'     => ['exists:hospital,id,deleted_at,NULL'],
@@ -45,7 +48,7 @@ class UpdateRequest extends FormRequest
             $rules['trust']  = ['required', 'exists:trust,id'];
         }
 
-        if($editeUserDetail->primary_role == config('constant.roles.booker')){
+        if($this->role == config('constant.roles.booker')){
             $rules['speciality']        = ['nullable'];
             $rules['sub_speciality']    = ['nullable'];
         }

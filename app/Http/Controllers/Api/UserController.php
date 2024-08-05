@@ -244,6 +244,7 @@ class UserController extends APIController
             }
 
             $user->update([
+                'primary_role' => $request->role,
                 'full_name'    => $request->full_name ?? $user->full_name,
                 'user_email'   => $request->user_email ?? $user->user_email,
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
@@ -258,12 +259,15 @@ class UserController extends APIController
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
+
             // Sync speciality and sub_speciality
-            if($user->primary_role != config('constant.roles.booker')){
+            if($request->role != config('constant.roles.booker')){
                 $specialities = [
                     $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
                 ];
                 $user->specialityDetail()->sync($specialities);
+            }else{
+                $user->specialityDetail()->sync([]);
             }
 
             DB::commit();

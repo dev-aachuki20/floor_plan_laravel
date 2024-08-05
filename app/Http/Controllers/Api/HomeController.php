@@ -10,6 +10,8 @@ use App\Models\Hospital;
 use App\Models\Speciality;
 use App\Models\SubSpeciality;
 use Auth;
+use Illuminate\Validation\Rule;
+
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
@@ -107,6 +109,9 @@ class HomeController extends APIController
         $validateData = [
             'full_name'         => ['required','string','max:255',new TitleValidationRule],
             'user_email'        => ['required','email:dns','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id'],
+            'role'              => ['required', 
+                Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
+            ],
             'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
         ];
@@ -115,7 +120,7 @@ class HomeController extends APIController
             $validateData['password']   = ['nullable', 'string', 'min:8'];
         }
 
-        if($authUser->primary_role == config('constant.roles.booker')){
+        if($request->role == config('constant.roles.booker')){
             $validateData['speciality']        = ['nullable'];
             $validateData['sub_speciality']    = ['nullable'];
         }
@@ -132,6 +137,7 @@ class HomeController extends APIController
             $updateRecords = [
                 'full_name'    => ucwords($request->full_name),
                 'user_email'   => $request->user_email,
+                'primary_role' => $request->role,
             ];
 
             if($request->password){
@@ -141,13 +147,15 @@ class HomeController extends APIController
             $user = User::where('id',auth()->user()->id)->update($updateRecords);
 
 
-            if($authUser->primary_role != config('constant.roles.booker')){
+            if($request->role != config('constant.roles.booker')){
                 $specialities = [
                     $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
                 ];
                 
                 // Sync specialities with additional pivot data
                 auth()->user()->specialityDetail()->sync($specialities);
+            }else{
+                auth()->user()->specialityDetail()->sync([]);
             }
            
             

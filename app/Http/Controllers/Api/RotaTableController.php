@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Rota;
 use App\Models\RotaSession;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use App\Http\Requests\RotaTable\StoreRequest;
 use App\Http\Requests\RotaTable\UpdateRequest;
 use App\Http\Controllers\Api\APIController;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -138,12 +138,57 @@ class RotaTableController extends APIController
 
     public function store(StoreRequest $request)
     {
-        dd($request->all());
-        try {
-            DB::beginTransaction();
+        dd('working');
 
-            // Validate the incoming request data
+        try {   
+            DB::beginTransaction();
+ 
             $validatedData = $request->validated();
+
+            $start = Carbon::parse($startDate);
+
+            $rotaRecords = [
+                'quarter_id'            => $validatedData['quarter_id'],
+                'hospital_id'           => $validatedData['hospital_id'],
+                'week_no'               => '',
+                'week_start_date'       => $validatedData['week_days'][0],
+                'week_end_date'         => $validatedData['week_days'][6],
+            ];
+
+           
+            foreach ($validatedData['rooms'] as $room) {
+                $roomId = $room['id'];
+                foreach ($room['room_records'] as $date => $shifts) {
+                    foreach ($shifts as $shift => $record) {
+                        // Store or process each record
+                        echo "Room ID: $roomId, Date: $date, Shift: $shift, Record: $record\n";
+                        // Here you can store the values in a database or an array, e.g.,
+                        // $storedRecords[] = ['room_id' => $roomId, 'date' => $date, 'shift' => $shift, 'record' => $record];
+                    }
+                }
+            }
+
+            dd($validatedData);
+          
+           
+
+            $rotaSessionRecords = [
+                'rota_id'       => '',
+                'room_id'       => '',
+                'time_slot'     => '',
+                'speciality_id' => '',
+                'week_day_date' => '',
+            ];
+
+            $availability_user  = [
+                1 => ['role_id' => 1, 'status' => 0], // user_id => [role_id, status]
+                2 => ['role_id' => 2, 'status' => 0],
+                3 => ['role_id' => 3, 'status' => 0]
+            ];
+            
+            $rotaSession->users()->sync($users);
+
+
 
             // Initialize an empty array to store multiple rota session entries
             $rotaSessions = [];
