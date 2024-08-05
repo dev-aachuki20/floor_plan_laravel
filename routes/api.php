@@ -175,7 +175,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/users
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Parameters    : 
+        | Parameters    : - is_deleted : true or false
         |                 - filter_by,filter_value (optional): string (e.g., ?filter_by=value&filter_value=value)
         |                 - search (optional): string (e.g., ?search=term)
         |                 - page (optional): integer (e.g., ?page=1)
@@ -239,7 +239,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         Route::post('user/delete/{uuid}', [UserController::class, 'destroy']);
 
         
-
 
         /*
         |--------------------------------------------------------------------------

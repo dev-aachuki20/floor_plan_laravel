@@ -95,6 +95,11 @@ class UserController extends APIController
                 });
             }
 
+            //only Trashed Users
+            if($request->is_deleted){
+                $model = $model->onlyTrashed();
+            }
+
             // Filter based on the authenticated user's role
             $getAllRecords = $model->where(function ($qu) use ($user) {
                 $qu->whereRelation('role', 'id', '!=', config('constant.roles.system_admin'));

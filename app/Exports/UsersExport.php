@@ -69,13 +69,14 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             $row->user_email,
             $row->trusts->value('trust_name') ?? '',
             $row->role->role_name,
-            $hospitals ?? '',
         ];
 
         if(!$row->is_booker){
             $rows[] = $row->specialityDetail->value('speciality_name') ?? '';
             $rows[] = $row->subSpecialityDetail->value('sub_speciality_name') ?? '';
         }
+
+        $rows[] = $hospitals ?? '';
 
         return $rows;
     }
