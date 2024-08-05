@@ -32,7 +32,7 @@ class UpdateRequest extends FormRequest
 
         $rules = [
             'full_name'      => ['required', 'string', 'max:255', new TitleValidationRule],
-            'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users')->ignore($editUserId)->whereNull('deleted_at')],
+            'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', Rule::unique('users')->ignore($editUserId)],
             'password'       => ['nullable', 'string', 'min:8'],
             'trust'          => ['nullable', 'exists:trust,id'],
             'hospital'       => ['required', 'array'],

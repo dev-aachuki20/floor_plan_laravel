@@ -106,7 +106,7 @@ class HomeController extends APIController
 
         $validateData = [
             'full_name'         => ['required','string','max:255',new TitleValidationRule],
-            'user_email'        => ['required','email:dns','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id,deleted_at,NULL'],
+            'user_email'        => ['required','email:dns','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id'],
             'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
             'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
         ];

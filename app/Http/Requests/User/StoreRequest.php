@@ -29,7 +29,7 @@ class StoreRequest extends FormRequest
 
         $rules = [
             'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
-            'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id,deleted_at,NULL'],
+            'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'unique:users,user_email,NULL,id'],
 
             'password'          => ['required', 'string', 'min:8'],
             'password_confirmation'  => ['required', 'string', 'min:8','same:password'],

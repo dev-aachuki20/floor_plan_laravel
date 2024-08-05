@@ -26,7 +26,7 @@ class LoginController extends APIController
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'user_email'    => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email,deleted_at,NULL'],
+            'user_email'    => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
             'password' => 'required|min:8',
         ], [
             'user_email.exists' => trans('messages.wrong_credentials'),
@@ -36,6 +36,12 @@ class LoginController extends APIController
 
 
         try {
+            $deletedUser = User::where('user_email', $credentials['user_email'])->onlyTrashed()->first();
+
+            if ($deletedUser && $deletedUser->deleted_at) {
+                return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
+            }
+
             if (!$token = JWTAuth::attempt($credentials)) {
                 return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
             }

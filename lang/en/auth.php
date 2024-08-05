@@ -52,5 +52,6 @@ return [
     ],
 
     'unauthorize'  => 'You are not authorized to perform this action.',
+    'account_suspended' => 'Your account has been suspended!',
 
 ];

@@ -50,9 +50,6 @@ class StoreRequest extends FormRequest
         return [
             'quarter_id'    => 'quarter',
             'hospital_id'   => 'hospital',
-            'user_id'       => 'user',
-            'procedure_id'  => 'procedure',
-            'status_id'     => 'status'
         ];
     }
 }
