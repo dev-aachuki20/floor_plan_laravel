@@ -68,11 +68,8 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         });
 
         static::deleting(function ($user) {
-            // Check if the user is not being soft deleted
-            if (!method_exists($user, 'trashed') || !$user->trashed()) {
-                $user->deleted_by = auth()->user()->id;
-                $user->save();
-            }
+            $user->deleted_by = auth()->user()->id;
+            $user->save();
         });
     }
 

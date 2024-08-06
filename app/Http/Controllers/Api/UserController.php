@@ -81,11 +81,18 @@ class UserController extends APIController
 
             if ($user->is_trust_admin) {
 
-                $trustIds = $user->trusts()->select('trust_id')->groupBy('trust_id')->pluck('trust_id')->toArray();
+                // $trustIds = $user->trusts()->select('trust_id')->groupBy('trust_id')->pluck('trust_id')->toArray();
 
-                $model = $model->whereRelation('trusts', function ($query) use ($trustIds) {
-                    $query->whereIn('trust.id', $trustIds);
+                // $model = $model->whereRelation('trusts', function ($query) use ($trustIds) {
+                //     $query->whereIn('trust.id', $trustIds);
+                // });
+
+                $hospital_ids = $user->getHospitals()->select('hospital_id')->groupBy('hospital_id')->pluck('hospital_id')->toArray();
+
+                $model = $model->whereRelation('getHospitals', function ($query) use ($hospital_ids) {
+                    $query->whereIn('hospital.id', $hospital_ids);
                 });
+
             } else if ($user->is_hospital_admin) {
 
                 $hospital_ids = $user->getHospitals()->select('hospital_id')->groupBy('hospital_id')->pluck('hospital_id')->toArray();
