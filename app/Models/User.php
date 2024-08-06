@@ -25,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'full_name',
         'phone',
         'email_verified_at',
+        'is_tos',
         'created_by',
         'deleted_by',
         'created_at',
@@ -161,6 +162,11 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by', 'id');
     }
 
     public function specialityDetail()

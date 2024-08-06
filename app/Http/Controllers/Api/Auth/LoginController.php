@@ -65,6 +65,7 @@ class LoginController extends APIController
             'trust'                 => $user->trusts ? $user->trusts()->value('id') : null,
             'trust_name'            => $user->trusts ? $user->trusts()->value('trust_name') : null,
             'hospital'              => $user->getHospitals()->pluck('hospital_name', 'id')->toArray(),
+            'is_tos'                => $user->is_tos,
         ];
 
         if($user->primary_role != config('constant.roles.booker')){

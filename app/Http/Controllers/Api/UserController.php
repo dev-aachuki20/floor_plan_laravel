@@ -188,7 +188,7 @@ class UserController extends APIController
     {
         try {
             $user_details = [];
-            $user = User::where('uuid', $uuid)->firstOrFail();
+            $user = User::where('uuid', $uuid)->withTrashed()->first();
 
             if ($user) {
                 $user_details['uuid']          = $user->uuid;
@@ -212,6 +212,9 @@ class UserController extends APIController
                 }
               
                 $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
+                $user_details['deleted_by']    = $user->deletedBy ? $user->deletedBy->full_name : null;
+                $user_details['deleted_at']    = $user->deleted_at ? $user->deleted_at->format('d-m-Y h:i A') : null;
+
             }
 
             return $this->respondOk([
@@ -359,5 +362,50 @@ class UserController extends APIController
         }
 
         return $trustId;
+    }
+
+    public function updateIstos(){
+
+        try {
+
+            DB::beginTransaction();
+
+            $authUser = auth()->user();
+
+            $authUser->is_tos = 0;
+           
+            $authUser->save();
+
+            $reponseData = [
+                'uuid'                  => $authUser->uuid,
+                'full_name'             => $authUser->full_name,
+                'user_email'            => $authUser->user_email,
+                'primary_role'          => $authUser->primary_role,
+                'role'                  => $authUser->role->role_name,
+                'trust'                 => $authUser->trusts ? $authUser->trusts()->value('id') : null,
+                'trust_name'            => $authUser->trusts ? $authUser->trusts()->value('trust_name') : null,
+                'hospital'              => $authUser->getHospitals()->pluck('hospital_name', 'id')->toArray(),
+                'is_tos'                => $authUser->is_tos,
+            ];
+    
+            if($authUser->primary_role != config('constant.roles.booker')){
+                $reponseData['speciality']     = $authUser->specialityDetail()->value('speciality_name');
+                $reponseData['sub_speciality'] = $authUser->subSpecialityDetail()->value('sub_speciality_name');
+            }
+
+            DB::commit();
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'   => trans('messages.record_updated_successfully'),
+                'data'     => $reponseData
+            ])->setStatusCode(Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+        }
+
     }
 }

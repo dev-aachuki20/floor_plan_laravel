@@ -164,6 +164,20 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     */
     Route::get('users/export', [UserController::class, 'exportUserData']);
 
+    /*
+    |--------------------------------------------------------------------------
+    | Update Auth User Is Tos API Route
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/update-tos
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    : 
+    |             
+    | Method        : POST
+    */
+    Route::post('update-tos', [UserController::class, 'updateIstos']);
+
 
     Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])]], function () {
 

@@ -92,8 +92,16 @@ class RotaTableController extends APIController
             $hospitalId = $request->hospital;
             $weekDays   = $request->week_days;
 
+            $days_of_week = [];
+            foreach ($weekDays as $date) {
+                $carbonDate = Carbon::parse($date);
+                $days_of_week[] = $carbonDate->format('l');
+            }
+
             $hospitalData = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
             $hospitalData->rooms = $hospitalData->rooms()->select('id', 'room_name')->get();
+            $hospitalData->days_of_week = $days_of_week;
+
 
             $timeSlots = config('constant.time_slots');
 
@@ -139,23 +147,35 @@ class RotaTableController extends APIController
     public function store(StoreRequest $request)
     {
         dd('working');
-
         try {   
             DB::beginTransaction();
  
             $validatedData = $request->validated();
 
+            $startDate = $validatedData['week_days'][0];
+            $endDate = $validatedData['week_days'][6];
+
             $start = Carbon::parse($startDate);
+            $weekNumber = $start->weekOfYear;
 
             $rotaRecords = [
                 'quarter_id'            => $validatedData['quarter_id'],
                 'hospital_id'           => $validatedData['hospital_id'],
-                'week_no'               => '',
-                'week_start_date'       => $validatedData['week_days'][0],
-                'week_end_date'         => $validatedData['week_days'][6],
+                'week_no'               => $weekNumber,
+                'week_start_date'       => $startDate,
+                'week_end_date'         => $endDate,
             ];
 
-           
+            $createdRota = Rota::create($rotaRecords);
+
+            if($createdRota){
+
+
+
+            }
+
+            dd($rotaRecords);
+
             foreach ($validatedData['rooms'] as $room) {
                 $roomId = $room['id'];
                 foreach ($room['room_records'] as $date => $shifts) {
@@ -168,7 +188,7 @@ class RotaTableController extends APIController
                 }
             }
 
-            dd($validatedData);
+          
           
            
 
@@ -225,6 +245,7 @@ class RotaTableController extends APIController
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollBack();
+            dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)
                 ->respondWithError(trans('messages.error_message'));
         }

@@ -25,7 +25,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'quarter_id'            => 'required|exists:quarters,id',
-            'week_days'             => ['required', 'array'],
+            'week_days'             => ['required', 'array','size:7'],
             'week_days.*'           => ['required', 'date'],
             'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
             'rooms'                 => 'required|array',

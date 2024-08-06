@@ -49,6 +49,11 @@ class Rota extends Model
         return $this->belongsTo(Quarter::class, 'quarter_id', 'id');
     }
 
+    public function rotaSession()
+    {
+        return $this->hasMany(RotaSession::class, 'rota_id');
+    }
+
     public function hospitalDetail()
     {
         return $this->belongsTo(Hospital::class, 'hospital_id', 'id');
