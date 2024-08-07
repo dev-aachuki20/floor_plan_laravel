@@ -36,7 +36,7 @@ class Rota extends Model
     {
         parent::boot();
 
-        static::creating(function (RotaSession $model) {
+        static::creating(function (Rota $model) {
 
             $model->uuid = Str::uuid();
 

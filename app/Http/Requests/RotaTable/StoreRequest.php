@@ -30,9 +30,9 @@ class StoreRequest extends FormRequest
             'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
             'rooms'                 => 'required|array',
             'rooms.*.id'            => 'required|exists:rooms,id,deleted_at,NULL',
-            'rooms.*.room_records.*.AM'  => 'nullable|string',
-            'rooms.*.room_records.*.PM'  => 'nullable|string',
-            'rooms.*.room_records.*.EVE' => 'nullable|string',
+            'rooms.*.room_records.*.AM'  => 'nullable',
+            'rooms.*.room_records.*.PM'  => 'nullable',
+            'rooms.*.room_records.*.EVE' => 'nullable',
         ];
 
     }

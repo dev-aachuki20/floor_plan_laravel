@@ -9,10 +9,12 @@ use App\Models\RotaSession;
 use App\Models\Quarter;
 use App\Models\Hospital;
 use Illuminate\Http\Request;
+use App\Mail\RotaSessionMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\RotaTable\StoreRequest;
 use App\Http\Requests\RotaTable\UpdateRequest;
 use App\Http\Controllers\Api\APIController;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 
@@ -114,8 +116,11 @@ class RotaTableController extends APIController
 
                     foreach ($timeSlots as $timeSlot) {
                         
-                        $record = RotaSession:: where('room_id', $room->id)
-                            ->whereDate('created_at', $date)
+                        $record = RotaSession::with(['users' => function($query) {
+                            $query->select('users.id', 'users.full_name') 
+                                  ->addSelect('rota_session_users.status');
+                        }])->select('id','speciality_id')->where('room_id', $room->id)
+                            ->whereDate('week_day_date', $date)
                             ->where('time_slot', $timeSlot) 
                             ->first();
 
@@ -146,7 +151,6 @@ class RotaTableController extends APIController
 
     public function store(StoreRequest $request)
     {
-        dd('working');
         try {   
             DB::beginTransaction();
  
@@ -168,136 +172,178 @@ class RotaTableController extends APIController
 
             $createdRota = Rota::create($rotaRecords);
 
-            if($createdRota){
+           if($createdRota){
 
+                //Rooms
+                foreach ($validatedData['rooms'] as $room) {
+                    $roomId = $room['id'];
+                    foreach ($room['room_records'] as $date => $timeSlots) {
+                        foreach ($timeSlots as $slotKey => $speciality) {
 
+                            //Rota Session Table
+                            $rotaSessionRecords = [
+                                'room_id'       => $roomId,
+                                'time_slot'     => $slotKey,
+                                'speciality_id' => $speciality,
+                                'week_day_date' => $date,
+                            ];
+                            
+                            $createdRotaSession = $createdRota->rotaSession()->create($rotaSessionRecords);
+                          
+                            //Start Availability Users
+                            $rolesId = [
+                                config('constant.roles.speciality_lead'),
+                                config('constant.roles.staff_coordinator'),
+                                config('constant.roles.anesthetic_lead'),
+                            ];
 
-            }
+                            $availabilityUsers = $createdRota->hospitalDetail->users()
+                                    ->whereIn('primary_role',$rolesId)
+                                    ->whereHas('specialityDetail', function ($query) use($speciality){
+                                        $query->where('speciality_id', $speciality);
+                                    })
+                                    ->with('specialityDetail')
+                                    ->get();
+                            
+                            $availability_user = [];
+                            foreach($availabilityUsers as $user){
+                                $availability_user[$user->id] = ['role_id' => $user->primary_role, 'status' => 0];
+                            }
 
-            dd($rotaRecords);
+                            if(count($availability_user) > 0){
+                                $createdRotaSession->users()->sync($availability_user);
 
-            foreach ($validatedData['rooms'] as $room) {
-                $roomId = $room['id'];
-                foreach ($room['room_records'] as $date => $shifts) {
-                    foreach ($shifts as $shift => $record) {
-                        // Store or process each record
-                        echo "Room ID: $roomId, Date: $date, Shift: $shift, Record: $record\n";
-                        // Here you can store the values in a database or an array, e.g.,
-                        // $storedRecords[] = ['room_id' => $roomId, 'date' => $date, 'shift' => $shift, 'record' => $record];
+                                foreach($createdRotaSession->users as $user){
+                                    $subject = "Upcoming Session";
+                                    Mail::to($user->user_email)->send(new RotaSessionMail($subject, $user, $createdRotaSession));
+                                }
+                            }
+                           
+                            //End Availability Users
+                        }
+                      
                     }
                 }
+                //End Rooms
+
             }
 
-          
-          
-           
-
-            $rotaSessionRecords = [
-                'rota_id'       => '',
-                'room_id'       => '',
-                'time_slot'     => '',
-                'speciality_id' => '',
-                'week_day_date' => '',
-            ];
-
-            $availability_user  = [
-                1 => ['role_id' => 1, 'status' => 0], // user_id => [role_id, status]
-                2 => ['role_id' => 2, 'status' => 0],
-                3 => ['role_id' => 3, 'status' => 0]
-            ];
-            
-            $rotaSession->users()->sync($users);
-
-
-
-            // Initialize an empty array to store multiple rota session entries
-            $rotaSessions = [];
-
-            // Iterate over each room in the validated data
-            foreach ($validatedData['rooms'] as $roomId => $roomData) {
-                // Iterate over each time slot for the current room
-                foreach ($roomData['time_slots'] as $timeSlot => $slotData) {
-                    // Prepare a rota session entry
-                    $rotaSessions[] = [
-                        'hospital_id'          => $validatedData['hospital_id'],
-                        'user_id'              => $validatedData['user_id'],
-                        'procedure_id'         => $slotData['procedure_id'],
-                        'room_id'              => $roomId,
-                        'time_slot'            => $timeSlot,
-                        'status_id'            => $validatedData['status_id'],
-                        'session_description'  => $roomData['session_description'],
-                        'session_released'     => $roomData['session_released'],
-                    ];
-                }
-            }
-
-            // Insert all rota session entries into the database
-            RotaSession::insert($rotaSessions);
-
-            // Commit the transaction
             DB::commit();
 
             return $this->respondOk([
                 'status'    => true,
                 'message'   => trans('messages.record_created_successfully'),
-                'data'      => $rotaSessions
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollBack();
-            dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            //dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)
-                ->respondWithError(trans('messages.error_message'));
+                ->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
 
-    // public function store(StoreRequest $request)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         $validatedData = $request->validated();
-    //         $rota = RotaSession::create($validatedData);
-
-    //         DB::commit();
-
-    //         return $this->respondOk([
-    //             'status'    => true,
-    //             'message'   => trans('messages.record_created_successfully'),
-    //             'data'      => $rota
-    //         ])->setStatusCode(Response::HTTP_OK);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-    //         return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
-    //     }
-    // }
-
-    /**
-     * Update the specified resource in storage.
-     */
+  
     public function update(UpdateRequest $request, $uuid)
-    {
+    {    
         try {
             DB::beginTransaction();
 
             $validatedData = $request->validated();
-            $rota = RotaSession::where('uuid', $uuid)->first();
-            $rota->update($validatedData);
+
+            $startDate = $validatedData['week_days'][0];
+            $endDate = $validatedData['week_days'][6];
+
+            $start = Carbon::parse($startDate);
+            $weekNumber = $start->weekOfYear;
+
+            $rotaRecords = [
+                'quarter_id'      => $validatedData['quarter_id'],
+                'hospital_id'     => $validatedData['hospital_id'],
+                'week_no'         => $weekNumber,
+                'week_start_date' => $startDate,
+                'week_end_date'   => $endDate,
+            ];
+
+            $existingRota = Rota::where('uuid', $uuid)->first();
+            $existingRota->update($rotaRecords);
+
+            // Rooms
+            foreach ($validatedData['rooms'] as $room) {
+                $roomId = $room['id'];
+                foreach ($room['room_records'] as $date => $timeSlots) {
+                    foreach ($timeSlots as $slotKey => $speciality) {
+                        // Check if the rota session already exists
+                        $rotaSession = $existingRota->rotaSession()
+                            ->where('room_id', $roomId)
+                            ->where('time_slot', $slotKey)
+                            ->where('week_day_date', $date)
+                            ->first();
+
+                        $rotaSessionRecords = [
+                            'room_id'       => $roomId,
+                            'time_slot'     => $slotKey,
+                            'speciality_id' => $speciality,
+                            'week_day_date' => $date,
+                        ];
+
+                        if ($rotaSession) {
+                            // Update existing rota session
+                            $rotaSession->update($rotaSessionRecords);
+                        } else {
+                            // Create new rota session
+                            $rotaSession = $existingRota->rotaSession()->create($rotaSessionRecords);
+                        }
+
+                        // Start Availability Users
+                        $rolesId = [
+                            config('constant.roles.speciality_lead'),
+                            config('constant.roles.staff_coordinator'),
+                            config('constant.roles.anesthetic_lead'),
+                        ];
+
+                        $availabilityUsers = $existingRota->hospitalDetail->users()
+                            ->whereIn('primary_role', $rolesId)
+                            ->whereHas('specialityDetail', function ($query) use ($speciality) {
+                                $query->where('speciality_id', $speciality);
+                            })
+                            ->with('specialityDetail')
+                            ->get();
+
+                        $availability_user = [];
+                        foreach ($availabilityUsers as $user) {
+                            $availability_user[$user->id] = ['role_id' => $user->primary_role, 'status' => 0];
+                        }
+
+                        if (count($availability_user) > 0) {
+                            $rotaSession->users()->sync($availability_user);
+
+                            foreach($rotaSession->users as $user){
+                                $subject = "Upcoming Session";
+                                Mail::to($user->user_email)->send(new RotaSessionMail($subject, $user, $rotaSession));
+                            }
+                        }
+                        // End Availability Users
+                    }
+                }
+            }
+            // End Rooms
 
             DB::commit();
 
             return $this->respondOk([
-                'status'    => true,
-                'message'   => trans('messages.record_updated_successfully'),
-                'data'      => $rota
+                'status'  => true,
+                'message' => trans('messages.record_updated_successfully'),
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
+            // Rollback the transaction in case of an error
             DB::rollBack();
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+            return $this->setStatusCode(500)
+                ->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
+
 
     public function getQuarters(){
     
