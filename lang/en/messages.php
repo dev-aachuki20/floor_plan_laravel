@@ -54,6 +54,7 @@ return [
     'record_created_successfully'   => 'Record created successfully',
     'record_updated_successfully'   => 'Record updated successfully',
     'record_deleted_successfully'   => 'Record deleted successfully',
+    'record_saved_successfully'     => 'Record saved successfully',
     'password_updated_successfully' => 'Password updated successfully',
 
     'profile_updated_successfully'  => 'Profile updated successfully',

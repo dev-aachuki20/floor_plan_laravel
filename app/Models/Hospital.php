@@ -27,9 +27,9 @@ class Hospital extends Model
         'deleted_at',
     ];
 
-    public function rotaSession()
+    public function rotaTable()
     {
-        return $this->hasMany(RotaSession::class, 'hospital_id');
+        return $this->hasMany(Rota::class, 'hospital_id');
     }
 
     public function trustDetails()

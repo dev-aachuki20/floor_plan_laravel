@@ -73,9 +73,16 @@ class HomeController extends APIController
         ])->setStatusCode(Response::HTTP_OK);
     }
 
-    public function getSpecialities(){
+    public function getSpecialities($type = null){
         $specialities = Speciality::pluck('speciality_name','id');
         
+       if($type == 'list'){
+            $specialities[null] = 'Unavailable';
+
+            $specialities = collect($specialities);
+       }
+        
+
         return $this->respondOk([
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),

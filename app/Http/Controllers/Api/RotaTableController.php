@@ -12,8 +12,7 @@ use Illuminate\Http\Request;
 use App\Mail\RotaSessionMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\RotaTable\StoreRequest;
-use App\Http\Requests\RotaTable\UpdateRequest;
+use App\Http\Requests\RotaTable\SaveRotaRequest;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,57 +21,181 @@ class RotaTableController extends APIController
 {
     public function index(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
+            'week_days' => ['required', 'array'],
+            'hospital'  => ['required', 'integer','exists:hospital,id,deleted_at,NULL'],
             'filter_value'   => 'nullable|array',
             'filter_value.*' => 'integer',
+            'time_slot'      => 'nullable',
         ]);
 
         try {
-            DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+           
+            $authUser  = auth()->user();
 
+            $timeSlots = config('constant.time_slots');
 
-            // $hospital = Hospital::first();
+            if(in_array($request->time_slot,$timeSlots)){
+                $timeSlots = array_diff($timeSlots, [$request->time_slot]);
+            }
+            
 
-            // dd($hospital->rooms()->get());
+            $hospitalId = $request->hospital;
+            $weekDays   = $request->week_days;
 
-            $model = RotaSession::query();
+            $startDate = $validatedData['week_days'][0];
+            $endDate = $validatedData['week_days'][6];
+
+            $start = Carbon::parse($startDate);
+            $weekNumber = $start->weekOfYear;
+
+            $days_of_week = [];
+            foreach ($weekDays as $date) {
+                $carbonDate = Carbon::parse($date);
+                $days_of_week[] = $carbonDate->format('l');
+            }
+
+            $model = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
+            $model->days_of_week = $days_of_week;
+            $model->rota_table = $model->rotaTable()->select('id','uuid','quarter_id','hospital_id','week_no','week_start_date','week_end_date')->where('week_no',$weekNumber)->where(function($query) use ($weekDays) {
+                $query->whereDate('week_start_date', '<=', min($weekDays))
+                      ->whereDate('week_end_date', '>=', max($weekDays));
+            })->first();
+
+            $model->rooms = $model->rooms()->select('id', 'room_name')->get();
 
             //Start Apply filters
             if ($request->filter_by) {
-
                 if ($request->filter_by == 'rooms' && $request->filter_value) {
 
-                    $model = $model->whereRelation('hospitalDetail.rooms', function ($query) use ($request) {
-                        $query->whereIn('id', $request->filter_value);
-                    });
-                } else if ($request->filter_by == 'specialty' && $request->filter_value) {
+                    $model->rooms = $model->rooms()->whereIn('id', $request->filter_value)->get();
 
-                    $model = $model->whereRelation('user.specialityDetail', function ($query) use ($request) {
-                        $query->whereIn('id', $request->filter_value);
-                    });
-                }
+                } 
             }
             //End Apply filters
+            
+         
+            foreach ($model->rooms as $room) {
+            
+                $room_records = [];
 
-            $getAllRecords = $model->orderBy('created_at', 'desc')->paginate(10);
+                foreach ($timeSlots as $timeSlot) {
+                    foreach ($weekDays as $key=>$date) {
+                   
+                        $record = RotaSession::with(['users' => function($query) use($authUser){
+                            // $query->select('users.id', 'users.full_name') 
+                            //       ->addSelect('rota_session_users.status');
 
-            if ($getAllRecords->count() > 0) {
-                foreach ($getAllRecords as $record) {
-                    // dd($record->procedure);
-                    //     $record->full_name = ucwords($record->full_name);
-                    //    $record->procedure_id = $record->procedure->value('id');
-                    $record->procedure_name = $record->procedure->value('procedures_name');
-                    //     $record->speciality =   $record->specialityDetail()->value('speciality_name');
-                    //     $record->sub_speciality = $record->subSpecialityDetail()->value('sub_speciality_name');
-                    //     $record->trust = $record->trusts()->pluck('trust_name', 'id')->toArray();
-                    //     $record->hospitals = $record->getHospitals()->pluck('hospital_name')->toArray();
+                            $query->select('users.id', 'users.full_name')
+                            ->withPivot('status', 'role_id')
+                            ->wherePivotIn('role_id', [
+                                config('constant.roles.speciality_lead'),
+                                config('constant.roles.staff_coordinator'),
+                                config('constant.roles.anesthetic_lead'),
+                            ]);
+
+                            $rolesId = [
+                                config('constant.roles.speciality_lead'),
+                                config('constant.roles.staff_coordinator'),
+                                config('constant.roles.anesthetic_lead'),
+                            ];
+        
+                            if(in_array($authUser->primary_role,$rolesId)){
+                                $query->where('users.id',$authUser->id);
+                            }
+
+                        }])->select('id','speciality_id','time_slot')->where('room_id', $room->id)
+                            ->whereDate('week_day_date', $date)
+                            ->where('time_slot', $timeSlot);
+                        
+                        //Start Apply filters
+                        if ($request->filter_by) {
+
+                            if ($request->filter_by == 'specialty' && $request->filter_value) {
+
+                                $record = $record->whereIn('speciality_id', $request->filter_value);
+
+                            }
+                        }
+                        //End Apply filters
+
+                        $record = $record->first();
+
+                        // Initialize role statuses
+                        $rolesStatus = [
+                            'speciality_lead' => 0,
+                            'anesthetic_lead' => 0,
+                            'staff_coordinator' => 0,
+                        ];
+                        
+                        if($authUser->is_speciality_lead){
+                            $rolesStatus = [
+                                'speciality_lead' => 0,
+                            ];
+                        }else if($authUser->is_anesthetic_lead){
+                            $rolesStatus = [
+                                'anesthetic_lead' => 0,
+                            ];
+
+                        }else if($authUser->is_staff_coordinator){
+                            $rolesStatus = [
+                                'staff_coordinator' => 0,
+                            ];
+                        }
+                        
+
+                        // Group users by their role and check status
+                        if ($record && $record->users) {
+                            $groupedUsers = [
+                                'speciality_lead' => [],
+                                'anesthetic_lead' => [],
+                                'staff_coordinator' => [],
+                            ];
+
+                            foreach ($record->users as $user) {
+                                switch ($user->pivot->role_id) {
+                                    case config('constant.roles.speciality_lead'):
+                                        $groupedUsers['speciality_lead'][] = $user;
+                                        break;
+                                    case config('constant.roles.anesthetic_lead'):
+                                        $groupedUsers['anesthetic_lead'][] = $user;
+                                        break;
+                                    case config('constant.roles.staff_coordinator'):
+                                        $groupedUsers['staff_coordinator'][] = $user;
+                                        break;
+                                }
+                            }
+
+                            // Now check each group for status and set rolesStatus
+                            foreach ($groupedUsers as $role => $users) {
+                                foreach ($users as $user) {
+                                    if ($user->pivot->status) {
+                                        $rolesStatus[$role] = $user->pivot->status;
+
+                                        if($user->pivot->status == 1){
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        $room_records[$timeSlot][$key]['date'] = $date;
+                        $room_records[$timeSlot][$key]['value'] = $record ? $record->speciality_id : null;
+                        $room_records[$timeSlot][$key]['users'] = $record ? $record->users : null;
+                        $room_records[$timeSlot][$key]['roles_status'] = $rolesStatus;
+                       
+                    }
                 }
+
+                // Assign the records to the room
+                $room->room_records = $room_records;
             }
 
             return $this->respondOk([
                 'status'   => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
-                'data'      => $getAllRecords,
+                'data'      => $model,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             dd($e->getMessage() . '->' . $e->getLine());
@@ -85,14 +208,23 @@ class RotaTableController extends APIController
      */
     public function getDetails(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'week_days' => ['required', 'array'],
             'hospital'  => ['required', 'integer','exists:hospital,id,deleted_at,NULL'],
         ]);
 
         try {
+            $timeSlots = config('constant.time_slots');
+
             $hospitalId = $request->hospital;
             $weekDays   = $request->week_days;
+
+            $startDate = $validatedData['week_days'][0];
+            $endDate = $validatedData['week_days'][6];
+
+            $start = Carbon::parse($startDate);
+            $weekNumber = $start->weekOfYear;
+
 
             $days_of_week = [];
             foreach ($weekDays as $date) {
@@ -101,31 +233,36 @@ class RotaTableController extends APIController
             }
 
             $hospitalData = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
+
+            $hospitalData->rota_table = $hospitalData->rotaTable()->select('id','uuid','quarter_id','hospital_id','week_no','week_start_date','week_end_date')->where('week_no',$weekNumber)->where('hospital_id',$hospitalId)->where(function($query) use ($weekDays) {
+                $query->whereDate('week_start_date', '<=', min($weekDays))
+                      ->whereDate('week_end_date', '>=', max($weekDays));
+            })->first();
+
             $hospitalData->rooms = $hospitalData->rooms()->select('id', 'room_name')->get();
             $hospitalData->days_of_week = $days_of_week;
 
-
-            $timeSlots = config('constant.time_slots');
-
+            
             foreach ($hospitalData->rooms as $room) {
             
                 $room_records = [];
 
-                foreach ($weekDays as $date) {
-                    $room_records[$date] = [];
-
-                    foreach ($timeSlots as $timeSlot) {
+                foreach ($timeSlots as $timeSlot) {
+                        
+                    foreach ($weekDays as $key=>$date) {
                         
                         $record = RotaSession::with(['users' => function($query) {
                             $query->select('users.id', 'users.full_name') 
                                   ->addSelect('rota_session_users.status');
-                        }])->select('id','speciality_id')->where('room_id', $room->id)
+                        }])->select('id','speciality_id','time_slot')->where('room_id', $room->id)
                             ->whereDate('week_day_date', $date)
                             ->where('time_slot', $timeSlot) 
                             ->first();
 
-                        $room_records[$date][$timeSlot] = $record ? $record : null;
+                        $room_records[$timeSlot][$key]['date'] = $date;
+                        $room_records[$timeSlot][$key]['value'] = $record ? $record->speciality_id : null;
                     }
+
                 }
 
                 // Assign the records to the room
@@ -141,111 +278,13 @@ class RotaTableController extends APIController
 
         } catch (\Exception $e) {
             // dd($e->getMessage() . '->' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . '->' . $e->getLine());
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
 
-    public function store(StoreRequest $request)
+    public function saveRota(SaveRotaRequest $request, $uuid = null)
     {
-        try {   
-            DB::beginTransaction();
- 
-            $validatedData = $request->validated();
-
-            $startDate = $validatedData['week_days'][0];
-            $endDate = $validatedData['week_days'][6];
-
-            $start = Carbon::parse($startDate);
-            $weekNumber = $start->weekOfYear;
-
-            $rotaRecords = [
-                'quarter_id'            => $validatedData['quarter_id'],
-                'hospital_id'           => $validatedData['hospital_id'],
-                'week_no'               => $weekNumber,
-                'week_start_date'       => $startDate,
-                'week_end_date'         => $endDate,
-            ];
-
-            $createdRota = Rota::create($rotaRecords);
-
-           if($createdRota){
-
-                //Rooms
-                foreach ($validatedData['rooms'] as $room) {
-                    $roomId = $room['id'];
-                    foreach ($room['room_records'] as $date => $timeSlots) {
-                        foreach ($timeSlots as $slotKey => $speciality) {
-
-                            //Rota Session Table
-                            $rotaSessionRecords = [
-                                'room_id'       => $roomId,
-                                'time_slot'     => $slotKey,
-                                'speciality_id' => $speciality,
-                                'week_day_date' => $date,
-                            ];
-                            
-                            $createdRotaSession = $createdRota->rotaSession()->create($rotaSessionRecords);
-                          
-                            //Start Availability Users
-                            $rolesId = [
-                                config('constant.roles.speciality_lead'),
-                                config('constant.roles.staff_coordinator'),
-                                config('constant.roles.anesthetic_lead'),
-                            ];
-
-                            $availabilityUsers = $createdRota->hospitalDetail->users()
-                                    ->whereIn('primary_role',$rolesId)
-                                    ->whereHas('specialityDetail', function ($query) use($speciality){
-                                        $query->where('speciality_id', $speciality);
-                                    })
-                                    ->with('specialityDetail')
-                                    ->get();
-                            
-                            $availability_user = [];
-                            foreach($availabilityUsers as $user){
-                                $availability_user[$user->id] = ['role_id' => $user->primary_role, 'status' => 0];
-                            }
-
-                            if(count($availability_user) > 0){
-                                $createdRotaSession->users()->sync($availability_user);
-
-                                foreach($createdRotaSession->users as $user){
-                                    $subject = "Upcoming Session";
-                                    Mail::to($user->user_email)->send(new RotaSessionMail($subject, $user, $createdRotaSession));
-                                }
-                            }
-                           
-                            //End Availability Users
-                        }
-                      
-                    }
-                }
-                //End Rooms
-
-            }
-
-            DB::commit();
-
-            return $this->respondOk([
-                'status'    => true,
-                'message'   => trans('messages.record_created_successfully'),
-            ])->setStatusCode(Response::HTTP_OK);
-        } catch (\Exception $e) {
-            // Rollback the transaction in case of an error
-            DB::rollBack();
-            //dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)
-                ->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-        }
-    }
-
-  
-    public function update(UpdateRequest $request, $uuid)
-    {    
         try {
             DB::beginTransaction();
 
@@ -265,8 +304,13 @@ class RotaTableController extends APIController
                 'week_end_date'   => $endDate,
             ];
 
-            $existingRota = Rota::where('uuid', $uuid)->first();
-            $existingRota->update($rotaRecords);
+            if ($uuid) {
+                $existingRota = Rota::where('uuid', $uuid)->first();
+                $existingRota->update($rotaRecords);
+                $rota = $existingRota;
+            } else {
+                $rota = Rota::create($rotaRecords);
+            }
 
             // Rooms
             foreach ($validatedData['rooms'] as $room) {
@@ -274,7 +318,7 @@ class RotaTableController extends APIController
                 foreach ($room['room_records'] as $date => $timeSlots) {
                     foreach ($timeSlots as $slotKey => $speciality) {
                         // Check if the rota session already exists
-                        $rotaSession = $existingRota->rotaSession()
+                        $rotaSession = $rota->rotaSession()
                             ->where('room_id', $roomId)
                             ->where('time_slot', $slotKey)
                             ->where('week_day_date', $date)
@@ -292,7 +336,7 @@ class RotaTableController extends APIController
                             $rotaSession->update($rotaSessionRecords);
                         } else {
                             // Create new rota session
-                            $rotaSession = $existingRota->rotaSession()->create($rotaSessionRecords);
+                            $rotaSession = $rota->rotaSession()->create($rotaSessionRecords);
                         }
 
                         // Start Availability Users
@@ -302,7 +346,7 @@ class RotaTableController extends APIController
                             config('constant.roles.anesthetic_lead'),
                         ];
 
-                        $availabilityUsers = $existingRota->hospitalDetail->users()
+                        $availabilityUsers = $rota->hospitalDetail->users()
                             ->whereIn('primary_role', $rolesId)
                             ->whereHas('specialityDetail', function ($query) use ($speciality) {
                                 $query->where('speciality_id', $speciality);
@@ -318,10 +362,10 @@ class RotaTableController extends APIController
                         if (count($availability_user) > 0) {
                             $rotaSession->users()->sync($availability_user);
 
-                            foreach($rotaSession->users as $user){
+                           /* foreach($rotaSession->users as $user){
                                 $subject = "Upcoming Session";
                                 Mail::to($user->user_email)->send(new RotaSessionMail($subject, $user, $rotaSession));
-                            }
+                            }*/
                         }
                         // End Availability Users
                     }
@@ -333,7 +377,7 @@ class RotaTableController extends APIController
 
             return $this->respondOk([
                 'status'  => true,
-                'message' => trans('messages.record_updated_successfully'),
+                'message' => trans('messages.record_saved_successfully'),
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
