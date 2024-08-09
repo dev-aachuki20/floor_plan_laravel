@@ -105,9 +105,9 @@ Route::group(['namespace' => 'Api'], function () {
 });
 
 Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
-    
+
     Route::get('get-hospitals/{trust?}', [HomeController::class, 'getHospitals']);
-    
+
     Route::get('get-roles', [HomeController::class, 'getRoles']);
 
     /*
@@ -158,8 +158,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/users/export
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
-    |             
+    | Parameters    :
+    |
     | Method        : GET
     */
     Route::get('users/export', [UserController::class, 'exportUserData']);
@@ -172,8 +172,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/update-tos
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
-    |             
+    | Parameters    :
+    |
     | Method        : POST
     */
     Route::post('update-tos', [UserController::class, 'updateIstos']);
@@ -186,7 +186,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/user/delete/uuid
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
+    | Parameters    :
     |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
     | Method        : POST
     */
@@ -200,7 +200,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/rota-table
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
+    | Parameters    :
     |                 - filter_by,filter_value (optional): string (e.g., ?filter_by=value&filter_value=value)
     |                 - search (optional): string (e.g., ?search=term)
     |                 - page (optional): integer (e.g., ?page=1)
@@ -239,7 +239,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/user/show/{uuid}
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Method        : GET        
+        | Method        : GET
         */
         Route::get('user/show/{uuid}', [UserController::class, 'show']);
 
@@ -251,7 +251,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/user/create
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Method        : POST        
+        | Method        : POST
         */
         Route::post('user/create', [UserController::class, 'store']);
 
@@ -263,14 +263,14 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/user/update/{uuid}
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Parameters    : 
+        | Parameters    :
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-        | Method        : PUT        
+        | Method        : PUT
         */
         Route::put('user/update/{uuid}', [UserController::class, 'update']);
 
-       
-        
+
+
 
         /*
         |--------------------------------------------------------------------------
@@ -280,8 +280,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/get-quarter
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Parameters    : 
-        |             
+        | Parameters    :
+        |
         | Method        : GET
         */
         Route::get('get-quarter', [RotaTableController::class, 'getQuarters']);
@@ -295,8 +295,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/rota-table/get-details
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Parameters    : hospital, 
-        | Method        : POST        
+        | Parameters    : hospital,
+        | Method        : POST
         */
         Route::post('rota-table/get-details', [RotaTableController::class, 'getDetails']);
 
@@ -309,9 +309,9 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Route         : http://localhost:8000/api/rota-table/save/{uuid?}
         | Header        : Content-Type:application/json
         |               : Authorization : Token
-        | Parameters    : 
+        | Parameters    :
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-        | Method        : PUT        
+        | Method        : PUT
         */
         Route::post('/rota-table/save/{uuid?}', [RotaTableController::class, 'saveRota']);
 
@@ -322,6 +322,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     Route::get('rota-table/available-sessions', [RotaTableController::class, 'getAvailableSessions']);
 
     // confirm availability session status .
-    Route::patch('/rota-table/availability', [RotaTableController::class, 'updateAvailability']);
-    
+   // Route::patch('/rota-table/availability', [RotaTableController::class, 'updateAvailability']);
+
 });
