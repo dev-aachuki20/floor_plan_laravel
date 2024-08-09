@@ -211,6 +211,21 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     */
     Route::post('rota-table', [RotaTableController::class, 'index']);
 
+    /*
+    |--------------------------------------------------------------------------
+    |  Update Availability Rota Table Record API Route
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/rota-table/update-availability/{uuid}
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    :
+    |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+    | Method        : POST
+    */
+    Route::post('/rota-table/update-availability/{uuid}', [RotaTableController::class, 'updateAvailability']);
+
+    
     Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])]], function () {
 
         /*
@@ -312,27 +327,18 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |               : Authorization : Token
         | Parameters    :
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-        | Method        : PUT
+        | Method        : POST
         */
         Route::post('/rota-table/save/{uuid?}', [RotaTableController::class, 'saveRota']);
 
     });
 
-
-    // get all sessions
-    Route::get('rota-table/available-sessions', [RotaTableController::class, 'getAvailableSessions']);
-
-    // confirm availability session status .
-   // Route::patch('/rota-table/availability', [RotaTableController::class, 'updateAvailability']);
-
-    //Generate Reports For medical speciality
-    Route::post('reports/specialty-performance', [ReportController::class, 'getSpecialtyPerformance']);
-   
-
-
+    Route::post('reports', [ReportController::class, 'index']);
 
 });
-    Route::post('rota-table/sessions/confirm', [ReportController::class, 'confirmAvailability']);
 
+Route::post('rota-table/sessions/confirm', [ReportController::class, 'confirmAvailability']);
+
+    
 
 

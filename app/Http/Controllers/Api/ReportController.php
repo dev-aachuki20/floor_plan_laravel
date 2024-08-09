@@ -16,8 +16,7 @@ use Mail;
 
 class ReportController extends APIController
 {
-    // Method to get weekly performnce percentage 
-    public function getSpecialtyPerformance(Request $request)
+    public function index(Request $request)
     {
         $validatedData = $request->validate([
             'week_days' => ['required', 'array'],
@@ -68,21 +67,24 @@ class ReportController extends APIController
 
         $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;
 
-        return response()->json([
-            'success' => true,
-            'data' => $performanceData,
-            'weekly_percentage_overview' => round($weeklyPercentageOverview, 2),
-            'weekly_total_session' => $totalSessions,
-            'weekly_total_confirm_session' => $totalConfirmed,
-            'weekly_total_cancel_session' => $totalCancelled,
-        ]);
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data' => [
+                // $performanceData,
+                'weekly_percentage_overview' => round($weeklyPercentageOverview, 2),
+                'weekly_total_session' => $totalSessions,
+                'weekly_total_confirm_session' => $totalConfirmed,
+                'weekly_total_cancel_session' => $totalCancelled,
+            ],
+        ])->setStatusCode(Response::HTTP_OK);
     }
 
 
     public function confirmAvailability(Request $request)
     {
         $validatedData = $request->validate([
-            'rotasession_id' => 'required|integer|exists:rota_session_users,rota_session_id',
+            'rota_session_id' => 'required|integer|exists:rota_session_users,rota_session_id',
             'user_id'    => 'required|integer|exists:users,id',
         ]);
 

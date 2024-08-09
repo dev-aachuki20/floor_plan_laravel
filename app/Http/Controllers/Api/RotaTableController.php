@@ -13,6 +13,7 @@ use App\Mail\RotaSessionMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\RotaTable\SaveRotaRequest;
+use App\Http\Requests\RotaTable\UpdateAvailablityRequest;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -49,11 +50,18 @@ class RotaTableController extends APIController
             $start = Carbon::parse($startDate);
             $weekNumber = $start->weekOfYear;
 
+            //Week days
             $days_of_week = [];
-            foreach ($weekDays as $date) {
+            foreach ($weekDays as $key=>$date) {
                 $carbonDate = Carbon::parse($date);
-                $days_of_week[] = $carbonDate->format('l');
-            }
+                $formattedDate = $carbonDate->format('D, j M');
+                $days_of_week[$key]['date'] = $formattedDate;
+                $days_of_week[$key]['statistics']['overall'] = 0;
+                $days_of_week[$key]['statistics']['speciality'] = 0;
+                $days_of_week[$key]['statistics']['anesthetic'] = 0;
+                $days_of_week[$key]['statistics']['staff'] = 0;
+            } 
+            //End Week days
 
             $model = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
             $model->days_of_week = $days_of_week;
@@ -123,23 +131,23 @@ class RotaTableController extends APIController
 
                         // Initialize role statuses
                         $rolesStatus = [
-                            'speciality_lead' => 0,
-                            'anesthetic_lead' => 0,
-                            'staff_coordinator' => 0,
+                            'speciality_lead' => false,
+                            'anesthetic_lead' => false,
+                            'staff_coordinator' => false,
                         ];
                         
                         if($authUser->is_speciality_lead){
                             $rolesStatus = [
-                                'speciality_lead' => 0,
+                                'speciality_lead' => false,
                             ];
                         }else if($authUser->is_anesthetic_lead){
                             $rolesStatus = [
-                                'anesthetic_lead' => 0,
+                                'anesthetic_lead' => false,
                             ];
 
                         }else if($authUser->is_staff_coordinator){
                             $rolesStatus = [
-                                'staff_coordinator' => 0,
+                                'staff_coordinator' => false,
                             ];
                         }
                         
@@ -170,7 +178,7 @@ class RotaTableController extends APIController
                             foreach ($groupedUsers as $role => $users) {
                                 foreach ($users as $user) {
                                     if ($user->pivot->status) {
-                                        $rolesStatus[$role] = $user->pivot->status;
+                                        $rolesStatus[$role] = $user->pivot->status == 1 ? true : false;
 
                                         if($user->pivot->status == 1){
                                             break;
@@ -180,8 +188,14 @@ class RotaTableController extends APIController
                             }
                         }
 
-                        $room_records[$timeSlot][$key]['date'] = $date;
-                        $room_records[$timeSlot][$key]['value'] = $record ? $record->speciality_id : null;
+                        $carbonDate = Carbon::parse($date);
+                        $formattedDate = $carbonDate->format('D, j M');
+                        
+
+                        $room_records[$timeSlot][$key]['date'] = $formattedDate;
+                        $room_records[$timeSlot][$key]['rota_session_id'] = $record ? $record->id : null;
+                        $room_records[$timeSlot][$key]['speciality_id']   = $record ? $record->speciality_id : null;
+                        $room_records[$timeSlot][$key]['speciality_name'] = $record->specialityDetail ? $record->specialityDetail->speciality_name : 'Unavailable';
                         $room_records[$timeSlot][$key]['users'] = $record ? $record->users : null;
                         $room_records[$timeSlot][$key]['roles_status'] = $rolesStatus;
                        
@@ -198,8 +212,8 @@ class RotaTableController extends APIController
                 'data'      => $model,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            dd($e->getMessage() . '->' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+            // dd($e->getMessage() . '->' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . '->' . $e->getLine());
         }
     }
 
@@ -362,10 +376,10 @@ class RotaTableController extends APIController
                         if (count($availability_user) > 0) {
                             $rotaSession->users()->sync($availability_user);
 
-                           /* foreach($rotaSession->users as $user){
+                            foreach($rotaSession->users as $user){
                                 $subject = "Upcoming Session";
-                                Mail::to($user->user_email)->send(new RotaSessionMail($subject, $user, $rotaSession));
-                            }*/
+                                Mail::to($user->user_email)->queue(new RotaSessionMail($subject, $user, $rotaSession));
+                            }
                         }
                         // End Availability Users
                     }
@@ -388,7 +402,6 @@ class RotaTableController extends APIController
         }
     }
 
-
     public function getQuarters(){
     
         $currentYear = date('Y');
@@ -406,86 +419,51 @@ class RotaTableController extends APIController
     }
 
 
-    public function getAvailableSessions()
+    public function updateAvailability(UpdateAvailablityRequest $request,$uuid)
     {
-        try {
-            $user = auth()->user();
-
-            $query = RotaSession::query();
-
-            if ($user->is_speciality_lead) {
-                $query->where('procedure_id', $user->specialityDetail->value('id'));
-            }
-
-            $sessions = $query->get();
-
-            return $this->respondOk([
-                'status'   => true,
-                'message'   => trans('messages.get_available_session_list'),
-                'data'      => $sessions,
-            ])->setStatusCode(Response::HTTP_OK);
-        } catch (\Exception $e) {
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
-        }
-    }
-
-
-    public function updateAvailability(UpdateRotaSessionRequest $request)
-    {
-        $user = Auth::user();
-        $validatedData = $request->validated();
+        dd('working');
+        $authUser = auth()->user();
+       
         try {
             DB::beginTransaction();
-            foreach ($validatedData['sessions'] as $session) {
-                $rotaSession = RotaSession::findOrFail($session['rota_session_id']);
+           
+            $validatedData = $request->validated();
 
-                // Ensure the user has access to the session
-                if ($user->is_speciality_lead && $rotaSession->speciality_id !== $user->specialityDetail->value('id')) {
-                    return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
+            $startDate = $validatedData['week_days'][0];
+            $endDate = $validatedData['week_days'][6];
+
+            $start = Carbon::parse($startDate);
+            $weekNumber = $start->weekOfYear;
+          
+            $rota = Rota::where('uuid', $uuid)->first();
+            if($validatedData['rooms']){
+                foreach ($validatedData['rooms'] as $room) {
+                    $roomId = $room['id'];
+
+                    if($room['room_records']){
+
+                        foreach ($room['room_records'] as $time_slot => $dates) {
+                           dd($val);
+                        }
+
+                    }
+                    
+                    dd($room);
                 }
-
-                // Check if the room, time slot, and date match the rota session
-                if (
-                    $rotaSession->room_id !== $session['room_id'] || $rotaSession->time_slot !== $session['time_slot'] || $rotaSession->scheduled->format('Y-m-d') !== $session['date']
-                ) {
-                    return $this->setStatusCode(500)->respondWithError(trans('messages.data_mismatch'));
-                }
-
-                // Validate date if 'scheduled' is not null
-                // Validate date if 'scheduled' is not null
-                if ($rotaSession->scheduled) {
-                    $scheduledDate = $rotaSession->scheduled->format('Y-m-d');
-                } else {
-                    $scheduledDate = null;
-                }
-
-                if ($scheduledDate !== $session['date']) {
-                    return $this->setStatusCode(500)->respondWithError(trans('messages.date_data_mismatch'));
-                }
-
-                // Check if the user is associated with the rota session
-                $exists = $rotaSession->users()->where('user_id', $user->id)->exists();
-                if (!$exists) {
-                    return $this->setStatusCode(500)->respondWithError(trans('messages.user_not_assign_to_session'));
-                }
-
-                $rotaSession->users()->updateExistingPivot($user->id, ['status' => $session['status'] ?? "pending"]);
             }
-
+            
+         
             DB::commit();
 
             return $this->respondOk([
                 'status'   => true,
-                'message'   => trans('messages.user_available_session_status')
+                'message'   => trans('messages.record_updated_successfully')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return response()->json([
-                'status' => false,
-                'message' => 'An error occurred while updating availability status'
-            ], 500);
+            return $this->setStatusCode(500)
+            ->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
 }
