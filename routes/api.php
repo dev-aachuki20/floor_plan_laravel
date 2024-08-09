@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 
 
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RotaTableController;
 
@@ -324,4 +325,14 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     // confirm availability session status .
    // Route::patch('/rota-table/availability', [RotaTableController::class, 'updateAvailability']);
 
+    //Generate Reports For medical speciality
+    Route::post('reports/specialty-performance', [ReportController::class, 'getSpecialtyPerformance']);
+   
+
+
+
 });
+    Route::post('rota-table/sessions/confirm', [ReportController::class, 'confirmAvailability']);
+
+
+
