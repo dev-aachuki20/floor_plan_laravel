@@ -335,11 +335,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
     Route::post('reports', [ReportController::class, 'index']);
 
-    //Generate Reports For medical speciality
-    Route::post('reports/specialty-performance', [ReportController::class, 'getSpecialtyPerformance']);
-   
-
-
 
 });
 

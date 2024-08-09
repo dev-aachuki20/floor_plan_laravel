@@ -13,9 +13,6 @@ class UpdateAvailablityRequest extends FormRequest
     public function rules()
     {
         return [
-            'week_days'             => ['required', 'array','size:7'],
-            'week_days.*'           => ['required', 'date'],
-            'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
             'rooms'                 => 'required|array',
             'rooms.*.id'            => 'required|exists:rooms,id,deleted_at,NULL',
             'rooms.*.room_records.AM.*'  => 'nullable',

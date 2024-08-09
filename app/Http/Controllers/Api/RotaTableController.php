@@ -421,7 +421,6 @@ class RotaTableController extends APIController
 
     public function updateAvailability(UpdateAvailablityRequest $request,$uuid)
     {
-        dd('working');
         $authUser = auth()->user();
        
         try {
@@ -429,26 +428,33 @@ class RotaTableController extends APIController
            
             $validatedData = $request->validated();
 
-            $startDate = $validatedData['week_days'][0];
-            $endDate = $validatedData['week_days'][6];
-
-            $start = Carbon::parse($startDate);
-            $weekNumber = $start->weekOfYear;
-          
             $rota = Rota::where('uuid', $uuid)->first();
             if($validatedData['rooms']){
                 foreach ($validatedData['rooms'] as $room) {
                     $roomId = $room['id'];
 
+                    //Room Records
                     if($room['room_records']){
-
                         foreach ($room['room_records'] as $time_slot => $dates) {
-                           dd($val);
-                        }
+                            foreach ($dates as $date => $value) {
 
+                                $rotaSessionId = $value['rota_session_id'];
+                                $speciality    = $value['speciality_id'];
+                                $is_available  = $value['is_available'] ? 1 : 0;
+
+                                if($rotaSessionId){
+                                    // $rota_session = $rota->rotaSession()->where('id',$rotaSessionId)->first();
+
+                                    // $availability_user[$authUser->id] = ['role_id' => $authUser->primary_role, 'status' => $is_available];
+
+                                    // $rota_session->users()->where('id',$authUser->id)->sync($availability_user);
+                                }
+                            
+                            }
+                        }
                     }
-                    
-                    dd($room);
+                    //End Room Records
+                   
                 }
             }
             
