@@ -28,6 +28,12 @@ class ReportController extends APIController
 
         $performanceData = [];
 
+        $roleBasedTotals = [
+            'speciality' => ['total' => 0, 'confirmed' => 0, 'cancelled' => 0],
+            'anaesthetics' => ['total' => 0, 'confirmed' => 0, 'cancelled' => 0],
+            'staff' => ['total' => 0, 'confirmed' => 0, 'cancelled' => 0],
+        ];
+
         foreach ($weekDays as $date) {
             // Query for the sessions on each date
             $sessions = RotaSession::whereDate('week_day_date', $date)
@@ -49,6 +55,30 @@ class ReportController extends APIController
                     'cancelled_sessions' => $cancelledSessions,
                     'performance_percentage' => round($performancePercentage, 2),
                 ];
+
+                // Calculate role-based totals
+                foreach ($session->users as $user) {
+                    switch ($user->primary_role) {
+                        case config('constant.roles.speciality_lead'):
+                            $role = 'speciality';
+                            break;
+                        case config('constant.roles.anesthetic_lead'):
+                            $role = 'anaesthetics';
+                            break;
+                        case config('constant.roles.staff_coordinator'):
+                            $role = 'staff';
+                            break;
+                        default:
+                            continue 2;
+                    }
+
+                    $roleBasedTotals[$role]['total']++;
+                    if ($user->pivot->status == 1) {
+                        $roleBasedTotals[$role]['confirmed']++;
+                    } elseif ($user->pivot->status == 2) {
+                        $roleBasedTotals[$role]['cancelled']++;
+                    }
+                }
             }
         }
 
@@ -65,37 +95,42 @@ class ReportController extends APIController
             }
         }
 
-        $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;        
+        $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;
 
-        $reportOverview['percentage'] = round($weeklyPercentageOverview, 2);
+        // Calculate role-based performance percentages
+        foreach ($roleBasedTotals as $role => $totals) {
+            $roleBasedTotals[$role]['performance_percentage'] = $totals['total'] ? ($totals['confirmed'] / $totals['total']) * 100 : 0;
+        }
+
         $reportOverview['title'] = trans('messages.reports.overview.title');
         $reportOverview['description'] = trans('messages.reports.overview.descriptiion');
+        $reportOverview['percentage'] = round($weeklyPercentageOverview, 2);
 
         $reportsResponse['speciality']['role_id'] = config('constant.roles.speciality_lead');
         $reportsResponse['speciality']['title'] = trans('messages.reports.speciality.title');
         $reportsResponse['speciality']['description'] = trans('messages.reports.speciality.description');
-        $reportsResponse['speciality']['percentage'] = 40;
+        $reportsResponse['speciality']['percentage'] = round($roleBasedTotals['speciality']['performance_percentage'], 2);
 
 
         $reportsResponse['anaesthetics']['role_id'] = config('constant.roles.anesthetic_lead');
         $reportsResponse['anaesthetics']['title'] = trans('messages.reports.anaesthetics.title');
         $reportsResponse['anaesthetics']['description'] = trans('messages.reports.anaesthetics.description');
-        $reportsResponse['anaesthetics']['percentage'] = 30;
+        $reportsResponse['anaesthetics']['percentage'] = round($roleBasedTotals['anaesthetics']['performance_percentage'], 2);
 
-       
+
         $reportsResponse['staff']['role_id'] = config('constant.roles.staff_coordinator');
         $reportsResponse['staff']['title'] = trans('messages.reports.staff.title');
         $reportsResponse['staff']['description'] = trans('messages.reports.staff.description');
-        $reportsResponse['staff']['percentage'] = 80;
+        $reportsResponse['staff']['percentage'] = round($roleBasedTotals['staff']['performance_percentage'], 2);
 
-        
+
 
         return $this->respondOk([
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),
             'data' => [
                 // $performanceData,
-               /* 'percentage_overview' => round($weeklyPercentageOverview, 2),
+                /* 'percentage_overview' => round($weeklyPercentageOverview, 2),
                 'total_session' => $totalSessions,
                 'total_confirm_session' => $totalConfirmed,
                 'total_cancel_session' => $totalCancelled,*/
@@ -104,8 +139,6 @@ class ReportController extends APIController
 
             ],
         ])->setStatusCode(Response::HTTP_OK);
-
-
     }
 
 
@@ -121,7 +154,7 @@ class ReportController extends APIController
         $user = User::find($validatedData['user_id']);
         $sessionIds = $validatedData['rota_session_ids'];
         // dd($sessionIds);
-        
+
         // Check if the user is an anesthetic lead
         if ($user->is_anesthetic_lead) {
             // Confirm availability for each session
@@ -133,7 +166,7 @@ class ReportController extends APIController
                     $session->users()->updateExistingPivot($user->id, ['status' => 1]);
                 }
             }
-            
+
             /// Dispatch job to send emails
             // dispatch(new SessionConfirmationMail($session, $user));
             dispatch(new SessionConfirmationMail($sessionIds, $user));
