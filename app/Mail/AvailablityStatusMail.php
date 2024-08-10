@@ -15,19 +15,21 @@ class AvailablityStatusMail extends Mailable
 
     public $user;
     public $subject, $rota_session_detail;
+    public $staffMember;
    
     /**
      * Create a new message instance.
      */
-    public function __construct($subject,$user,$rota_session_detail)
+    public function __construct($subject,$user,$rota_session_detail,$staffMember)
     {
         $this->subject  = $subject;
         $this->user     = $user;
         $this->rota_session_detail = $rota_session_detail;
+        $this->staffMember = $staffMember;
     }
 
     public function build()
     {
-        return $this->markdown('emails.availablity-status-mail', ['user' => $this->user, 'rota_session_detail' => $this->rota_session_detail])->subject($this->subject);
+        return $this->markdown('emails.availablity-status-mail', ['user' => $this->user, 'rota_session_detail' => $this->rota_session_detail,'staffMember'=>$this->staffMember])->subject($this->subject);
     }
 }

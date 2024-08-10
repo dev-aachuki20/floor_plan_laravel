@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\Rota;
 use App\Models\RotaSession;
 use App\Models\Quarter;
+use App\Models\Speciality;
 use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Mail\RotaSessionMail;
@@ -45,7 +46,7 @@ class RotaTableController extends APIController
             ];
 
             if(in_array($request->time_slot,$timeSlots)){
-                $timeSlots = array_diff($timeSlots, [$request->time_slot]);
+                $timeSlots = [$request->time_slot];
             }
 
             $hospitalId = $request->hospital;
@@ -458,39 +459,39 @@ class RotaTableController extends APIController
                                 $speciality_name = $rota_session->specialityDetail ? $rota_session->specialityDetail->speciality_name : '';
                                 return $this->setStatusCode(403)
                                 ->respondWithError(trans('messages.already_confirm_session',['sessionName'=>$speciality_name,'sessionDate'=>$rota_session->week_day_date]));
-                
-                                return response()->json(['message' => 'This session has already been confirmed by another user.'], 403);
 
                             } else {
 
-                                // Prepare the data for the specific user
                                 // $availability_data = ['role_id' => $authUser->primary_role, 'status' => $is_available];
                                 $availability_data = ['role_id' => $authUser->primary_role, 'status' => 1];
 
-                                // Update only the current user's pivot data
                                 $rota_session->users()->updateExistingPivot($authUser->id, $availability_data);
 
                                 // Detach all other users from the rota session except the current user
                                 //$rota_session->users()->wherePivot('user_id', '!=', $authUser->id)->wherePivot('role_id', $authUser->primary_role)->detach();
 
                                
-                                $roleName = $authUser->role->role_name;
-                                $subject = trans('messages.availablity_status.confirm',['roleName'=>$roleName]);
-
-                                $adminUsers = $rota->hospitalDetail->users()->select('id','full_name','user_email')->get();
-                               
-                                $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
-                                if ($superAdmin) {
-                                    $adminUsers = $adminUsers->concat([$superAdmin]);
-                                }
-
-                                // dd($adminUsers);
+                                //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
+                                    $adminUsers = $rota->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
                                 
-                                // Mail::to($authUser->user_email)->queue(new AvailablityStatusMail($subject, $authUser, $rota_session));
+                                    $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
+                                    if ($superAdmin) {
+                                        $adminUsers = $adminUsers->concat([$superAdmin]);
+                                    }
+
+                                    if($adminUsers){
+
+                                        foreach($adminUsers as $user){
+                                            $roleName = $authUser->role->role_name;
+                                            $subject = trans('messages.availablity_status.confirm',['roleName'=>$roleName]);
+            
+                                            Mail::to($user->user_email)->queue(new AvailablityStatusMail($subject, $user, $rota_session, $authUser));
+                                        }
+
+                                    }
+                                // End to Notify to admin users
                                 
                             }
-
-                            
 
                         }
 
@@ -519,4 +520,46 @@ class RotaTableController extends APIController
             ->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
+
+
+    public function rotaTableDropdown(Request $request){
+
+        $validatedData = $request->validate([
+            'speciality_type'=> ['nullable']
+        ]);
+
+        $responseData = [];
+       
+        // Retrieve quarters 
+        $currentYear = date('Y');
+        $responseData['quarters'] = Quarter::select('id','quarter_name','start_date','end_date')->whereYear('start_date', $currentYear)
+                        ->whereYear('end_date', $currentYear)
+                        ->get();
+
+        // Retrieve specialities 
+        $specialities = Speciality::pluck('speciality_name','id');
+        if($request->speciality_type == 'list'){
+            $specialities[null] = 'Unavailable';
+        }          
+        $responseData['specialities'] = collect($specialities);
+                        
+        // Retrieve hospitals 
+        $hospitals = [];
+        $responseData['hospitals'] = Hospital::pluck('hospital_name','id');
+        if(auth()->user()){
+
+            if(auth()->user()->is_trust_admin || auth()->user()->is_hospital_admin){
+                $responseData['hospitals'] = auth()->user()->getHospitals()->pluck('hospital_name','id');
+            }
+        } 
+
+            
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $responseData,
+        ])->setStatusCode(Response::HTTP_OK);
+
+    }
+    
 }
