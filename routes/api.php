@@ -211,20 +211,22 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     */
     Route::post('rota-table', [RotaTableController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    |  Update Availability Rota Table Record API Route
-    |--------------------------------------------------------------------------
-    |
-    | Route         : http://localhost:8000/api/rota-table/update-availability/{uuid}
-    | Header        : Content-Type:application/json
-    |               : Authorization : Token
-    | Parameters    :
-    |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-    | Method        : POST
-    */
-    Route::post('/rota-table/update-availability/{uuid}', [RotaTableController::class, 'updateAvailability']);
+    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.speciality_lead'), config('constant.roles.anesthetic_lead'), config('constant.roles.staff_coordinator')])]], function () {
 
+        /*
+        |--------------------------------------------------------------------------
+        |  Update Availability Rota Table Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/update-availability/{uuid}
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :
+        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        | Method        : POST
+        */
+        Route::post('/rota-table/update-availability/{uuid}', [RotaTableController::class, 'updateAvailability']);
+    });
     
     Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])]], function () {
 

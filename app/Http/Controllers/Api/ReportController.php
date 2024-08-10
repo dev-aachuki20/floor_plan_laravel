@@ -67,9 +67,9 @@ class ReportController extends APIController
 
         $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;        
 
-        $reportsResponse['overview']['percentage'] = round($weeklyPercentageOverview, 2);
-        $reportsResponse['overview']['title'] = trans('messages.reports.overview.title');
-        $reportsResponse['overview']['description'] = trans('messages.reports.overview.descriptiion');
+        $reportOverview['percentage'] = round($weeklyPercentageOverview, 2);
+        $reportOverview['title'] = trans('messages.reports.overview.title');
+        $reportOverview['description'] = trans('messages.reports.overview.descriptiion');
 
         $reportsResponse['speciality']['role_id'] = config('constant.roles.speciality_lead');
         $reportsResponse['speciality']['title'] = trans('messages.reports.speciality.title');
@@ -99,7 +99,7 @@ class ReportController extends APIController
                 'total_session' => $totalSessions,
                 'total_confirm_session' => $totalConfirmed,
                 'total_cancel_session' => $totalCancelled,*/
-
+                $reportOverview,
                 $reportsResponse
 
             ],

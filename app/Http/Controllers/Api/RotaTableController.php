@@ -423,6 +423,7 @@ class RotaTableController extends APIController
     {
         $authUser = auth()->user();
        
+        dd('working');
         try {
             DB::beginTransaction();
            
@@ -438,17 +439,22 @@ class RotaTableController extends APIController
                         foreach ($room['room_records'] as $time_slot => $dates) {
                             foreach ($dates as $date => $value) {
 
-                                dd($value);
                                 $rotaSessionId = $value['rota_session_id'];
                                 $speciality    = $value['speciality_id'];
                                 $is_available  = $value['is_available'] ? 1 : 0;
 
                                 if($rotaSessionId){
-                                    // $rota_session = $rota->rotaSession()->where('id',$rotaSessionId)->first();
+                                    $rota_session = $rota->rotaSession()->where('id',$rotaSessionId)->first();
 
                                     // $availability_user[$authUser->id] = ['role_id' => $authUser->primary_role, 'status' => $is_available];
 
                                     // $rota_session->users()->where('id',$authUser->id)->sync($availability_user);
+
+                                    // Prepare the data for the specific user
+                                    $availability_data = ['role_id' => $authUser->primary_role, 'status' => $is_available];
+
+                                    // Update only the current user's pivot data
+                                    $rota_session->users()->updateExistingPivot($authUser->id, $availability_data);
                                 }
                             
                             }
