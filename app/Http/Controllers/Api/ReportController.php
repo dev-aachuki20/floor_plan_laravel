@@ -65,7 +65,11 @@ class ReportController extends APIController
             }
         }
 
-        $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;
+        $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;        
+
+        $reportsResponse['overview']['percentage'] = round($weeklyPercentageOverview, 2);
+        $reportsResponse['overview']['title'] = trans('messages.reports.overview.title');
+        $reportsResponse['overview']['description'] = trans('messages.reports.overview.descriptiion');
 
         $reportsResponse['speciality']['role_id'] = config('constant.roles.speciality_lead');
         $reportsResponse['speciality']['title'] = trans('messages.reports.speciality.title');
@@ -83,6 +87,8 @@ class ReportController extends APIController
         $reportsResponse['staff']['title'] = trans('messages.reports.staff.title');
         $reportsResponse['staff']['description'] = trans('messages.reports.staff.description');
         $reportsResponse['staff']['percentage'] = 80;
+
+        
 
         return $this->respondOk([
             'status'   => true,
@@ -106,21 +112,32 @@ class ReportController extends APIController
     public function confirmAvailability(Request $request)
     {
         $validatedData = $request->validate([
-            'rota_session_id' => 'required|integer|exists:rota_session_users,rota_session_id',
+            'rota_session_ids' => 'required|array',
+            // 'rota_session_ids.*' => 'integer|exists:rota_session_users,rota_session_id',
+            'rota_session_ids.*' => 'integer|exists:rota_sessions,id',
             'user_id'    => 'required|integer|exists:users,id',
         ]);
 
         $user = User::find($validatedData['user_id']);
-        $session = RotaSession::find($validatedData['rotasession_id']);
-        // dd($session);
+        $sessionIds = $validatedData['rota_session_ids'];
+        // dd($sessionIds);
+        
         // Check if the user is an anesthetic lead
         if ($user->is_anesthetic_lead) {
-            // Confirm availability
-            $session->users()->updateExistingPivot($user->id, ['status' => 1]);
-            /// Dispatch job to send emails
-            dispatch(new \App\Jobs\SessionConfirmationMail($session, $user));
+            // Confirm availability for each session
+            foreach ($sessionIds as $sessionId) {
+                $session = RotaSession::find($sessionId);
+                $hospitalAdmin = $session->rotaDetail->hospitalDetail;
+                dd($hospitalAdmin);
+                if ($session) {
+                    $session->users()->updateExistingPivot($user->id, ['status' => 1]);
+                }
+            }
             
-            return response()->json(['success' => true, 'message' => 'Session confirmed and emails sent.']);
+            /// Dispatch job to send emails
+            // dispatch(new SessionConfirmationMail($session, $user));
+            dispatch(new SessionConfirmationMail($sessionIds, $user));
+            return response()->json(['success' => true, 'message' => 'Session confirmed and email sent.']);
         }
 
         return response()->json(['success' => false, 'message' => 'User is not authorized to confirm this session.']);
