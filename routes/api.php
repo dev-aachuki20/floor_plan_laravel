@@ -337,10 +337,9 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
     Route::post('reports', [ReportController::class, 'index']);
 
+    Route::get('unconfirmed/sessions/reminder', [ReportController::class, 'sendSessionReminderForUnconfirmedUsers']);
 
 });
-
-Route::post('rota-table/sessions/confirm', [ReportController::class, 'confirmAvailability']);
 
     
 

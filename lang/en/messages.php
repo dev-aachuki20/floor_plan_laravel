@@ -87,15 +87,19 @@ return [
             'title' => 'Overview',
             'descriptiion' => 'The following graphic shows the level of progress in approved surgical procedures throughout the week in the selected hospital.',
         ]
+
     ],
 
-    'availablity_status' =>[
+    'availablity_status' => [
         'confirm' => ':roleName was confirmed',
         'decline' => ':roleName was declined',
         'cancel'  => ':roleName was canceled',
     ],
 
-    'already_confirm_session' => 'This session (:sessionName) on :sessionDate has already been confirmed by another user.'
+    'already_confirm_session' => 'This session (:sessionName) on :sessionDate has already been confirmed by another user.',
 
+    'notification' => [
+        'reminder_send' => 'Reminders sent successfully.',
+    ]
 
 ];

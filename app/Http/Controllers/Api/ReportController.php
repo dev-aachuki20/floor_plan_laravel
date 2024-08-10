@@ -8,10 +8,12 @@ use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use App\Jobs\SessionConfirmationMail;
+use App\Mail\SessionReminderMail;
 use App\Models\Speciality;
 use App\Models\User;
 use Symfony\Component\HttpFoundation\Response;
 use Mail;
+use Illuminate\Support\Facades\Log;
 
 
 class ReportController extends APIController
@@ -142,37 +144,48 @@ class ReportController extends APIController
     }
 
 
-    public function confirmAvailability(Request $request)
+
+    public function sendSessionReminderForUnconfirmedUsers()
     {
-        $validatedData = $request->validate([
-            'rota_session_ids' => 'required|array',
-            // 'rota_session_ids.*' => 'integer|exists:rota_session_users,rota_session_id',
-            'rota_session_ids.*' => 'integer|exists:rota_sessions,id',
-            'user_id'    => 'required|integer|exists:users,id',
-        ]);
+        $sevenDaysAgo = now()->subDays(7);
 
-        $user = User::find($validatedData['user_id']);
-        $sessionIds = $validatedData['rota_session_ids'];
-        // dd($sessionIds);
+        $dates = collect(range(1, 7))->map(function ($day) {
+            return now()->subDays($day)->startOfDay();
+        });
 
-        // Check if the user is an anesthetic lead
-        if ($user->is_anesthetic_lead) {
-            // Confirm availability for each session
-            foreach ($sessionIds as $sessionId) {
-                $session = RotaSession::find($sessionId);
-                $hospitalAdmin = $session->rotaDetail->hospitalDetail;
-                dd($hospitalAdmin);
-                if ($session) {
-                    $session->users()->updateExistingPivot($user->id, ['status' => 1]);
-                }
-            }
-
-            /// Dispatch job to send emails
-            // dispatch(new SessionConfirmationMail($session, $user));
-            dispatch(new SessionConfirmationMail($sessionIds, $user));
-            return response()->json(['success' => true, 'message' => 'Session confirmed and email sent.']);
+        // Initialize a collection to hold unconfirmed sessions
+        $unconfirmedSessions = collect();
+        foreach ($dates as $date) {
+            $sessions = RotaSession::whereHas('users', function ($query) {
+                $query->where('status', 0);
+            })
+                ->whereDate('week_day_date', $date)
+                ->with('users')
+                ->get();
+            $unconfirmedSessions = $unconfirmedSessions->merge($sessions);
         }
 
-        return response()->json(['success' => false, 'message' => 'User is not authorized to confirm this session.']);
+        $usersToNotify = $unconfirmedSessions->flatMap(function ($session) {
+
+            // Get the confirmed user role
+            $confirmedUserRole = $session->users->filter(function ($user) {
+                return $user->pivot->status == 1;
+            })->pluck('pivot.role_id')->unique();
+
+            // Get users with unconfirmed status and roles different from the confirmed user role
+            return $session->users->filter(function ($user) use ($confirmedUserRole) {
+                return $user->pivot->status == 0 && !$confirmedUserRole->contains($user->pivot->role_id);
+            });
+        })->unique('id');
+
+        // Send email reminders
+        foreach ($usersToNotify as $user) {
+            Mail::to($user->email)->queue(new SessionReminderMail($unconfirmedSessions));
+        }
+
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.reminder_send'),
+        ])->setStatusCode(Response::HTTP_OK);
     }
 }
