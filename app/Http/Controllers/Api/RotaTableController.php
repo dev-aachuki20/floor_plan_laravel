@@ -136,16 +136,6 @@ class RotaTableController extends APIController
 
                         $record = $record->first();
 
-                        // Calculate statistics
-                        if ($record) {
-                            $statistics = calculateRoleStatistics($record->users ?? collect());
-
-                            // Update day statistics
-                            $days_of_week[$key]['statistics']['overall'] += $statistics['overall'];
-                            $days_of_week[$key]['statistics']['speciality'] += $statistics['speciality_lead'];
-                            $days_of_week[$key]['statistics']['anesthetic'] += $statistics['anesthetic_lead'];
-                            $days_of_week[$key]['statistics']['staff'] += $statistics['staff_coordinator'];
-                        }
 
                         // Initialize role statuses
                         $rolesStatus = [
