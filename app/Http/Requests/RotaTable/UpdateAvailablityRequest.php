@@ -13,11 +13,7 @@ class UpdateAvailablityRequest extends FormRequest
     public function rules()
     {
         return [
-            'rooms'                 => 'required|array',
-            'rooms.*.id'            => 'required|exists:rooms,id,deleted_at,NULL',
-            'rooms.*.room_records.AM.*'  => 'nullable',
-            'rooms.*.room_records.PM.*'  => 'nullable',
-            'rooms.*.room_records.EVE.*' => 'nullable',
+            'rota_sessions' => 'required|array',
         ];
     }
 
@@ -29,7 +25,7 @@ class UpdateAvailablityRequest extends FormRequest
     public function attributes()
     {
         return [
-            'hospital_id'   => 'hospital',
+           
         ];
     }
 }
