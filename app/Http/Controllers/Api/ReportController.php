@@ -67,17 +67,39 @@ class ReportController extends APIController
 
         $weeklyPercentageOverview = $totalSessions ? ($totalConfirmed / $totalSessions) * 100 : 0;
 
+        $reportsResponse['speciality']['role_id'] = config('constant.roles.speciality_lead');
+        $reportsResponse['speciality']['title'] = trans('messages.reports.speciality.title');
+        $reportsResponse['speciality']['description'] = trans('messages.reports.speciality.description');
+        $reportsResponse['speciality']['percentage'] = 40;
+
+
+        $reportsResponse['anaesthetics']['role_id'] = config('constant.roles.anesthetic_lead');
+        $reportsResponse['anaesthetics']['title'] = trans('messages.reports.anaesthetics.title');
+        $reportsResponse['anaesthetics']['description'] = trans('messages.reports.anaesthetics.description');
+        $reportsResponse['anaesthetics']['percentage'] = 30;
+
+       
+        $reportsResponse['staff']['role_id'] = config('constant.roles.staff_coordinator');
+        $reportsResponse['staff']['title'] = trans('messages.reports.staff.title');
+        $reportsResponse['staff']['description'] = trans('messages.reports.staff.description');
+        $reportsResponse['staff']['percentage'] = 80;
+
         return $this->respondOk([
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),
             'data' => [
                 // $performanceData,
-                'weekly_percentage_overview' => round($weeklyPercentageOverview, 2),
-                'weekly_total_session' => $totalSessions,
-                'weekly_total_confirm_session' => $totalConfirmed,
-                'weekly_total_cancel_session' => $totalCancelled,
+               /* 'percentage_overview' => round($weeklyPercentageOverview, 2),
+                'total_session' => $totalSessions,
+                'total_confirm_session' => $totalConfirmed,
+                'total_cancel_session' => $totalCancelled,*/
+
+                $reportsResponse
+
             ],
         ])->setStatusCode(Response::HTTP_OK);
+
+
     }
 
 

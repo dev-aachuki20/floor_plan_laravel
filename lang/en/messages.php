@@ -70,6 +70,19 @@ return [
     'user_created_and_welcome_email_sent'  => 'User created successfully and a welcome email has been sent.',
     'user_updated_and_email_sent'  => 'User updated successfully and email has been sent.',
 
-
+    'reports'=>[
+        'speciality' => [
+            'title'       => 'Surgeons',
+            'description' => 'The following graphic shows the level of progress of prepared surgeons over the week in the selected hospital.'
+        ],
+        'anaesthetics' => [
+            'title'       => 'Anaesthetics',
+            'description' => 'The following graphic shows the level of progress of prepared anaesthetics over the week in the selected hospital.'
+        ],
+        'staff' => [
+            'title'       => 'Staff',
+            'description' => 'The following graphic shows the level of progress of prepared staff over the week in the selected hospital.'
+        ]
+    ]
     
 ];

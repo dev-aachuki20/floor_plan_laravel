@@ -438,6 +438,7 @@ class RotaTableController extends APIController
                         foreach ($room['room_records'] as $time_slot => $dates) {
                             foreach ($dates as $date => $value) {
 
+                                dd($value);
                                 $rotaSessionId = $value['rota_session_id'];
                                 $speciality    = $value['speciality_id'];
                                 $is_available  = $value['is_available'] ? 1 : 0;
