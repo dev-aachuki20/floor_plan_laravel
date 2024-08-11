@@ -54,17 +54,13 @@ class HomeController extends APIController
 
         $hospitals = [];
 
-        if(is_null($trust)){
+        if(!auth()->user()->is_system_admin){
+            $hospitals = auth()->user()->getHospitals()->pluck('hospital_name','id');
+        }else if(is_null($trust)){
             $hospitals = Hospital::pluck('hospital_name','id');
-        }else if(auth()->user()){
-
-            if(auth()->user()->is_trust_admin || auth()->user()->is_hospital_admin){
-                $hospitals = auth()->user()->getHospitals()->pluck('hospital_name','id');
-            }else{
-                $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
-            } 
-            
-        }
+        }else{
+            $hospitals = Hospital::where('trust',$trust)->pluck('hospital_name','id');
+        } 
 
         return $this->respondOk([
             'status'   => true,

@@ -210,6 +210,21 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
     /*
     |--------------------------------------------------------------------------
+    |  Get Rota Table Filter Dropdown API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/rota-table/filter-dropdowns
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    : 
+    |                
+    | Method        : POST
+    |
+    */
+    Route::post('rota-table/filter-dropdowns', [RotaTableController::class, 'rotaTableFitlerDropdown']);
+
+    /*
+    |--------------------------------------------------------------------------
     |  Get Rota Table Records API Routes
     |--------------------------------------------------------------------------
     |

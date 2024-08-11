@@ -82,7 +82,7 @@ class RotaTableController extends APIController
             })->first();
 
             $model->all_rooms = $model->rooms()->select('id as value', 'room_name as label')->get();
-            $model->all_status = [
+            $model->all_status = [ 
                 ['value' => 1, 'label' => 'Closed'],
                 ['value' => 2, 'label' => 'At Risk']
             ];
@@ -358,22 +358,17 @@ class RotaTableController extends APIController
                             config('constant.roles.anesthetic_lead'),
                         ];
 
-                        $availabilityUsers = $rota->hospitalDetail->users()
-                            ->whereIn('primary_role', $rolesId)
-                            ->whereHas('specialityDetail', function ($query) use ($speciality) {
-                                $query->where('speciality_id', $speciality);
-                            })
-                            ->with('specialityDetail')
-                            ->get();
+                        $availabilityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->whereIn('primary_role', $rolesId)->get() : [];
 
                         $availability_user = [];
                         foreach ($availabilityUsers as $user) {
-                            $availability_user[$user->id] = ['role_id' => $user->primary_role, 'status' => 0];
-                        }
+                            $availability_user[$user->id] = ['role_id' => $user->primary_role];
+                        }  
 
                         if (count($availability_user) > 0) {
-                            $rotaSession->users()->sync($availability_user);
 
+                            $rotaSession->users()->sync($availability_user);
+                         
                             foreach ($rotaSession->users as $user) {
                                 $subject = "Upcoming Session";
                                 Mail::to($user->user_email)->queue(new RotaSessionMail($subject, $user, $rotaSession));
@@ -517,7 +512,7 @@ class RotaTableController extends APIController
        
         // Retrieve quarters 
         $currentYear = date('Y');
-        $responseData['quarters'] = Quarter::select('id','quarter_name','start_date','end_date')->whereYear('start_date', $currentYear)
+        $responseData['quarters'] = Quarter::select('id as value','quarter_name as label')->whereYear('start_date', $currentYear)
                         ->whereYear('end_date', $currentYear)
                         ->get();
 
@@ -533,11 +528,38 @@ class RotaTableController extends APIController
         $responseData['hospitals'] = Hospital::pluck('hospital_name','id');
         if(auth()->user()){
 
-            if(auth()->user()->is_trust_admin || auth()->user()->is_hospital_admin){
+            if(!auth()->user()->is_system_admin){
                 $responseData['hospitals'] = auth()->user()->getHospitals()->pluck('hospital_name','id');
             }
         } 
 
+            
+        return $this->respondOk([
+            'status'   => true,
+            'message'   => trans('messages.record_retrieved_successfully'),
+            'data'      => $responseData,
+        ])->setStatusCode(Response::HTTP_OK);
+
+    }
+
+    public function rotaTableFitlerDropdown(Request $request){
+        $validatedData = $request->validate([
+            'hospital'=> ['required']
+        ]);
+
+        $responseData = [];
+
+        //Retrieve Rooms
+        $responseData['all_rooms'] = Room::select('id as value', 'room_name as label')->where('hospital_id',$request->hospital)->get();
+
+        // Retrieve specialities 
+        $responseData['specialities'] = Speciality::select('id as value','speciality_name as label',)->get();         
+      
+        //Retrieve Status
+        $responseData['all_status'] = [ 
+                ['value' => 1, 'label' => 'Closed'],
+                ['value' => 2, 'label' => 'At Risk']
+        ];
             
         return $this->respondOk([
             'status'   => true,
