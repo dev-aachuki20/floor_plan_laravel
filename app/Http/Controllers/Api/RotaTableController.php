@@ -104,9 +104,7 @@ class RotaTableController extends APIController
                     foreach ($weekDays as $key => $date) {
 
                         $record = RotaSession::with(['users' => function ($query) use ($authUser) {
-                            // $query->select('users.id', 'users.full_name') 
-                            //       ->addSelect('rota_session_users.status');
-
+                          
                             $rolesId = [
                                 config('constant.roles.speciality_lead'),
                                 config('constant.roles.staff_coordinator'),
@@ -144,21 +142,12 @@ class RotaTableController extends APIController
                             'staff_coordinator' => false,
                         ];
 
-                        if ($authUser->is_speciality_lead) {
+                        if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
                             $rolesStatus = [
-                                'speciality_lead' => false,
-                            ];
-                        } else if ($authUser->is_anesthetic_lead) {
-                            $rolesStatus = [
-                                'anesthetic_lead' => false,
-                            ];
-                        } else if ($authUser->is_staff_coordinator) {
-                            $rolesStatus = [
-                                'staff_coordinator' => false,
+                                'is_available' => false,
                             ];
                         }
-
-
+                        
                         // Group users by their role and check status
                         if ($record && $record->users) {
                             $groupedUsers = [
@@ -185,7 +174,12 @@ class RotaTableController extends APIController
                             foreach ($groupedUsers as $role => $users) {
                                 foreach ($users as $user) {
                                     if ($user->pivot->status) {
-                                        $rolesStatus[$role] = $user->pivot->status == 1 ? true : false;
+
+                                        if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
+                                            $rolesStatus['is_available'] = $user->pivot->status == 1 ? true : false;
+                                        }else{
+                                            $rolesStatus[$role] = $user->pivot->status == 1 ? true : false;
+                                        }
 
                                         if ($user->pivot->status == 1) {
                                             break;
@@ -218,7 +212,7 @@ class RotaTableController extends APIController
                 'data'      => $model,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            dd($e->getMessage() . '->' . $e->getLine());
+            // dd($e->getMessage() . '->' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message') . $e->getMessage() . '->' . $e->getLine());
         }
     }
