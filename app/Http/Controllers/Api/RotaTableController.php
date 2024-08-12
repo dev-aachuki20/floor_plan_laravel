@@ -125,15 +125,15 @@ class RotaTableController extends APIController
                         //Start Apply filters
                         if ($request->filter_by) {
 
-                            if ($request->filter_by == 'specialty' && $request->filter_value) {
+                            if ($request->filter_by == 'speciality' && $request->filter_value) {
 
                                 $record = $record->whereIn('speciality_id', $request->filter_value);
+
                             }
                         }
                         //End Apply filters
 
                         $record = $record->first();
-
 
                         // Initialize role statuses
                         $rolesStatus = [
@@ -248,7 +248,7 @@ class RotaTableController extends APIController
 
             $hospitalData = Hospital::select('id', 'hospital_name')->where('id', $hospitalId)->first();
 
-            $hospitalData->rota_table = $hospitalData->rotaTable()->select('id', 'uuid', 'quarter_id', 'hospital_id', 'week_no', 'week_start_date', 'week_end_date')->where('week_no', $weekNumber)->where('hospital_id', $hospitalId)->where(function ($query) use ($weekDays) {
+            $hospitalData->rota_table = $hospitalData->rotaTable()->select('id', 'uuid', 'quarter_id', 'hospital_id', 'week_no', 'week_start_date', 'week_end_date','updated_at')->where('week_no', $weekNumber)->where('hospital_id', $hospitalId)->where(function ($query) use ($weekDays) {
                 $query->whereDate('week_start_date', '<=', min($weekDays))
                     ->whereDate('week_end_date', '>=', max($weekDays));
             })->first();
@@ -309,7 +309,7 @@ class RotaTableController extends APIController
             $weekNumber = $start->weekOfYear;
 
             $rotaRecords = [
-                'quarter_id'      => $validatedData['quarter_id'],
+                'quarter_id'      => $validatedData['quarter_id'] ?? null,
                 'hospital_id'     => $validatedData['hospital_id'],
                 'week_no'         => $weekNumber,
                 'week_start_date' => $startDate,
@@ -339,7 +339,7 @@ class RotaTableController extends APIController
                         $rotaSessionRecords = [
                             'room_id'       => $roomId,
                             'time_slot'     => $slotKey,
-                            'speciality_id' => $speciality,
+                            'speciality_id' => $speciality ?? null,
                             'week_day_date' => $date,
                         ];
 
@@ -432,8 +432,8 @@ class RotaTableController extends APIController
                         $rota_session = $rota->rotaSession()->where('id', $id)->where('speciality_id', '!=', null)->first();
                         if ($rota_session) {
 
-                            $availability_data = ['role_id' => $authUser->primary_role, 'status' => 0];
-                            $rota_session->users()->updateExistingPivot($authUser->id, $availability_data);
+                            // $availability_data = ['role_id' => $authUser->primary_role, 'status' => 0];
+                            // $rota_session->users()->updateExistingPivot($authUser->id, $availability_data);
 
 
                             $existingConfirmed = $rota_session->users()->wherePivot('status', 1)->wherePivot('role_id', $authUser->primary_role)->wherePivot('user_id', '!=', $authUser->id)->exists();
@@ -444,17 +444,16 @@ class RotaTableController extends APIController
                                 return $this->setStatusCode(403)
                                 ->respondWithError(trans('messages.already_confirm_session',['sessionName'=>$speciality_name,'sessionDate'=>$rota_session->week_day_date]));
 
-                                return response()->json(['message' => 'This session has already been confirmed by another user.'], 403);
                             } else {
+                               
+                                $is_available = $is_available ? 1 : 2;
 
-                                // $availability_data = ['role_id' => $authUser->primary_role, 'status' => $is_available];
-                                $availability_data = ['role_id' => $authUser->primary_role, 'status' => 1];
-
+                                $availability_data = ['role_id' => $authUser->primary_role, 'status' => $is_available];
+                             
                                 $rota_session->users()->updateExistingPivot($authUser->id, $availability_data);
 
                                 // Detach all other users from the rota session except the current user
                                 //$rota_session->users()->wherePivot('user_id', '!=', $authUser->id)->wherePivot('role_id', $authUser->primary_role)->detach();
-
                                
                                 //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
                                     $adminUsers = $rota->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
@@ -519,7 +518,7 @@ class RotaTableController extends APIController
         // Retrieve specialities 
         $specialities = Speciality::pluck('speciality_name','id');
         if($request->speciality_type == 'list'){
-            $specialities[null] = 'Unavailable';
+            $specialities[''] = 'Unavailable';
         }          
         $responseData['specialities'] = collect($specialities);
                         

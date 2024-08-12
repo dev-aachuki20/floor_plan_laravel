@@ -13,7 +13,7 @@ class SaveRotaRequest extends FormRequest
     public function rules()
     {
         return [
-            'quarter_id'            => 'required|exists:quarters,id',
+            'quarter_id'            => 'nullable',
             'week_days'             => ['required', 'array','size:7'],
             'week_days.*'           => ['required', 'date'],
             'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
