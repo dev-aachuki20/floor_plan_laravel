@@ -1,10 +1,9 @@
 <?php
 
-use App\Models\Order;
 use App\Models\Setting;
-use App\Models\Shift;
 use App\Models\Uploads;
 use App\Models\User;
+use App\Models\RotaSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str as Str;
@@ -184,57 +183,30 @@ if (!function_exists('generateSlug')) {
 	}
 }
 
-if (!function_exists('calculateRoleStatistics')) {
+if (!function_exists('calculateRotaTableStatistics')) {
 
-	function calculateRoleStatistics($users)
+	function calculateRotaTableStatistics($date,$role=null)
 	{
-		$rolesId = [
-			config('constant.roles.speciality_lead'),
-			config('constant.roles.anesthetic_lead'),
-			config('constant.roles.staff_coordinator'),
-		];
+		$totaRotaSession = RotaSession::whereDate('week_day_date',$date)->whereNotNull('speciality_id')->count();
+		$rotaSession = RotaSession::whereDate('week_day_date',$date)->whereNotNull('speciality_id')->first();
 
-		// Initialize counters
-		$roleCounts = [
-			'speciality_lead' => 0,
-			'anesthetic_lead' => 0,
-			'staff_coordinator' => 0,
-			'overall' =>0,
-		];
+		$totalConfirmedSession = 0;
 
-		$totalSessions = 0;
-
-		foreach ($users as $user) {
-			$totalSessions++;
-
-			switch ($user->pivot->role_id) {
-				case $rolesId[0]: // Speciality Lead
-					if ($user->pivot->status == 1) {
-						$roleCounts['speciality_lead']++;
-					}
-					break;
-				case $rolesId[1]: // Anesthetic Lead
-					if ($user->pivot->status == 1) {
-						$roleCounts['anesthetic_lead']++;
-					}
-					break;
-				case $rolesId[2]: // Staff Coordinator
-					if ($user->pivot->status == 1) {
-						$roleCounts['staff_coordinator']++;
-					}
-					break;
+		if($rotaSession){
+			if($rotaSession->users){
+				$rotaSession = $rotaSession->users();
+	
+				if($role){
+					$rotaSession = $rotaSession->wherePivot('role_id',$role);
+				}
+				
+				$totalConfirmedSession = $rotaSession->wherePivot('status',1)->count();
+		
 			}
 		}
+		
+		$result = $totalConfirmedSession > 0 ? round(($totalConfirmedSession / $totaRotaSession) * 100, 2) : 0;
 
-		// Calculate percentages
-		$percentages = [
-			'speciality_lead' => $totalSessions > 0 ? round(($roleCounts['speciality_lead'] / $totalSessions) * 100, 2) : 0,
-			'anesthetic_lead' => $totalSessions > 0 ? round(($roleCounts['anesthetic_lead'] / $totalSessions) * 100, 2) : 0,
-			'staff_coordinator' => $totalSessions > 0 ? round(($roleCounts['staff_coordinator'] / $totalSessions) * 100, 2) : 0,
-			'overall' =>	$totalSessions > 0 ? round(($roleCounts['speciality_lead'] + $roleCounts['anesthetic_lead'] + $roleCounts['staff_coordinator']) / $totalSessions * 100, 2) : 0
-		];
-
-		// dd($percentages);
-		return $percentages;
+		return $result;
 	}
 }

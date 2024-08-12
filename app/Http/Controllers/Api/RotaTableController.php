@@ -66,10 +66,10 @@ class RotaTableController extends APIController
                 $days_of_week[$key]['date'] = $formattedDate;
 
                 if (in_array($authUser->primary_role, $adminRoles)) {
-                    $days_of_week[$key]['statistics']['overall'] = 0;
-                    $days_of_week[$key]['statistics']['speciality'] = 0;
-                    $days_of_week[$key]['statistics']['anesthetic'] = 0;
-                    $days_of_week[$key]['statistics']['staff'] = 0;
+                    $days_of_week[$key]['statistics']['overall'] = calculateRotaTableStatistics($date);
+                    $days_of_week[$key]['statistics']['speciality'] = calculateRotaTableStatistics($date, config('constant.roles.speciality_lead'));
+                    $days_of_week[$key]['statistics']['anesthetic'] = calculateRotaTableStatistics($date, config('constant.roles.anesthetic_lead'));
+                    $days_of_week[$key]['statistics']['staff'] = calculateRotaTableStatistics($date, config('constant.roles.staff_coordinator'));
                 }
             }
             //End Week days
