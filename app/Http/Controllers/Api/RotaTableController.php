@@ -103,7 +103,7 @@ class RotaTableController extends APIController
                 foreach ($timeSlots as $timeSlot) {
                     foreach ($weekDays as $key => $date) {
 
-                        $record = RotaSession::with(['users' => function ($query) use ($authUser) {
+                        $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
                           
                             $rolesId = [
                                 config('constant.roles.speciality_lead'),
@@ -111,14 +111,17 @@ class RotaTableController extends APIController
                                 config('constant.roles.anesthetic_lead'),
                             ];
 
+                            // $query->select('users.id', 'users.full_name')
+                            //     ->withPivot('status', 'role_id')
+                            //     ->wherePivotIn('role_id', $rolesId);
+
                             $query->select('users.id', 'users.full_name')
-                                ->withPivot('status', 'role_id')
-                                ->wherePivotIn('role_id', $rolesId);
+                                ->whereIn('rota_session_users.role_id', $rolesId);
 
                             if (in_array($authUser->primary_role, $rolesId)) {
                                 $query->where('users.id', $authUser->id);
                             }
-                        }])->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                        })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
                             ->whereDate('week_day_date', $date)
                             ->where('time_slot', $timeSlot);
 
@@ -518,7 +521,7 @@ class RotaTableController extends APIController
         // Retrieve specialities 
         $specialities = Speciality::pluck('speciality_name','id');
         if($request->speciality_type == 'list'){
-            $specialities[''] = 'Unavailable';
+            $specialities[0] = 'Unavailable';
         }          
         $responseData['specialities'] = collect($specialities);
                         
