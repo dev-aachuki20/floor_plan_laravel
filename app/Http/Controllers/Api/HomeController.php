@@ -70,12 +70,14 @@ class HomeController extends APIController
     }
 
     public function getSpecialities($type = null){
-        $specialities = Speciality::pluck('speciality_name','id');
+        $specialities = Speciality::where('id','!=',10)->pluck('speciality_name','id');
         
        if($type == 'list'){
-            $specialities[null] = 'Unavailable';
+            // $specialities[null] = 'Unavailable';
 
-            $specialities = collect($specialities);
+            // $specialities = collect($specialities);
+
+            $specialities = Speciality::pluck('speciality_name','id');
        }
         
 

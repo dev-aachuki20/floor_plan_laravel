@@ -277,7 +277,7 @@ class RotaTableController extends APIController
                             ->first();
 
                         $room_records[$timeSlot][$key]['date'] = $date;
-                        $room_records[$timeSlot][$key]['value'] = $record ? $record->speciality_id : null;
+                        $room_records[$timeSlot][$key]['value'] = ($record && (!is_null($record->speciality_id))) ? $record->speciality_id : '';
                     }
                 }
 
@@ -354,6 +354,8 @@ class RotaTableController extends APIController
                             $rotaSession = $rota->rotaSession()->create($rotaSessionRecords);
                         }
 
+                       
+                       
                         // Start Availability Users
                         $rolesId = [
                             config('constant.roles.speciality_lead'),
@@ -371,13 +373,15 @@ class RotaTableController extends APIController
                         if (count($availability_user) > 0) {
 
                             $rotaSession->users()->sync($availability_user);
-                         
+                        
                             foreach ($rotaSession->users as $user) {
                                 $subject = "Upcoming Session";
                                 Mail::to($user->user_email)->queue(new RotaSessionMail($subject, $user, $rotaSession));
                             }
                         }
                         // End Availability Users
+
+                        
                     }
                 }
             }
@@ -520,9 +524,9 @@ class RotaTableController extends APIController
 
         // Retrieve specialities 
         $specialities = Speciality::pluck('speciality_name','id');
-        if($request->speciality_type == 'list'){
-            $specialities[0] = 'Unavailable';
-        }          
+        // if($request->speciality_type == 'list'){
+        //     $specialities[''] = 'Unavailable';
+        // }          
         $responseData['specialities'] = collect($specialities);
                         
         // Retrieve hospitals 
@@ -555,7 +559,7 @@ class RotaTableController extends APIController
         $responseData['all_rooms'] = Room::select('id as value', 'room_name as label')->where('hospital_id',$request->hospital)->get();
 
         // Retrieve specialities 
-        $responseData['specialities'] = Speciality::select('id as value','speciality_name as label',)->get();         
+        $responseData['specialities'] = Speciality::select('id as value','speciality_name as label')->where('id','!=',10)->get();         
       
         //Retrieve Status
         $responseData['all_status'] = [ 
