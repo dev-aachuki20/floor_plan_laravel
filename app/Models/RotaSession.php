@@ -17,20 +17,40 @@ class RotaSession extends Model
     ];
 
     protected $fillable = [
-        'rota_id',
+        'uuid',
+        'quarter_id',
+        'week_no',
+        'hospital_id',
         'room_id',
         'time_slot',
         'speciality_id',
         'week_day_date',
+        'created_by',
         'created_at',
         'updated_at',
-       
+
     ];
 
-   
-    public function rotaDetail()
+    protected static function boot()
     {
-        return $this->belongsTo(Rota::class, 'rota_id', 'id');
+        parent::boot();
+
+        static::creating(function (RotaSession $model) {
+
+            $model->uuid = Str::uuid();
+
+            $model->created_by = auth()->user() ? auth()->user()->id : null;
+        });
+    }
+
+    public function quarterDetail()
+    {
+        return $this->belongsTo(Quarter::class, 'quarter_id', 'id');
+    }
+
+    public function hospitalDetail()
+    {
+        return $this->belongsTo(Hospital::class, 'hospital_id', 'id');
     }
 
     public function roomDetail()
@@ -38,7 +58,7 @@ class RotaSession extends Model
         return $this->belongsTo(Room::class, 'room_id', 'id');
     }
 
-    
+
     public function specialityDetail()
     {
         return $this->belongsTo(Speciality::class, 'speciality_id', 'id');
@@ -48,9 +68,14 @@ class RotaSession extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'rota_session_users')
-                    ->withPivot(['role_id','status']);             
+                    ->withPivot(['role_id','status']);
     }
 
-  
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+
 
 }

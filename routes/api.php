@@ -203,8 +203,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/rota-table/dropdowns
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
-    |                
+    | Parameters    :
+    |
     | Method        : POST
     |
     */
@@ -218,8 +218,8 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Route         : http://localhost:8000/api/rota-table/filter-dropdowns
     | Header        : Content-Type:application/json
     |               : Authorization : Token
-    | Parameters    : 
-    |                
+    | Parameters    :
+    |
     | Method        : POST
     |
     */
@@ -250,16 +250,16 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |  Update Availability Rota Table Record API Route
         |--------------------------------------------------------------------------
         |
-        | Route         : http://localhost:8000/api/rota-table/update-availability/{uuid}
+        | Route         : http://localhost:8000/api/rota-table/update-availability
         | Header        : Content-Type:application/json
         |               : Authorization : Token
         | Parameters    :
-        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        |
         | Method        : POST
         */
-        Route::post('/rota-table/update-availability/{uuid}', [RotaTableController::class, 'updateAvailability']);
+        Route::post('/rota-table/update-availability', [RotaTableController::class, 'updateAvailability']);
     });
-    
+
     Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin')])]], function () {
 
         /*
@@ -374,18 +374,18 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     Route::get('test-notification/{user}', [NotificationController::class, 'sendmailToUser']);
 
 
-    
+
     /*
     |--------------------------------------------------------------------------
     |  Notifications API Routes
     |--------------------------------------------------------------------------
-    | 
+    |
     | Route         : http://localhost:8000/api/notifications
     | Header        : Content-Type:application/json
     |               : Authorization : Token
     | Parameters    :- filter_by = type, filter_value = 'session_confirmed','session_canceled'
     | Method        : GET
-    | 
+    |
     */
     Route::get('notifications', [NotificationController::class, 'index']);
 
@@ -393,21 +393,21 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     |--------------------------------------------------------------------------
     |  Mark As Read Notification API Routes
     |--------------------------------------------------------------------------
-    | 
+    |
     | Route         : http://localhost:8000/api/notifications/{uuid}/mark-as-read
     | Header        : Content-Type:application/json
     |               : Authorization : Token
     | Parameters    :- uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
     | Method        : PUT
-    | 
+    |
     */
     Route::put('/notifications/{uuid}/mark-as-read', [NotificationController::class,'makeAsRead']);
 
 
-    
+
 
 });
 
-    
+
 
 

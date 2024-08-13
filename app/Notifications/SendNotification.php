@@ -42,12 +42,11 @@ class SendNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable)
     {
-      
+
         $subject = $this->data['subject'];
         $userName = $notifiable->full_name;
         $message = $this->data['message'];
 
-       
         if($this->data['notification_type'] == 'session_available'){
 
             if(isset($this->data['rota_session'])){
@@ -55,7 +54,7 @@ class SendNotification extends Notification implements ShouldQueue
                 $rotaSession = $this->data['rota_session'];
                 return (new RotaSessionMail($subject, $notifiable, $rotaSession))->to($notifiable->user_email);
 
-            }     
+            }
 
         }
 
@@ -66,16 +65,16 @@ class SendNotification extends Notification implements ShouldQueue
                 $rotaSession = $this->data['rota_session'];
 
                 $authUser = $notifiable->createdBy;
-                
+
                 return (new AvailablityStatusMail($subject, $notifiable, $rotaSession,$authUser))->to($notifiable->user_email);
 
-               
-            }     
+
+            }
 
         }
-    
+
         return (new UserNotificationMail($subject, $userName, $message))->to($notifiable->user_email);
-        
+
     }
 
     /**

@@ -37,7 +37,7 @@ class DummyDataSeeder extends Seeder
             if ($created_trust) {
 
                 $hospitals = [];
-             
+
                 for ($key = 0; $key < 3; $key++) {
                     $hospital_index = $hospital_index + 1;
                     $hospitals[] = [
@@ -142,17 +142,22 @@ class DummyDataSeeder extends Seeder
 
             $speciality = Speciality::create($speciality_data);
 
-            foreach ($subSpecialities as $subSpeciality) {
+            if($subSpecialities){
 
-                $sub_specialities =
-                [
-                    'parent_speciality_id' => $speciality->id,
-                    'sub_speciality_name' => $subSpeciality,
-                    'sub_speciality_description' => null,
-                ];
+                foreach ($subSpecialities as $subSpeciality) {
 
-                SubSpeciality::create($sub_specialities);
+                    $sub_specialities =
+                    [
+                        'parent_speciality_id' => $speciality->id,
+                        'sub_speciality_name' => $subSpeciality,
+                        'sub_speciality_description' => null,
+                    ];
+
+                    SubSpeciality::create($sub_specialities);
+                }
+
             }
+
         }
         //End Speciality & Subspeciality
 

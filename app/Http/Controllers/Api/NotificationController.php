@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 class NotificationController extends APIController
 {
     public function index(Request $request){
-       
+
         $authUser = auth()->user();
 
         $notifications = $authUser->notifications();
@@ -45,9 +45,9 @@ class NotificationController extends APIController
         DB::beginTransaction();
         try {
             $authUser = auth()->user();
-        
+
             $notification = $authUser->notifications()->where('id',$uuid)->update(['read_at'=>now()]);
-            
+
             if (!$notification) {
                 return $this->respondOk([
                     'status'   => true,
@@ -61,7 +61,7 @@ class NotificationController extends APIController
                 'status'   => true,
                 'message'   => trans('messages.notification.mark_as_read')
             ])->setStatusCode(Response::HTTP_OK);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             // return $this->throwValidation([$e->getMessage()]);
@@ -82,7 +82,7 @@ class NotificationController extends APIController
             'message'           => 'Hello session is available',
             'rota_session'      => null,
         ];
-        
+
         $user->notify(new SendNotification($messageData));
 
         return $this->respondOk([
@@ -90,7 +90,7 @@ class NotificationController extends APIController
             'message'   => 'Send Notification',
         ])->setStatusCode(Response::HTTP_OK);
     }
-  
-   
-  
+
+
+
 }

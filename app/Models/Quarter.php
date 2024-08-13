@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Quarter extends Model
 {
-   
+
     public $table = 'quarters';
     public $timestamps = true;
 
@@ -21,15 +21,15 @@ class Quarter extends Model
         'end_date',
         'created_at',
         'updated_at',
-       
+
     ];
 
 
-    public function rotaRecords()
+    public function rotaSession()
     {
-        return $this->hasMany(Rota::class, 'quarter_id');
+        return $this->hasMany(RotaSession::class, 'quarter_id');
     }
 
 
-  
+
 }

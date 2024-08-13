@@ -13,11 +13,15 @@ return new class extends Migration
     {
         Schema::create('rota_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('rota_id')->constrained('rota');
-            $table->foreignId('room_id')->constrained('rooms'); // Assuming you have a rooms table
+            $table->uuid('uuid')->unique();
+            $table->foreignId('quarter_id')->nullable()->constrained('quarters');
+            $table->integer('week_no')->nullable();
+            $table->foreignId('hospital_id')->constrained('hospital');
+            $table->foreignId('room_id')->constrained('rooms');
             $table->enum('time_slot', ['AM', 'PM', 'EVE']);
-            $table->foreignId('speciality_id')->constrained('speciality'); // Assuming you have a specialities table
+            $table->foreignId('speciality_id')->nullable()->constrained('speciality');
             $table->date('week_day_date');
+            $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
         });
     }

@@ -29,7 +29,7 @@ class Hospital extends Model
 
     public function rotaTable()
     {
-        return $this->hasMany(Rota::class, 'hospital_id');
+        return $this->hasMany(RotaSession::class, 'hospital_id');
     }
 
     public function trustDetails()
@@ -53,8 +53,4 @@ class Hospital extends Model
         return $this->hasMany(Procedure::class, 'procedure_id', 'id');
     }
 
-    public function rotaRecords()
-    {
-        return $this->hasMany(Rota::class, 'hospital_id');
-    }
 }
