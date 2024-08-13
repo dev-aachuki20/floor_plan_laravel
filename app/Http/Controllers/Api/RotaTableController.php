@@ -103,27 +103,43 @@ class RotaTableController extends APIController
                 foreach ($timeSlots as $timeSlot) {
                     foreach ($weekDays as $key => $date) {
 
-                        $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
+                        $rolesId = [
+                            config('constant.roles.speciality_lead'),
+                            config('constant.roles.staff_coordinator'),
+                            config('constant.roles.anesthetic_lead'),
+                        ];
+
+                        if(!in_array($authUser->primary_role, $rolesId)){
+                            $record = RotaSession::with(['users'=>function ($query) use ($authUser,$rolesId) {
+                                $query->select('users.id', 'users.full_name')
+                                    ->withPivot('status', 'role_id')
+                                    ->wherePivotIn('role_id', $rolesId);
+    
+                            }])->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                                ->whereDate('week_day_date', $date)
+                                ->where('time_slot', $timeSlot);
+                        }else{
+
+                            $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
                           
-                            $rolesId = [
-                                config('constant.roles.speciality_lead'),
-                                config('constant.roles.staff_coordinator'),
-                                config('constant.roles.anesthetic_lead'),
-                            ];
+                                $rolesId = [
+                                    config('constant.roles.speciality_lead'),
+                                    config('constant.roles.staff_coordinator'),
+                                    config('constant.roles.anesthetic_lead'),
+                                ];
+    
+                                $query->select('users.id', 'users.full_name')
+                                    ->whereIn('rota_session_users.role_id', $rolesId);
+    
+                                if (in_array($authUser->primary_role, $rolesId)) {
+                                    $query->where('users.id', $authUser->id);
+                                }
+                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                                ->whereDate('week_day_date', $date)
+                                ->where('time_slot', $timeSlot);
 
-                            // $query->select('users.id', 'users.full_name')
-                            //     ->withPivot('status', 'role_id')
-                            //     ->wherePivotIn('role_id', $rolesId);
+                        }
 
-                            $query->select('users.id', 'users.full_name')
-                                ->whereIn('rota_session_users.role_id', $rolesId);
-
-                            if (in_array($authUser->primary_role, $rolesId)) {
-                                $query->where('users.id', $authUser->id);
-                            }
-                        })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
-                            ->whereDate('week_day_date', $date)
-                            ->where('time_slot', $timeSlot);
 
                         //Start Apply filters
                         if ($request->filter_by) {
@@ -179,7 +195,9 @@ class RotaTableController extends APIController
                                     if ($user->pivot->status) {
 
                                         if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-                                            $rolesStatus['is_available'] = $user->pivot->status == 1 ? true : false;
+                                            if ($authUser->id == $user->id) {
+                                                $rolesStatus['is_available'] = ($user->pivot->status == 1) ? true : false;
+                                            }
                                         }else{
                                             $rolesStatus[$role] = $user->pivot->status == 1 ? true : false;
                                         }
