@@ -129,6 +129,7 @@ class DummyDataSeeder extends Seeder
                 'Vascular Medicine',
                 'Vascular Imaging',
             ],
+            'Unavailable' => null
         ];
 
 

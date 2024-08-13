@@ -187,26 +187,101 @@ if (!function_exists('calculateRotaTableStatistics')) {
 
 	function calculateRotaTableStatistics($date,$role=null)
 	{
+		$rolesId = [
+			config('constant.roles.speciality_lead'),
+			config('constant.roles.staff_coordinator'),
+			config('constant.roles.anesthetic_lead'),
+		];
+
+
 		$totaRotaSession = RotaSession::whereDate('week_day_date',$date)->whereNotNull('speciality_id')->count();
-		$rotaSession = RotaSession::whereDate('week_day_date',$date)->whereNotNull('speciality_id')->first();
 
-		$totalConfirmedSession = 0;
+		$totalConfirmedSession = RotaSession::whereHas('users', function ($query) use ($rolesId) {
+			$query->whereIn('rota_session_users.role_id', $rolesId)
+				  ->where('rota_session_users.status', 1);
+		})
+		->whereDate('week_day_date', $date)
+		->whereNotNull('speciality_id')
+		->count();
 
-		if($rotaSession){
-			if($rotaSession->users){
-				$rotaSession = $rotaSession->users();
-	
-				if($role){
-					$rotaSession = $rotaSession->wherePivot('role_id',$role);
-				}
-				
-				$totalConfirmedSession = $rotaSession->wherePivot('status',1)->count();
-		
-			}
+		if($role){
+			
+			$totalConfirmedSession = RotaSession::whereHas('users', function ($query) use ($role) {
+				$query->where('rota_session_users.role_id', $role)
+					  ->where('rota_session_users.status', 1);
+			})
+			->whereDate('week_day_date', $date)
+			->whereNotNull('speciality_id')
+			->count();
+
+		}else{
+			$totaRotaSession = (int)$totaRotaSession * 3;
 		}
 		
 		$result = $totalConfirmedSession > 0 ? round(($totalConfirmedSession / $totaRotaSession) * 100, 2) : 0;
-
+		
 		return $result;
 	}
+}
+
+
+if (!function_exists('sendNotification')) {
+    function sendNotification($user_id, $subject, $message, $section, $notification_type = null, $data = null)
+    {
+        try {
+        // 	$firebaseToken = User::where('is_active', 1)->where('id', $user_id)->whereNotNull('device_token')->pluck('device_token')->all();
+
+			$firebaseToken = User::where('id', $user_id)->whereNotNull('device_token')->pluck('device_token')->all();
+
+
+			\Log::info(['firebaseToken' => $firebaseToken,'user_id'=>$user_id]);
+
+			$response = null;
+			if($firebaseToken){
+				$SERVER_API_KEY = env('FIREBASE_KEY');
+
+				\Log::info(['SERVER_API_KEY' => $SERVER_API_KEY]);
+
+				$notification = [
+					"title" => $subject,
+					"body" 	=> $message,
+					"sound" => "default",
+					"alert" => "New"
+				];
+
+				$bodydata = [
+					"title"=> $subject,
+					"body" => $message,
+					"notification_id" => $data['notification_id'] ?? null,
+					"data" => $data,
+					"type" => $section,
+				];
+
+				$data = [
+					"registration_ids"	=> $firebaseToken,
+					"notification" 		=> $notification,
+					"priority"			=> "high",
+					"contentAvailable" 	=> true,
+					"data" 				=> $bodydata
+				];
+				$encodedData = json_encode($data);
+				$headers = [
+					'Authorization: key=' . $SERVER_API_KEY,
+					'Content-Type: application/json',
+				];
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+				curl_setopt($ch, CURLOPT_POST, true);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedData);
+				$response = curl_exec($ch);
+			}
+			\Log::info('Response ' . $response);
+			return $response;
+		} catch (\Exception $e) {
+			\Log::info($e->getMessage().' '.$e->getFile().' '.$e->getCode());
+		}
+    }
 }

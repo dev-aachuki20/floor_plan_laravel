@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
+use App\Channels\DatabaseChannel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Notification::extend('database', function ($app) {
+            return new DatabaseChannel();
+        });
     }
 }

@@ -45,7 +45,17 @@ return [
         0 => 'Pending',
         1 => 'Confirm', 
         2 => 'Decline'
-    ]
+    ],
+
+    'notification_section' => [
+        'announcements' => 'Announcements',
+    ],
+
+    'subject_notification_type' => [
+        'session_available'                 => 'Session Available',
+        'session_confirmed'                 => 'Session Confirmed',
+        'session_canceled'                  => 'Session Canceled',
+    ],
 
     
     

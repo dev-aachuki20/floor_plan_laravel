@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RotaTableController;
+use App\Http\Controllers\Api\NotificationController;
+
 
 use Illuminate\Support\Facades\Route;
 
@@ -368,6 +370,41 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     Route::post('reports', [ReportController::class, 'index']);
 
     Route::get('unconfirmed/sessions/reminder', [ReportController::class, 'sendSessionReminderForUnconfirmedUsers']);
+
+    Route::get('test-notification/{user}', [NotificationController::class, 'sendmailToUser']);
+
+
+    
+    /*
+    |--------------------------------------------------------------------------
+    |  Notifications API Routes
+    |--------------------------------------------------------------------------
+    | 
+    | Route         : http://localhost:8000/api/notifications
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    :- filter_by = type, filter_value = 'session_confirmed','session_canceled'
+    | Method        : GET
+    | 
+    */
+    Route::get('notifications', [NotificationController::class, 'index']);
+
+    /*
+    |--------------------------------------------------------------------------
+    |  Mark As Read Notification API Routes
+    |--------------------------------------------------------------------------
+    | 
+    | Route         : http://localhost:8000/api/notifications/{uuid}/mark-as-read
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    :- uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+    | Method        : PUT
+    | 
+    */
+    Route::put('/notifications/{uuid}/mark-as-read', [NotificationController::class,'makeAsRead']);
+
+
+    
 
 });
 

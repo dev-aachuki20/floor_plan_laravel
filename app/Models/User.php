@@ -206,5 +206,15 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         return $this->belongsToMany(RotaSession::class, 'rota_session_users')
                     ->withPivot(['role_id','status']);             
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'notifiable_id');
+    }
+
+    public function notificationSender()
+    {
+        return $this->hasMany(Notification::class, 'created_by');
+    }
    
 }

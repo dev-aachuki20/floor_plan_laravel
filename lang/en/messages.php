@@ -98,8 +98,13 @@ return [
 
     'already_confirm_session' => 'This session (:sessionName) on :sessionDate has already been confirmed by another user.',
 
-    'notification' => [
-        'reminder_send' => 'Reminders sent successfully.',
-    ]
+    'notification'=>[
+        'not_found'          => 'Notification not found',
+        'mark_as_read'       => 'Notification marked as read',
+        'no_notification'    => 'No notifications to clear!',
+        'clear_notification' => 'All notifications have been cleared',
+        'delete'             => 'Notification has been deleted successfully!',
+        'reminder_send'      => 'Reminders sent successfully.',
+    ],
 
 ];

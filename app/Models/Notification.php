@@ -3,26 +3,57 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Notification extends Model
 {
-    public $table = 'notifications';
-    public $timestamps = true;
+    use SoftDeletes;
+
+    protected $table = "notifications";
+
+    protected $primarykey = "id";
+
+    protected $fillable = [
+        'id',
+        'type',
+        'notifiable',
+        'data',
+        'subject',
+        'message',
+        'section',
+        'notification_type',
+        'rota_session_id',
+        'created_by',
+        'read_at',        
+    ];
 
     protected $dates = [
-        'created_at',
         'updated_at',
+        'created_at',
         'deleted_at',
     ];
 
-    protected $fillable = [
-        'notification_time',
-        'notification_title',
-        'notification_type',
-        'notification_status',
-        'created_at',
-        'updated_at',
+    protected $casts = [
+        'data' => 'array',
+        'id' => 'string'
     ];
 
-  
+
+    public function notifyUser()
+    {
+        return $this->belongsTo(User::class,'notifiable_id','id');
+    }
+
+    public function rotaSession()
+    {
+        return $this->belongsTo(RotaSession::class,'rota_session_id','id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class,'created_by','id');
+    }
+
+
 }
