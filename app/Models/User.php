@@ -207,7 +207,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
                     ->withPivot(['role_id','status']);             
     }
 
-    public function notifications()
+    public function notification()
     {
         return $this->hasMany(Notification::class, 'notifiable_id');
     }

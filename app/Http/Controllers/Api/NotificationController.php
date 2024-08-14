@@ -18,7 +18,7 @@ class NotificationController extends APIController
 
         $authUser = auth()->user();
 
-        $notifications = $authUser->notifications();
+        $notifications = $authUser->notification();
 
         //Start Apply filters
         if ($request->filter_by) {
@@ -46,7 +46,7 @@ class NotificationController extends APIController
         try {
             $authUser = auth()->user();
 
-            $notification = $authUser->notifications()->where('id',$uuid)->update(['read_at'=>now()]);
+            $notification = $authUser->notification()->where('id',$uuid)->update(['read_at'=>now()]);
 
             if (!$notification) {
                 return $this->respondOk([

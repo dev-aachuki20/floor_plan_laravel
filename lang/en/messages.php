@@ -93,7 +93,7 @@ return [
     'availablity_status' => [
         'confirm' => ':roleName was confirmed',
         'decline' => ':roleName was declined',
-        'cancel'  => ':roleName was canceled',
+        'cancel'  => ':roleName cancelled a confirmation',
     ],
 
     'already_confirm_session' => 'This session (:sessionName) on :sessionDate has already been confirmed by another user.',

@@ -54,7 +54,7 @@ return [
     'subject_notification_type' => [
         'session_available'                 => 'Session Available',
         'session_confirmed'                 => 'Session Confirmed',
-        'session_canceled'                  => 'Session Canceled',
+        'session_cancelled'                 => 'Session Cancelled',
     ],
 
     
