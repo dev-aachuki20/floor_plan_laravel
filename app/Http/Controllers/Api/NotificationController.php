@@ -18,7 +18,7 @@ class NotificationController extends APIController
 
         $authUser = auth()->user();
 
-        $notifications = $authUser->notification();
+        $notifications = $authUser->notification()->select('id','subject','message','notification_type','rota_session_id','read_at','created_at');
 
         //Start Apply filters
         if ($request->filter_by) {
@@ -31,7 +31,9 @@ class NotificationController extends APIController
         }
         //End Apply filters
 
-        $notifications = $notifications->orderBy('created_at','desc')->paginate(10);
+        $perPage = $request->per_page ?? 10;
+
+        $notifications = $notifications->orderBy('created_at','desc')->paginate($perPage);
 
         return $this->respondOk([
             'status'   => true,

@@ -38,11 +38,7 @@ class ReportController extends APIController
 
         foreach ($weekDays as $date) {
             // Query for the sessions on each date
-            $sessions = RotaSession::whereDate('week_day_date', $date)
-                ->whereHas('rotaDetail', function ($query) use ($hospitalId) {
-                    $query->where('hospital_id', $hospitalId);
-                })
-                ->get(); //for ex: date 2024-08-01 total data is 3
+            $sessions = RotaSession::whereDate('week_day_date', $date)->where('hospital_id', $hospitalId)->get(); 
 
             foreach ($sessions as $session) {
                 $totalSessions = $session->users->count();

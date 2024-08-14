@@ -44,6 +44,7 @@ class RotaTableController extends APIController
                 config('constant.roles.system_admin'),
                 config('constant.roles.trust_admin'),
                 config('constant.roles.hospital_admin'),
+                config('constant.roles.chair'),
             ];
 
             if(in_array($request->time_slot,$timeSlots)){
@@ -100,35 +101,46 @@ class RotaTableController extends APIController
 
                 $room_records = [];
 
+                $rolesId = [
+                    config('constant.roles.speciality_lead'),
+                    config('constant.roles.staff_coordinator'),
+                    config('constant.roles.anesthetic_lead'),
+                ];
+
                 foreach ($timeSlots as $timeSlot) {
                     foreach ($weekDays as $key => $date) {
 
-                        $rolesId = [
-                            config('constant.roles.speciality_lead'),
-                            // config('constant.roles.staff_coordinator'),
-                            // config('constant.roles.anesthetic_lead'),
-                        ];
+                        if($authUser->is_speciality_lead){
+                            $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
 
-                        if(!in_array($authUser->primary_role, $rolesId)){
+                                $query->select('users.id', 'users.full_name')
+                                    ->whereIn('rota_session_users.role_id', config('constant.roles.speciality_lead'))
+                                    ->where('users.id', $authUser->id);
+
+                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                                ->whereDate('week_day_date', $date)
+                                ->where('time_slot', $timeSlot);
+
+                        }else if($authUser->is_booker){
+
+                            $record = RotaSession::whereHas('users' ,function ($query) use ($authUser, $rolesId) {
+
+                                $query->select('users.id', 'users.full_name')
+                                    ->where('rota_session_users.status', 1)
+                                    ->whereIn('rota_session_users.role_id', $rolesId);
+
+                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                                ->whereDate('week_day_date', $date)
+                                ->where('time_slot', $timeSlot);
+
+                        }else{
+
                             $record = RotaSession::with(['users'=>function ($query) use ($authUser,$rolesId) {
                                 $query->select('users.id', 'users.full_name')
                                     ->withPivot('status', 'role_id')
                                     ->wherePivotIn('role_id', $rolesId);
 
                             }])->select('id', 'uuid', 'quarter_id', 'hospital_id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
-                                ->whereDate('week_day_date', $date)
-                                ->where('time_slot', $timeSlot);
-                        }else{
-
-                            $record = RotaSession::whereHas('users' ,function ($query) use ($authUser, $rolesId) {
-
-                                $query->select('users.id', 'users.full_name')
-                                    ->whereIn('rota_session_users.role_id', $rolesId);
-
-                                if (in_array($authUser->primary_role, $rolesId)) {
-                                    $query->where('users.id', $authUser->id);
-                                }
-                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot);
 
