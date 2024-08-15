@@ -91,6 +91,8 @@ return [
     ],
 
     'availablity_status' => [
+        'available' => 'Session is available',
+        'session_cancel' => ':roleName cancelled a session',
         'confirm' => ':roleName was confirmed',
         'decline' => ':roleName was declined',
         'cancel'  => ':roleName cancelled a confirmation',

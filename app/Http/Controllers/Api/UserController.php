@@ -159,7 +159,7 @@ class UserController extends APIController
             ]);
 
             // Send welcome email
-            // Mail::to($user->user_email)->send(new WelcomeEmail($user, $password));
+            Mail::to($user->user_email)->queue(new WelcomeEmail($user, $password));
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
@@ -213,11 +213,11 @@ class UserController extends APIController
                 if($user->primary_role != config('constant.roles.booker')){
                     $user_details['speciality']      = $user->specialityDetail()->value('id');
                     $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
-    
+
                     $user_details['sub_speciality']      =  $user->subSpecialityDetail()->value('id');
-                    $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');    
+                    $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
                 }
-              
+
                 $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
                 $user_details['deleted_by']    = $user->deletedBy ? $user->deletedBy->full_name : null;
                 $user_details['deleted_at']    = $user->deleted_at ? $user->deleted_at->format('d-m-Y h:i A') : null;
@@ -231,7 +231,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());         
+            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -380,7 +380,7 @@ class UserController extends APIController
             $authUser = auth()->user();
 
             $authUser->is_tos = 0;
-           
+
             $authUser->save();
 
             $reponseData = [
@@ -394,7 +394,7 @@ class UserController extends APIController
                 'hospital'              => $authUser->getHospitals()->pluck('hospital_name', 'id')->toArray(),
                 'is_tos'                => $authUser->is_tos,
             ];
-    
+
             if($authUser->primary_role != config('constant.roles.booker')){
                 $reponseData['speciality']     = $authUser->specialityDetail()->value('speciality_name');
                 $reponseData['sub_speciality'] = $authUser->subSpecialityDetail()->value('sub_speciality_name');

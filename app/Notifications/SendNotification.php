@@ -70,7 +70,7 @@ class SendNotification extends Notification implements ShouldQueue
                 if($this->data['created_by']){
                     $authUser = User::find($this->data['created_by']);
                 }
-               
+
                 $notificationType = $this->data['notification_type'];
 
                 return (new AvailablityStatusMail($subject, $notifiable, $rotaSession,$authUser,$notificationType))->to($notifiable->user_email);

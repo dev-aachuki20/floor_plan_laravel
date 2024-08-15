@@ -38,19 +38,19 @@ class NotificationController extends APIController
 
         $perPage = $request->per_page ?? 10;
 
-        $notifications = $notifications->orderBy('created_at','desc')->paginate($perPage);
+        $notifications = $notifications->orderByRaw('CASE WHEN read_at IS NULL THEN 0 ELSE 1 END')->orderBy('created_at','desc')->paginate($perPage);
 
         $notifications->getCollection()->transform(function ($notification) {
             $notification->created_time = Carbon::parse($notification->created_at)->format('g:i A');
-           
+
 
             if($notification->rotaSession){
                 $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
                 $formattedDate = $carbonDate->format('D, j M');
-                $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;                
+                $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
             }
-        
-            
+
+
 
             return $notification;
         });

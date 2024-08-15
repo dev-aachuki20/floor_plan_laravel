@@ -32,13 +32,13 @@ class PasswordResetController  extends APIController
             'email',
             'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i',
             'exists:users,user_email']
-        ], 
+        ],
         getCommonValidationRuleMsgs(),
         [
             'user_email' => 'email',
         ]);
 
-       
+
         try{
 
             DB::beginTransaction();
@@ -69,7 +69,7 @@ class PasswordResetController  extends APIController
             ]);
 
             $subject = 'Reset Password Notification';
-            Mail::to($email_id)->send(new ResetPasswordMail($user->full_name,$reset_password_url,$subject));
+            Mail::to($email_id)->queue(new ResetPasswordMail($user->full_name,$reset_password_url,$subject));
 
             DB::commit();
 
@@ -101,7 +101,7 @@ class PasswordResetController  extends APIController
             if(!$updatePassword){
 
                 return $this->throwValidation([trans('passwords.token')]);
-                
+
             }else{
 
                 $email_id = $updatePassword->email;
@@ -112,14 +112,14 @@ class PasswordResetController  extends APIController
                     return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
                 }
                 //End Check deleted User
-               
+
                 $user = User::where('user_email', $email_id)
                 ->update(['password' => Hash::make($request->password)]);
 
                 DB::table('password_reset_tokens')->where(['email'=> $email_id])->delete();
 
                 DB::commit();
-                
+
                 return $this->respondOk([
                     'success'   => true,
                     'message' => trans('passwords.reset'),
