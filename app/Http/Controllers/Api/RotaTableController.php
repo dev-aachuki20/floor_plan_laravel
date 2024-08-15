@@ -114,7 +114,7 @@ class RotaTableController extends APIController
                             $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
 
                                 $query->select('users.id', 'users.full_name')
-                                    ->whereIn('rota_session_users.role_id', config('constant.roles.speciality_lead'))
+                                    ->where('rota_session_users.role_id', config('constant.roles.speciality_lead'))
                                     ->where('users.id', $authUser->id);
 
                             })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
@@ -308,6 +308,18 @@ class RotaTableController extends APIController
                 $room->room_records = $room_records;
             }
 
+            //Last Updated At
+            $lastUpdatedAt = RotaSession::whereIn('week_day_date', $weekDays)->orderBy('updated_at','desc')->value('updated_at');
+            $hospitalData->last_updated_at = Carbon::parse($lastUpdatedAt)->format('h:i A D, j M Y');
+
+            //Selected Quater
+            $quarterId = RotaSession::whereIn('week_day_date', $weekDays)
+            ->groupBy('quarter_id')
+            ->havingRaw('COUNT(DISTINCT week_day_date) = ?', [count($weekDays)])
+            ->pluck('quarter_id')
+            ->first();
+
+            $hospitalData->quarter_id = $quarterId;
 
             return $this->respondOk([
                 'status'   => true,
@@ -514,10 +526,8 @@ class RotaTableController extends APIController
                                             $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
                                        }
                                       
-                                       $carbonDate = Carbon::parse($rota_session->week_day_date);
-                                       $formattedDate = $carbonDate->format('D, j M');
-                                       $rotaSessionDateContent = $formattedDate.' - '.$rota_session->time_slot;
-                                       $messageContent = $rota_session->roomDetail->room_name.' - '. $rota_session->specialityDetail->speciality_name.'  '.$rotaSessionDateContent;
+                                      
+                                       $messageContent = $rota_session->roomDetail->room_name.' - '. $rota_session->specialityDetail->speciality_name;
 
                                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 

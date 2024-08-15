@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 use DB;
 use App\Models\User;
 use App\Models\RotaSession;
+use Illuminate\Support\Carbon;
 use App\Notifications\SendNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
@@ -31,9 +32,29 @@ class NotificationController extends APIController
         }
         //End Apply filters
 
+        if($request->status){
+            $notifications = $notifications->whereNull('read_at');
+        }
+
         $perPage = $request->per_page ?? 10;
 
         $notifications = $notifications->orderBy('created_at','desc')->paginate($perPage);
+
+        $notifications->getCollection()->transform(function ($notification) {
+            $notification->created_time = Carbon::parse($notification->created_at)->format('g:i A');
+           
+
+            if($notification->rotaSession){
+                $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
+                $formattedDate = $carbonDate->format('D, j M');
+                $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;                
+            }
+        
+            
+
+            return $notification;
+        });
+
 
         return $this->respondOk([
             'status'   => true,

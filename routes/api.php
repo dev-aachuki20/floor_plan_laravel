@@ -398,10 +398,10 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Header        : Content-Type:application/json
     |               : Authorization : Token
     | Parameters    :- uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
-    | Method        : PUT
+    | Method        : GET
     |
     */
-    Route::put('/notifications/{uuid}/mark-as-read', [NotificationController::class,'makeAsRead']);
+    Route::get('/notifications/{uuid}/mark-as-read', [NotificationController::class,'makeAsRead']);
 
 
 
