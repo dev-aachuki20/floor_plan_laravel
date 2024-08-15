@@ -62,10 +62,10 @@ class RotaTableController extends APIController
                 $days_of_week[$key]['date'] = $formattedDate;
 
                 if (in_array($authUser->primary_role, $adminRoles)) {
-                    $days_of_week[$key]['statistics']['overall'] = calculateRotaTableStatistics($date);
-                    $days_of_week[$key]['statistics']['speciality'] = calculateRotaTableStatistics($date, config('constant.roles.speciality_lead'));
-                    $days_of_week[$key]['statistics']['anesthetic'] = calculateRotaTableStatistics($date, config('constant.roles.anesthetic_lead'));
-                    $days_of_week[$key]['statistics']['staff'] = calculateRotaTableStatistics($date, config('constant.roles.staff_coordinator'));
+                    $days_of_week[$key]['statistics']['overall'] = calculateRotaTableStatistics($hospitalId,$date);
+                    $days_of_week[$key]['statistics']['speciality'] = calculateRotaTableStatistics($hospitalId,$date, config('constant.roles.speciality_lead'));
+                    $days_of_week[$key]['statistics']['anesthetic'] = calculateRotaTableStatistics($hospitalId,$date, config('constant.roles.anesthetic_lead'));
+                    $days_of_week[$key]['statistics']['staff'] = calculateRotaTableStatistics($hospitalId,$date, config('constant.roles.staff_coordinator'));
                 }
             }
             //End Week days
@@ -248,6 +248,9 @@ class RotaTableController extends APIController
                 $room->room_records = $room_records;
             }
 
+            //Disable dates
+            $model->is_disabled = (isset($weekDays[0]) && $weekDays[0] == date('Y-m-d')) ? true : false;
+
             return $this->respondOk([
                 'status'   => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
@@ -320,6 +323,8 @@ class RotaTableController extends APIController
             ->first();
 
             $hospitalData->quarter_id = $quarterId;
+
+            $hospitalData->is_disabled = (isset($weekDays[0]) && $weekDays[0] == date('Y-m-d')) ? true : false;
 
             return $this->respondOk([
                 'status'   => true,
@@ -578,9 +583,17 @@ class RotaTableController extends APIController
 
         // Retrieve quarters
         $currentYear = date('Y');
-        $responseData['quarters'] = Quarter::select('id as value','quarter_name as label')->whereYear('start_date', $currentYear)
-                        ->whereYear('end_date', $currentYear)
-                        ->get();
+        $quarters = Quarter::select('id as value', 'quarter_name as label')
+            ->whereYear('start_date', $currentYear)
+            ->whereYear('end_date', $currentYear)
+            ->get();
+        
+        $quarters->prepend([
+            'value' => '',
+            'label' => 'Apply to a Quarter'
+        ]);
+    
+        $responseData['quarters'] = $quarters;
 
         // Retrieve specialities
         $specialities = Speciality::pluck('speciality_name','id');

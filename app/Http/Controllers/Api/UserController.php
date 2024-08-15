@@ -159,7 +159,7 @@ class UserController extends APIController
             ]);
 
             // Send welcome email
-            Mail::to($user->user_email)->send(new WelcomeEmail($user, $password));
+            // Mail::to($user->user_email)->send(new WelcomeEmail($user, $password));
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
@@ -184,7 +184,7 @@ class UserController extends APIController
         } catch (\Exception $e) {
             DB::rollBack();
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
 

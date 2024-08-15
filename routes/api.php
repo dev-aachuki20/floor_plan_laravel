@@ -384,10 +384,10 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Header        : Content-Type:application/json
     |               : Authorization : Token
     | Parameters    :- filter_by = type, filter_value = 'session_confirmed','session_canceled'
-    | Method        : GET
+    | Method        : Post
     |
     */
-    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::post('notifications', [NotificationController::class, 'index']);
 
     /*
     |--------------------------------------------------------------------------

@@ -52,12 +52,13 @@ return [
     ],
 
     'subject_notification_type' => [
-        'session_available'                 => 'Session Available',
-        'session_confirmed'                 => 'Session Confirmed',
-        'session_cancelled'                 => 'Session Cancelled',
+        'session_available'     => 'Session Available',
+        'session_confirmed'     => 'Session Confirmed',
+        'session_cancelled'     => 'Session Cancelled',
+        'session_utilised'      => 'Session Utilised',
     ],
 
-    
+    'unavailable_speciality_id' => 10,
     
 
 ];
