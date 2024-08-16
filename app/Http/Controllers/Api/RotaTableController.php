@@ -223,7 +223,7 @@ class RotaTableController extends APIController
                                         $status = $user->pivot->status;
 
                                         if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-                                            if ($authUser->id == $user->id) {
+                                            if ($authUser->primary_role == $user->primary_role) {
 
                                                 if($status == 1){
                                                     $rolesStatus['is_available'] = true;
@@ -275,6 +275,7 @@ class RotaTableController extends APIController
                 'message'   => trans('messages.record_retrieved_successfully'),
                 'data'      => $model,
             ])->setStatusCode(Response::HTTP_OK);
+
         } catch (\Exception $e) {
             // dd($e->getMessage() . '->' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message') . $e->getMessage() . '->' . $e->getLine());
@@ -379,7 +380,6 @@ class RotaTableController extends APIController
 
                         $isNewCreated = false;
 
-
                         $start = Carbon::parse($date);
                         $weekNumber = $start->weekOfYear;
 
@@ -396,7 +396,7 @@ class RotaTableController extends APIController
                             'week_no'         => $weekNumber,
                             'room_id'         => $roomId,
                             'time_slot'       => $slotKey,
-                            'speciality_id'   => $speciality ?? null,
+                            'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
                             'week_day_date'   => $date,
                         ];
 
