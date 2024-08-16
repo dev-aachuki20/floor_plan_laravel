@@ -208,20 +208,39 @@ class RotaTableController extends APIController
                             // Now check each group for status and set rolesStatus
                             foreach ($groupedUsers as $role => $users) {
                                 foreach ($users as $user) {
-                                    if ($user->pivot->status) {
+                                     // if ($user->pivot->status) {
                                         $status = $user->pivot->status;
 
                                         if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-                                            // if ($authUser->primary_role == $user->primary_role) {
 
-                                                if($status == 1){
-                                                    $rolesStatus['is_available'] = true;
-                                                }else if($status == 2){
-                                                    $rolesStatus['is_available'] = false;
+                                            if($authUser->primary_role == $user->pivot->role_id){
+
+                                                if ($authUser->is_speciality_lead){
+                                                    if($status == 1){
+                                                        $rolesStatus['is_available'] = true;
+                                                    }else if($status == 2){
+                                                        $rolesStatus['is_available'] = false;
+                                                    }
+                                                }
+    
+                                                if ($authUser->is_anesthetic_lead){
+                                                    if($status == 1){
+                                                        $rolesStatus['is_available'] = true;
+                                                    }else if($status == 2){
+                                                        $rolesStatus['is_available'] = false;
+                                                    }
+                                                }
+    
+                                                if ($authUser->is_staff_coordinator){
+                                                    if($status == 1){
+                                                        $rolesStatus['is_available'] = true;
+                                                    }else if($status == 2){
+                                                        $rolesStatus['is_available'] = false;
+                                                    }
                                                 }
 
-                                                // $rolesStatus['is_available'] = ($user->pivot->status == 1) ? true : false;
-                                            // }
+                                            }
+                                            
                                         }else{
 
                                             if($status == 1){
@@ -236,7 +255,7 @@ class RotaTableController extends APIController
                                         if ($user->pivot->status == 1) {
                                             break;
                                         }
-                                    }
+                                    // }
                                 }
                             }
                         }
