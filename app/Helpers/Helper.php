@@ -196,14 +196,14 @@ if (!function_exists('calculateRotaTableStatistics')) {
 
 		$totaRotaSession = RotaSession::whereDate('week_day_date',$date)->where('hospital_id',$hospital_id)->where('speciality_id','!=',config('constant.unavailable_speciality_id'))->whereNotNull('speciality_id')->count();
 
-		$totalConfirmedSession = RotaSession::whereHas('users', function ($query) use ($rolesId) {
-			$query->whereIn('rota_session_users.role_id', $rolesId)
-				  ->where('rota_session_users.status', 1);
-		})
-		->whereDate('week_day_date', $date)
-		->where('hospital_id',$hospital_id)
+		$totalConfirmedSession = RotaSession::whereDate('week_day_date', $date)
+		->where('hospital_id', $hospital_id)
 		->whereNotNull('speciality_id')
-		->where('speciality_id','!=',config('constant.unavailable_speciality_id'))
+		->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
+		->whereDoesntHave('users', function ($query) use ($rolesId) {
+			$query->whereIn('rota_session_users.role_id', $rolesId)
+				->where('rota_session_users.status', '!=', 1);
+		})
 		->count();
 
 		if($role){
@@ -218,8 +218,6 @@ if (!function_exists('calculateRotaTableStatistics')) {
 			->where('speciality_id','!=',config('constant.unavailable_speciality_id'))
 			->count();
 
-		}else{
-			$totaRotaSession = (int)$totaRotaSession * 3;
 		}
 		
 		$result = $totalConfirmedSession > 0 ? round(($totalConfirmedSession / $totaRotaSession) * 100, 2) : 0;

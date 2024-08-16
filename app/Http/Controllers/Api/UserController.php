@@ -272,10 +272,22 @@ class UserController extends APIController
 
             // Sync speciality and sub_speciality
             if($request->role != config('constant.roles.booker')){
+
+                $currentSpecialities = $user->specialityDetail()->pluck('speciality_id')->toArray();
+
+                $newSpeciality = $request->speciality;
+
                 $specialities = [
-                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+                    $newSpeciality => ['sub_speciality_id' => $request->sub_speciality],
                 ];
                 $user->specialityDetail()->sync($specialities);
+
+                if (!in_array($newSpeciality, $currentSpecialities)) {
+                    if ($user->rotaSessions()->exists()) {
+                        $user->rotaSessions()->sync([]);
+                    }
+                }
+
             }else{
                 $user->specialityDetail()->sync([]);
             }

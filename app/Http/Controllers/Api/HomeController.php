@@ -149,12 +149,23 @@ class HomeController extends APIController
 
 
             if($authUser->primary_role != config('constant.roles.booker')){
+
+                $currentSpecialities = auth()->user()->specialityDetail()->pluck('speciality_id')->toArray();
+
+                $newSpeciality = $request->speciality;
+
                 $specialities = [
-                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
+                    $newSpeciality => ['sub_speciality_id' => $request->sub_speciality],
                 ];
                 
-                // Sync specialities with additional pivot data
                 auth()->user()->specialityDetail()->sync($specialities);
+
+                if (!in_array($newSpeciality, $currentSpecialities)) {
+                    if (auth()->user()->rotaSessions()->exists()) {
+                        auth()->user()->rotaSessions()->sync([]);
+                    }
+                }
+
             }
            
             

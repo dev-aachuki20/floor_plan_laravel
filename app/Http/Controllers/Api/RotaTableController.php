@@ -111,25 +111,14 @@ class RotaTableController extends APIController
                     foreach ($weekDays as $key => $date) {
 
                         if($authUser->is_speciality_lead){
-                            /*$record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
-
-                                $query->select('users.id', 'users.full_name')
-                                    ->where('rota_session_users.role_id', $authUser->primary_role)
-                                    ->where('users.id', $authUser->id);
-
-                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
-                                ->whereDate('week_day_date', $date)
-                                ->where('time_slot', $timeSlot)
-                                ->where('speciality_id','!=',config('constant.unavailable_speciality_id'));*/
-
                             $specialities = $authUser->specialityDetail()->pluck('id')->toArray();
 
-                            $record = RotaSession::whereHas('users' ,function ($query) use ($authUser) {
-
+                            $record = RotaSession:: with(['users'=>function ($query) use ($authUser) {
                                 $query->select('users.id', 'users.full_name')
-                                    ->where('rota_session_users.role_id', $authUser->primary_role);
+                                    ->withPivot('status', 'role_id')
+                                    ->wherePivot('role_id', $authUser->primary_role);
 
-                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                            }])->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot)
                                 ->whereIn('speciality_id',$specialities);
@@ -223,7 +212,7 @@ class RotaTableController extends APIController
                                         $status = $user->pivot->status;
 
                                         if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-                                            if ($authUser->primary_role == $user->primary_role) {
+                                            // if ($authUser->primary_role == $user->primary_role) {
 
                                                 if($status == 1){
                                                     $rolesStatus['is_available'] = true;
@@ -232,7 +221,7 @@ class RotaTableController extends APIController
                                                 }
 
                                                 // $rolesStatus['is_available'] = ($user->pivot->status == 1) ? true : false;
-                                            }
+                                            // }
                                         }else{
 
                                             if($status == 1){
@@ -256,6 +245,7 @@ class RotaTableController extends APIController
                         $formattedDate = $carbonDate->format('D, j M');
 
                         $room_records[$timeSlot][$key]['date'] = $formattedDate;
+                        $room_records[$timeSlot][$key]['is_disabled'] = (isset($date) && Carbon::parse($date)->gt(Carbon::now())) ? false : true;
                         $room_records[$timeSlot][$key]['rota_session_id'] = $record ? $record->id : null;
                         $room_records[$timeSlot][$key]['speciality_id']   = $record ? $record->speciality_id : null;
                         $room_records[$timeSlot][$key]['speciality_name'] = $record ? $record->specialityDetail ? $record->specialityDetail->speciality_name : null : null;
@@ -268,7 +258,7 @@ class RotaTableController extends APIController
             }
 
             //Disable dates
-            $model->is_disabled = (isset($weekDays[0]) && $weekDays[0] != date('Y-m-d')) ? true : false;
+            $model->is_disabled = (isset($weekDays[0]) && Carbon::parse($weekDays[0])->gt(Carbon::now())) ? false : true;
 
             return $this->respondOk([
                 'status'   => true,
@@ -344,7 +334,7 @@ class RotaTableController extends APIController
 
             $hospitalData->quarter_id = $quarterId;
 
-            $hospitalData->is_disabled = (isset($weekDays[0]) && $weekDays[0] != date('Y-m-d')) ? true : false;
+            $hospitalData->is_disabled = (isset($weekDays[0]) && Carbon::parse($weekDays[0])->gt(Carbon::now())) ? false : true;
 
             return $this->respondOk([
                 'status'   => true,
