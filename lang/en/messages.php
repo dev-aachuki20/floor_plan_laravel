@@ -91,16 +91,18 @@ return [
     ],
 
     'notification_subject' => [
-        'available' => 'Session is available',
+        'available'      => 'Session needs approve',
         'session_cancel' => ':roleName cancelled a session',
-        'confirm' => ':roleName was confirmed',
-        'decline' => ':roleName was declined',
-        'cancel'  => ':roleName cancelled a confirmation',
+        'confirm'   => ':roleName was confirmed',
+        'decline'   => ':roleName was declined',
+        'cancel'    => ':roleName cancelled a confirmation',
+        'utilised'  => 'Session is utilised',
+        'session_not_approved'  => 'Session does not approved',
+        'user_profile_updated_email' => ':roleName updated your email',
+        'user_profile_updated_hospital' => ':roleName updated hospital for you',
     ],
 
-    'already_confirm_session' => 'This session (:sessionName) on :sessionDate has already been confirmed by another user.',
-
-    'notification'=>[
+    'notification' => [
         'not_found'          => 'Notification not found',
         'mark_as_read'       => 'Notification marked as read',
         'no_notification'    => 'No notifications to clear!',

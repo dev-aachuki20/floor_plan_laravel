@@ -321,22 +321,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
 
 
-
-        /*
-        |--------------------------------------------------------------------------
-        |  Get All Quarters API Route
-        |--------------------------------------------------------------------------
-        |
-        | Route         : http://localhost:8000/api/get-quarter
-        | Header        : Content-Type:application/json
-        |               : Authorization : Token
-        | Parameters    :
-        |
-        | Method        : GET
-        */
-        Route::get('get-quarter', [RotaTableController::class, 'getQuarters']);
-
-
         /*
         |--------------------------------------------------------------------------
         |  Add Rota Table Record API Route
@@ -367,7 +351,35 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    |  Report API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/reports
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    :- week_days, hospital
+    | Method        : Post
+    |
+    */
     Route::post('reports', [ReportController::class, 'index']);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    |  Report chart API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route         : http://localhost:8000/api/reports-chart
+    | Header        : Content-Type:application/json
+    |               : Authorization : Token
+    | Parameters    :- year,month, hospital
+    | Method        : Post
+    |
+    */
+    Route::post('reports-chart', [ReportController::class, 'reportChart']);
+
 
     Route::get('test-notification/{user}', [NotificationController::class, 'sendmailToUser']);
 

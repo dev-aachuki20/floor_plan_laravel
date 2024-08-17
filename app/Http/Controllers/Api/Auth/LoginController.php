@@ -56,6 +56,8 @@ class LoginController extends APIController
 
         $user = JWTAuth::user();
 
+        $user->update(['last_login_at'=>now()]);
+
         $data = [
             'uuid'                  => $user->uuid,
             'full_name'             => $user->full_name,

@@ -26,7 +26,34 @@ class NotificationController extends APIController
 
             if ($request->filter_by == 'type' && $request->filter_value) {
 
-                $notifications = $notifications->where('notification_type', $request->filter_value);
+                $filterValue = $request->filter_value;
+
+                $rolesId = [
+                    config('constant.roles.speciality_lead'),
+                    config('constant.roles.staff_coordinator'),
+                    config('constant.roles.anesthetic_lead'),
+                ];
+
+                if( in_array($authUser->primary_role,$rolesId) ){
+
+                    if($filterValue == 'read'){
+
+                        $notifications = $notifications->whereNotNull('read_at');
+
+                    }else if($filterValue == 'unread'){
+
+                        $notifications = $notifications->whereNull('read_at');
+
+                    }else if($filterValue == 'unapproved'){
+
+                        $notifications = $notifications->where('notification_type','session_not_approved');
+
+                    }
+
+                }else{
+                    $notifications = $notifications->where('notification_type', $filterValue);
+                }
+                
 
             }
         }
@@ -45,16 +72,14 @@ class NotificationController extends APIController
 
             if($notification->rotaSession){
 
-                // if($notification->notification_type != config('constant.user_profile_updated')){
+                if($notification->notification_type != config('constant.user_profile_updated')){
                     $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
                     $formattedDate = $carbonDate->format('D, j M');
                     $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
-                // }
+                }
 
                 
             }
-
-
 
             return $notification;
         });
@@ -103,7 +128,7 @@ class NotificationController extends APIController
 
         $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
         $messageData = [
-            'notification_type' => array_search(config('constant.subject_notification_type.session_confirmed'), config('constant.subject_notification_type')),
+            'notification_type' => array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type')),
             'section'           => $key,
             'subject'           => 'Session is available',
             'message'           => 'Hello session is available',

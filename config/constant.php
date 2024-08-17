@@ -51,18 +51,15 @@ return [
         'announcements' => 'Announcements',
     ],
 
-    'subject_notification_type' => [
+    'notification_type' => [
         'session_available'     => 'Session Available',
         'session_confirmed'     => 'Session Confirmed',
         'session_cancelled'     => 'Session Cancelled',
         'session_utilised'      => 'Session Utilised',
         'session_declined'      => 'Session Declined',
-        'user_profile_updated'  => [
-            'email'             => 'Email Updated',
-            'hospital'          => 'Hospital Updated',
-        ],
-       
-
+        'session_not_approved'  => 'Session Unapproved',
+        'user_profile_updated_email'    => 'Email Updated',
+        'user_profile_updated_hospital' => 'Hospital Updated',
     ],
 
     'unavailable_speciality_id' => 10,

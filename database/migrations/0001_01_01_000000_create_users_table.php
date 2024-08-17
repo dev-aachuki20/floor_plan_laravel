@@ -29,6 +29,8 @@ return new class extends Migration
             $table->unsignedBigInteger('created_by')->nullable();
             $table->foreign('created_by')->references('id')->on('users');
 
+            $table->timestamp('last_login_at')->nullable();
+            
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

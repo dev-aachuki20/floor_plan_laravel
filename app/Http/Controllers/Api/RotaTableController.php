@@ -432,7 +432,7 @@ class RotaTableController extends APIController
                                     $roleName = $authUser->role->role_name;
     
                                     $subject = trans('messages.notification_subject.session_cancel',['roleName'=>$roleName]);
-                                    $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
+                                    $notification_type = array_search(config('constant.notification_type.session_cancelled'), config('constant.notification_type'));
     
                                     $messageContent = $rotaSession->roomDetail->room_name.' - '. $speciality_name_before_changed;
     
@@ -454,27 +454,6 @@ class RotaTableController extends APIController
     
                             $availabilityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->whereIn('primary_role', $rolesId)->get() : [];
     
-                           /* $availability_user = [];
-                            foreach ($availabilityUsers as $user) {
-                                if($user->is_speciality_lead){
-                                    $availability_user[$user->id] = ['role_id' => $user->primary_role];
-                                }
-                            }
-    
-                            if (count($availability_user) > 0) {
-    
-                                if($isSpecialityChanged){
-                                    $rotaSession->users()->sync($availability_user);
-                                }else{
-                                    $rotaSession->users()->syncWithoutDetaching($availability_user);
-                                }
-    
-                            }else{
-                                $rotaSession->users()->sync($availability_user);
-                            }*/
-                            // End Availability Users
-    
-    
                             //Send notification for available session
                             foreach ($availabilityUsers as $user) {
     
@@ -483,7 +462,7 @@ class RotaTableController extends APIController
     
                                     $subject = trans('messages.notification_subject.available');
     
-                                    $notification_type = array_search(config('constant.subject_notification_type.session_available'), config('constant.subject_notification_type'));
+                                    $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
     
                                     $messageContent = $rotaSession->roomDetail->room_name.' - '. $rotaSession->specialityDetail->rotaSession;
     
@@ -522,23 +501,6 @@ class RotaTableController extends APIController
             return $this->setStatusCode(500)
                 ->respondWithError(trans('messages.error_message') . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
-    }
-
-    public function getQuarters()
-    {
-
-        $currentYear = date('Y');
-
-        // Retrieve quarters for the current year
-        $quarters = Quarter::select('id', 'quarter_name', 'start_date', 'end_date')->whereYear('start_date', $currentYear)
-            ->whereYear('end_date', $currentYear)
-            ->get();
-
-        return $this->respondOk([
-            'status'   => true,
-            'message'   => trans('messages.record_retrieved_successfully'),
-            'data'      => $quarters,
-        ])->setStatusCode(Response::HTTP_OK);
     }
 
 
@@ -598,12 +560,12 @@ class RotaTableController extends APIController
                                        $roleName = $authUser->role->role_name;
 
                                        $subject = trans('messages.notification_subject.confirm',['roleName'=>$roleName]);
-                                       $notification_type = array_search(config('constant.subject_notification_type.session_confirmed'), config('constant.subject_notification_type'));
+                                       $notification_type = array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type'));
 
                                        if($is_available == 2){
                                             $subject = trans('messages.notification_subject.cancel',['roleName'=>$roleName]);
 
-                                            $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
+                                            $notification_type = array_search(config('constant.notification_type.session_cancelled'), config('constant.notification_type'));
                                        }
 
 
@@ -657,11 +619,7 @@ class RotaTableController extends APIController
         $responseData = [];
 
         // Retrieve quarters
-        $currentYear = date('Y');
-        $quarters = Quarter::select('id as value', 'quarter_name as label')
-            ->whereYear('start_date', $currentYear)
-            ->whereYear('end_date', $currentYear)
-            ->get();
+        $quarters = Quarter::select('id as value', 'quarter_name as label')->get();
 
         $quarters->prepend([
             'value' => '',

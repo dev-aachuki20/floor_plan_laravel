@@ -46,7 +46,7 @@ class SendNotificationReminderBeforeOneDay extends Command
         // })->unique('id');
 
         $messageData = [
-            'notification_type' => array_search(config('constant.subject_notification_type.clock_in_reminder'), config('constant.subject_notification_type')),
+            'notification_type' => array_search(config('constant.notification_type.clock_in_reminder'), config('constant.notification_type')),
             'section'           => $section,
             'subject'           => trans('messages.shift.shift_clock_in_reminder_subject'),
             'message'           => trans('messages.shift.shift_clock_in_reminder_message'),

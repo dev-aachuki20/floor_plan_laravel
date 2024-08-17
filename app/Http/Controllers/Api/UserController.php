@@ -16,6 +16,8 @@ use App\Exports\UsersExport;
 use App\Mail\WelcomeEmail;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Notifications\SendNotification;
+
 
 
 class UserController extends APIController
@@ -245,9 +247,12 @@ class UserController extends APIController
         try {
             DB::beginTransaction();
 
+            $authUser = auth()->user();
             $isEmailChanged = false;
 
             $user = User::where('uuid', $uuid)->firstOrFail();
+
+            $currentHospitalList = $user->getHospitals()->pluck('id')->toArray();
 
             if($user->user_email != $request->user_email){
                 $isEmailChanged = true;
@@ -260,15 +265,63 @@ class UserController extends APIController
                 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
+            $user = User::where('uuid', $uuid)->first();
+
             if($isEmailChanged){
+                
                 // Send welcome email
-                Mail::to($user->user_email)->send(new WelcomeEmail($user, $request->password));
+                Mail::to($user->user_email)->queue(new WelcomeEmail($user, $request->password));
+
+                //Send notification as email updated
+                $roleName = $authUser->role->role_name;
+
+                $subject = trans('messages.notification_subject.user_profile_updated_email',['roleName'=>$roleName]);
+                $notification_type = array_search(config('constant.notification_type.user_profile_updated_email'), config('constant.notification_type'));
+                $messageContent = null;
+                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+        
+                $messageData = [
+                     'notification_type' => $notification_type,
+                     'section'           => $key,
+                     'subject'           => $subject,
+                     'message'           => $messageContent,
+                     'rota_session'      => null,
+                     'created_by'        => $authUser->id
+                 ];
+        
+                $user->notify(new SendNotification($messageData));
+                //End send notification as email updated
+
             }
 
             $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
+            $updatedHospitalList = $user->getHospitals()->pluck('id')->toArray();
+
+            if (array_diff($currentHospitalList, $updatedHospitalList) || array_diff($updatedHospitalList, $currentHospitalList)) {
+
+                //Send notification as hospital updated
+                $roleName = $authUser->role->role_name;
+
+                $subject = trans('messages.notification_subject.user_profile_updated_hospital',['roleName'=>$roleName]);
+                $notification_type = array_search(config('constant.notification_type.user_profile_updated_hospital'), config('constant.notification_type'));
+                $messageContent = null;
+                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+        
+                $messageData = [
+                     'notification_type' => $notification_type,
+                     'section'           => $key,
+                     'subject'           => $subject,
+                     'message'           => $messageContent,
+                     'rota_session'      => null,
+                     'created_by'        => $authUser->id
+                 ];
+        
+                $user->notify(new SendNotification($messageData));
+                //End send notification as hospital updated
+            }
 
             // Sync speciality and sub_speciality
             if($request->role != config('constant.roles.booker')){
