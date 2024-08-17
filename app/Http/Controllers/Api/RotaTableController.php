@@ -359,152 +359,153 @@ class RotaTableController extends APIController
             // Rooms
             foreach ($validatedData['rooms'] as $room) {
                 $roomId = $room['id'];
-                foreach ($room['room_records'] as $date => $timeSlots) {
-                    foreach ($timeSlots as $slotKey => $speciality) {
-
-                        $isSpecialityChanged = false;
-                        $speciality_name_before_changed = null;
-
-                        $isNewCreated = false;
-
-                        $start = Carbon::parse($date);
-                        $weekNumber = $start->weekOfYear;
-
-                        // Check if the rota session already exists
-                        $rotaSession = RotaSession::where('hospital_id',$hospital_id)
-                            ->where('room_id', $roomId)
-                            ->where('time_slot', $slotKey)
-                            ->where('week_day_date', $date)
-                            ->first();
-
-                        $rotaSessionRecords = [
-                            'quarter_id'      => $validatedData['quarter_id'] ?? null,
-                            'hospital_id'     => $hospital_id,
-                            'week_no'         => $weekNumber,
-                            'room_id'         => $roomId,
-                            'time_slot'       => $slotKey,
-                            'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
-                            'week_day_date'   => $date,
-                        ];
-
-
-                        if ($rotaSession) {
-
-                            if(!is_null($rotaSession->speciality_id)){
-
-                                if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
-                                    $isSpecialityChanged = true;
-
-                                    $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
-
+                if(isset($room['room_records'])){
+                    foreach ($room['room_records'] as $date => $timeSlots) {
+                        foreach ($timeSlots as $slotKey => $speciality) {
+    
+                            $isSpecialityChanged = false;
+                            $speciality_name_before_changed = null;
+    
+                            $isNewCreated = false;
+    
+                            $start = Carbon::parse($date);
+                            $weekNumber = $start->weekOfYear;
+    
+                            // Check if the rota session already exists
+                            $rotaSession = RotaSession::where('hospital_id',$hospital_id)
+                                ->where('room_id', $roomId)
+                                ->where('time_slot', $slotKey)
+                                ->where('week_day_date', $date)
+                                ->first();
+    
+                            $rotaSessionRecords = [
+                                'quarter_id'      => $validatedData['quarter_id'] ?? null,
+                                'hospital_id'     => $hospital_id,
+                                'week_no'         => $weekNumber,
+                                'room_id'         => $roomId,
+                                'time_slot'       => $slotKey,
+                                'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                                'week_day_date'   => $date,
+                            ];
+    
+    
+                            if ($rotaSession) {
+    
+                                if(!is_null($rotaSession->speciality_id)){
+    
+                                    if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
+                                        $isSpecialityChanged = true;
+    
+                                        $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
+    
+                                    }
+    
+                                }else{
+                                    $isNewCreated = true;
                                 }
-
-                            }else{
+                                // Update existing rota session
+                                $rotaSession->update($rotaSessionRecords);
+    
+                                $rotaSession = RotaSession::find($rotaSession->id);
+    
+                            } else {
+                                // Create new rota session
+                                $rotaSession = RotaSession::create($rotaSessionRecords);
+    
                                 $isNewCreated = true;
                             }
-                            // Update existing rota session
-                            $rotaSession->update($rotaSessionRecords);
-
-                            $rotaSession = RotaSession::find($rotaSession->id);
-
-                        } else {
-                            // Create new rota session
-                            $rotaSession = RotaSession::create($rotaSessionRecords);
-
-                            $isNewCreated = true;
-                        }
-
-                        // Start Availability Users
-                       $rolesId = [
-                            config('constant.roles.speciality_lead'),
-                            config('constant.roles.staff_coordinator'),
-                            config('constant.roles.anesthetic_lead'),
-                        ];
-
-                        if($isSpecialityChanged){
-
-                            //If Speciality changed than send notification to all confirm user that session has been cancelled
-                            $existingConfirmedUsers = $rotaSession->users()->wherePivot('status', 1)->wherePivotIn('role_id', $rolesId)->get();
-
-                            foreach($existingConfirmedUsers as $user){
-
-                                $roleName = $authUser->role->role_name;
-
-                                $subject = trans('messages.availablity_status.session_cancel',['roleName'=>$roleName]);
-                                $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
-
-                                $messageContent = $rotaSession->roomDetail->room_name.' - '. $speciality_name_before_changed;
-
-                                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                                $messageData = [
-                                     'notification_type' => $notification_type,
-                                     'section'           => $key,
-                                     'subject'           => $subject,
-                                     'message'           => $messageContent,
-                                     'rota_session'      => $rotaSession,
-                                     'created_by'        => $authUser->id
-                                 ];
-
-                                $user->notify(new SendNotification($messageData));
-                            }
-                        }
-
-
-                        $availabilityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->whereIn('primary_role', $rolesId)->get() : [];
-
-                        $availability_user = [];
-                        foreach ($availabilityUsers as $user) {
-                            if($user->is_speciality_lead){
-                                $availability_user[$user->id] = ['role_id' => $user->primary_role];
-                            }
-                        }
-
-                        if (count($availability_user) > 0) {
-
+    
+                            // Start Availability Users
+                           $rolesId = [
+                                config('constant.roles.speciality_lead'),
+                                config('constant.roles.staff_coordinator'),
+                                config('constant.roles.anesthetic_lead'),
+                            ];
+    
                             if($isSpecialityChanged){
-                                $rotaSession->users()->sync($availability_user);
+    
+                                //If Speciality changed than send notification to all confirm user that session has been cancelled
+                                $existingConfirmedUsers = $rotaSession->users()->wherePivot('status', 1)->wherePivotIn('role_id', $rolesId)->get();
+    
+                                foreach($existingConfirmedUsers as $user){
+    
+                                    $roleName = $authUser->role->role_name;
+    
+                                    $subject = trans('messages.notification_subject.session_cancel',['roleName'=>$roleName]);
+                                    $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
+    
+                                    $messageContent = $rotaSession->roomDetail->room_name.' - '. $speciality_name_before_changed;
+    
+                                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+    
+                                    $messageData = [
+                                         'notification_type' => $notification_type,
+                                         'section'           => $key,
+                                         'subject'           => $subject,
+                                         'message'           => $messageContent,
+                                         'rota_session'      => $rotaSession,
+                                         'created_by'        => $authUser->id
+                                     ];
+    
+                                    $user->notify(new SendNotification($messageData));
+                                }
+                            }
+    
+    
+                            $availabilityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->whereIn('primary_role', $rolesId)->get() : [];
+    
+                           /* $availability_user = [];
+                            foreach ($availabilityUsers as $user) {
+                                if($user->is_speciality_lead){
+                                    $availability_user[$user->id] = ['role_id' => $user->primary_role];
+                                }
+                            }
+    
+                            if (count($availability_user) > 0) {
+    
+                                if($isSpecialityChanged){
+                                    $rotaSession->users()->sync($availability_user);
+                                }else{
+                                    $rotaSession->users()->syncWithoutDetaching($availability_user);
+                                }
+    
                             }else{
-                                $rotaSession->users()->syncWithoutDetaching($availability_user);
+                                $rotaSession->users()->sync($availability_user);
+                            }*/
+                            // End Availability Users
+    
+    
+                            //Send notification for available session
+                            foreach ($availabilityUsers as $user) {
+    
+                                if($isNewCreated || $isSpecialityChanged){
+                                    // $roleName = $authUser->role->role_name;
+    
+                                    $subject = trans('messages.notification_subject.available');
+    
+                                    $notification_type = array_search(config('constant.subject_notification_type.session_available'), config('constant.subject_notification_type'));
+    
+                                    $messageContent = $rotaSession->roomDetail->room_name.' - '. $rotaSession->specialityDetail->rotaSession;
+    
+                                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+    
+                                    $messageData = [
+                                        'notification_type' => $notification_type,
+                                        'section'           => $key,
+                                        'subject'           => $subject,
+                                        'message'           => $messageContent,
+                                        'rota_session'      => $rotaSession,
+                                        'created_by'        => $authUser->id
+                                    ];
+    
+                                    $user->notify(new SendNotification($messageData));
+                                }
                             }
-
-                            // $rotaSession->users()->sync($availability_user);
-
-                        }else{
-                            $rotaSession->users()->sync($availability_user);
+                            //End send notification for session available
                         }
-                        // End Availability Users
-
-
-                        //Send notification for available session
-                        foreach ($availabilityUsers as $user) {
-
-                            if($isNewCreated || $isSpecialityChanged){
-                                // $roleName = $authUser->role->role_name;
-
-                                $subject = trans('messages.availablity_status.available');
-
-                                $notification_type = array_search(config('constant.subject_notification_type.session_available'), config('constant.subject_notification_type'));
-
-                                $messageContent = $rotaSession->roomDetail->room_name.' - '. $rotaSession->specialityDetail->rotaSession;
-
-                                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                                $messageData = [
-                                    'notification_type' => $notification_type,
-                                    'section'           => $key,
-                                    'subject'           => $subject,
-                                    'message'           => $messageContent,
-                                    'rota_session'      => $rotaSession,
-                                    'created_by'        => $authUser->id
-                                ];
-
-                                $user->notify(new SendNotification($messageData));
-                            }
-                        }
-                        //End send notification for session available
                     }
                 }
+                
             }
             // End Rooms
 
@@ -557,33 +558,29 @@ class RotaTableController extends APIController
                     $rota_session = RotaSession::where('id', $id)->where('speciality_id', '!=', null)->first();
                     if ($rota_session) {
 
-                        $existingConfirmed = $rota_session->users()->wherePivot('status', 1)->wherePivot('role_id', $authUser->primary_role)->wherePivot('user_id', '!=', $authUser->id)->exists();
-
-                        if ($existingConfirmed) {
-
-                            $speciality_name = $rota_session->specialityDetail ? $rota_session->specialityDetail->speciality_name : '';
-
-                            return $this->setStatusCode(403)
-                            ->respondWithError(trans('messages.already_confirm_session',['sessionName'=>$speciality_name,'sessionDate'=>$rota_session->week_day_date]));
-
-                        } else if( in_array($is_available, array(true,false) ) ){
+                        if(in_array($is_available, array(true,false) ) ){
 
                             $is_available = $is_available ? 1 : 2;
 
                             $existingRecord = $rota_session->users()
-                                ->wherePivot('user_id', $authUser->id)
                                 ->wherePivot('role_id', $authUser->primary_role)
                                 ->first();
-
+                            
                             if ($existingRecord) {
                                 // Update the existing record's status
-                                $rota_session->users()->updateExistingPivot($authUser->id, ['status' => $is_available]);
+                                $rota_session->users()
+                                ->newPivotStatement()
+                                ->where('rota_session_id', $rota_session->id)
+                                ->where('role_id', $authUser->primary_role)
+                                ->update([
+                                    'user_id' => $authUser->id,
+                                    'status' => $is_available,
+                                ]);
+                            
                             } else {
                                 // Sync the new availability data
                                 $availability_user[$authUser->id] = ['role_id' => $authUser->primary_role,'status' => $is_available];
-                                // $rota_session->users()->sync($availability_user);
                                 $rota_session->users()->attach($authUser->id, $availability_user[$authUser->id]);
-
                             }
 
                             //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
@@ -600,11 +597,11 @@ class RotaTableController extends APIController
 
                                        $roleName = $authUser->role->role_name;
 
-                                       $subject = trans('messages.availablity_status.confirm',['roleName'=>$roleName]);
+                                       $subject = trans('messages.notification_subject.confirm',['roleName'=>$roleName]);
                                        $notification_type = array_search(config('constant.subject_notification_type.session_confirmed'), config('constant.subject_notification_type'));
 
                                        if($is_available == 2){
-                                            $subject = trans('messages.availablity_status.cancel',['roleName'=>$roleName]);
+                                            $subject = trans('messages.notification_subject.cancel',['roleName'=>$roleName]);
 
                                             $notification_type = array_search(config('constant.subject_notification_type.session_cancelled'), config('constant.subject_notification_type'));
                                        }

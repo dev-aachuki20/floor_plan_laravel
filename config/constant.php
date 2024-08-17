@@ -56,6 +56,13 @@ return [
         'session_confirmed'     => 'Session Confirmed',
         'session_cancelled'     => 'Session Cancelled',
         'session_utilised'      => 'Session Utilised',
+        'session_declined'      => 'Session Declined',
+        'user_profile_updated'  => [
+            'email'             => 'Email Updated',
+            'hospital'          => 'Hospital Updated',
+        ],
+       
+
     ],
 
     'unavailable_speciality_id' => 10,

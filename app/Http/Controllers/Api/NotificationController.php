@@ -43,11 +43,15 @@ class NotificationController extends APIController
         $notifications->getCollection()->transform(function ($notification) {
             $notification->created_time = Carbon::parse($notification->created_at)->format('g:i A');
 
-
             if($notification->rotaSession){
-                $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
-                $formattedDate = $carbonDate->format('D, j M');
-                $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
+
+                // if($notification->notification_type != config('constant.user_profile_updated')){
+                    $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
+                    $formattedDate = $carbonDate->format('D, j M');
+                    $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
+                // }
+
+                
             }
 
 
@@ -107,6 +111,7 @@ class NotificationController extends APIController
         ];
 
         $user->notify(new SendNotification($messageData));
+
 
         return $this->respondOk([
             'status'   => true,

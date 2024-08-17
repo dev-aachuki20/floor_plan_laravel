@@ -90,7 +90,7 @@ return [
 
     ],
 
-    'availablity_status' => [
+    'notification_subject' => [
         'available' => 'Session is available',
         'session_cancel' => ':roleName cancelled a session',
         'confirm' => ':roleName was confirmed',
