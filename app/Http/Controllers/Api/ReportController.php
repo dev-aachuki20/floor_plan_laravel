@@ -64,8 +64,8 @@ class ReportController extends APIController
     public function reportChart(Request $request){
        
         $validatedData = $request->validate([
-            'month' => ['nullable', 'integer', 'between:1,12'],
-            'year'  => ['nullable', 'integer'], 
+            'month' => ['nullable', 'string', 'regex:/^(0?[1-9]|1[0-2])$/'],
+            'year'  => ['nullable', 'string', 'size:4'], 
             'hospital_id'  => ['required', 'integer', 'exists:hospital,id,deleted_at,NULL'],
         ]);
 
