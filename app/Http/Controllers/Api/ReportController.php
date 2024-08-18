@@ -75,42 +75,64 @@ class ReportController extends APIController
             $month = $validatedData['month'] ?? null;
             $hospitalId = $validatedData['hospital_id'];
 
-            $users = User::select(DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
-            ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
-            ->where('user_hospital.hospital_id', $hospitalId)
-            ->whereYear('last_login_at', $year)
-            ->where('primary_role', '!=', config('constant.roles.system_admin'))
-            ->whereNull('users.deleted_at');
+            $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
+                ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
+                ->where('user_hospital.hospital_id', $hospitalId)
+                ->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
+                ->where('primary_role', '!=', config('constant.roles.system_admin'))
+                ->whereNull('users.deleted_at');
 
+            //Start Filter
             if ($month) {
-                // Filter by the specific month if provided and group by month
-                $users->whereMonth('last_login_at', $month)
-                    ->groupBy(DB::raw('MONTH(last_login_at)'));
-            } else {
-                // Group by month and order by the current month if no specific month is provided
-                $currentMonth = Carbon::now()->month;
-                $users->groupBy(DB::raw('MONTH(last_login_at)'))
-                    ->orderByRaw('MONTH(last_login_at) = ? DESC', [$currentMonth])
-                    ->orderBy('month');
+                $usersQuery->whereMonth('last_login_at', $month);
             }
 
-            $users = $users->get();
+            if ($year) {
+                $usersQuery->whereYear('last_login_at', $year);
+            }
+            //End Filter
+           
+            $usersQuery->groupBy(DB::raw('YEAR(last_login_at)'), DB::raw('MONTH(last_login_at)'))
+            ->orderByRaw('YEAR(last_login_at) DESC, MONTH(last_login_at) DESC');
+
+            $users = $usersQuery->get();
 
             $startMonth = $month ?: Carbon::now()->month;
+            $startYear = $year ?: Carbon::now()->year;
 
-            $monthNames = collect(range(0, 11))->map(function ($i) use ($startMonth) {
-                return Carbon::create()->month(($startMonth + $i - 1) % 12 + 1)->format('F');
-            });
-
-            $data = $monthNames->map(function ($monthName, $index) use ($users, $startMonth) {
-                $currentMonth = ($startMonth + $index - 1) % 12 + 1;
+            // Generate month and year in descending order starting from the current month and year
+            $monthYearNames = collect(range(0, 11))->map(function ($i) use ($startMonth, $startYear) {
+                $date = Carbon::create($startYear, $startMonth, 1)->subMonths($i);
                 return [
-                    'month' => $monthName,
-                    'count' => $users->firstWhere('month', $currentMonth)->count ?? 0,
+                    'month' => $date->format('F'),
+                    'year' => $date->year,
                 ];
             });
 
+            // Prepare data
+            $data = $monthYearNames->map(function ($monthYear) use ($users) {
+                $currentYear = $monthYear['year'];
+                $currentMonth = Carbon::parse($monthYear['month'])->month;
+
+                $userRecord = $users->firstWhere('month', $currentMonth);
+                
+                if ($userRecord && $userRecord->year == $currentYear) {
+                    return [
+                        'month' => $monthYear['month'],
+                        'year'  => $currentYear,
+                        'count' => $userRecord->count,
+                    ];
+                } else {
+                    return [
+                        'month' => $monthYear['month'],
+                        'year'  => $currentYear,
+                        'count' => 0,
+                    ];
+                }
+            });
+
             $months = $data->pluck('month');
+            $years = $data->pluck('year');
             $dataCounts = $data->pluck('count');
 
             return $this->respondOk([
