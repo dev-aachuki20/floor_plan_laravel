@@ -2,17 +2,18 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
+use App\Models\User;
 use App\Models\RotaSession;
-use App\Mail\SessionReminderMail;
+use Illuminate\Console\Command;
+use App\Notifications\SendNotification;
 use Symfony\Component\HttpFoundation\Response;
 
 
 class SendUnconfirmedSessionReminders extends Command
 {
-    protected $signature = 'sessions:remind-unconfirmed';
-    protected $description = 'Send reminders for unconfirmed sessions after a week';
+    protected $signature = 'unconfirmed-sessions:reminder';
+    protected $description = 'Send reminders to users about unconfirmed sessions one day before the session starts';
 
     public function __construct()
     {
@@ -21,47 +22,99 @@ class SendUnconfirmedSessionReminders extends Command
 
     public function handle()
     {
-        $sevenDaysAgo = now()->subDays(7);
+       
 
-        $dates = collect(range(1, 7))->map(function ($day) {
-            return now()->subDays($day)->startOfDay();
-        });
+        $now = Carbon::now();
+        $tomorrow = $now->copy()->addDay()->format('Y-m-d');
 
-        // Initialize a collection to hold unconfirmed sessions
-        $unconfirmedSessions = collect();
-        foreach ($dates as $date) {
-            $sessions = RotaSession::whereHas('users', function ($query) {
-                $query->where('status', 0);
-            })
-                ->whereDate('week_day_date', $date)
-                ->with('users')
-                ->get();
-            $unconfirmedSessions = $unconfirmedSessions->merge($sessions);
+        // Find all unconfirmed sessions starting tomorrow
+        $unconfirmedSessions = RotaSession::whereNotNull('speciality_id')->where('speciality_id','!=',config('constant.unavailable_speciality_id'))->where('week_day_date', $tomorrow)->get();
+
+        $usersToNotify = [];
+
+        foreach ($unconfirmedSessions as $key=>$session) {
+
+            //Speciality Lead User
+            $speciality_lead_user = $session->users()->wherePivot('status','!=',1)->wherePivot('role_id',config('constant.roles.speciality_lead'))->first();
+            if($speciality_lead_user){
+
+                $usersToNotify[$session->id][] = $speciality_lead_user->id;
+                
+            }else{
+                
+                $specialityLeadUsers = $session->specialityDetail->users()->where('primary_role',config('constant.roles.speciality_lead'))->get();
+
+                foreach ($specialityLeadUsers as $user) {
+                    $usersToNotify[$session->id][] = $user->id;
+                }
+            }
+
+            //Anesthetic lead
+            $anesthetic_lead_user = $session->users()->wherePivot('status','!=',1)->wherePivot('role_id',config('constant.roles.anesthetic_lead'))->first();
+            if($anesthetic_lead_user){
+
+                $usersToNotify[$session->id][] = $anesthetic_lead_user->id;
+
+            }else{
+                
+                $anestheticLeadUsers = User::where('primary_role',config('constant.roles.anesthetic_lead'))->get();
+
+                foreach ($anestheticLeadUsers as $user) {
+                    $usersToNotify[$session->id][] = $user->id;
+                }
+            }
+
+            //Staff Coordinator
+            $staff_user = $session->users()->wherePivot('status','!=',1)->wherePivot('role_id',config('constant.roles.staff_coordinator'))->first();
+            if($staff_user){
+
+                $usersToNotify[$session->id][] = $staff_user->id;
+
+            }else{
+                
+                $staffUsers = User::where('primary_role',config('constant.roles.anesthetic_lead'))->get();
+
+                foreach ($staffUsers as $user) {
+                    $usersToNotify[$session->id][] = $user->id;
+                }
+            }
+
+            $usersToNotify[$session->id] = array_unique($usersToNotify[$session->id]);
+
         }
 
-        $usersToNotify = $unconfirmedSessions->flatMap(function ($session) {
+     
+        // Send notifications
+        foreach ($usersToNotify as $sessionId => $allUsersId) {
 
-            // Get the confirmed user role
-            $confirmedUserRole = $session->users->filter(function ($user) {
-                return $user->pivot->status == 1;
-            })->pluck('pivot.role_id')->unique();
+            $rotaSession = RotaSession::find($sessionId);
 
-            // Get users with unconfirmed status and roles different from the confirmed user role
-            return $session->users->filter(function ($user) use ($confirmedUserRole) {
-                return $user->pivot->status == 0 && !$confirmedUserRole->contains($user->pivot->role_id);
-            });
-        })->unique('id');
+            $allUsers = User::whereIn('id',$allUsersId)->get();
+            foreach($allUsers as $user){
+                $subject = 'Reminder : '.trans('messages.notification_subject.available');
 
-        // Send email reminders
-        foreach ($usersToNotify as $user) {
-            Mail::to($user->email)->queue(new SessionReminderMail($unconfirmedSessions));
+                $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+
+                $messageContent = $rotaSession->roomDetail->room_name.' - '. $rotaSession->specialityDetail->rotaSession;
+
+                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                $messageData = [
+                    'notification_type' => $notification_type,
+                    'section'           => $key,
+                    'subject'           => $subject,
+                    'message'           => $messageContent,
+                    'rota_session'      => $rotaSession,
+                    'created_by'        => config('constant.roles.system_admin')
+                ];
+
+                $user->notify(new SendNotification($messageData));
+            }
+
         }
 
-        // $this->info('Reminders sent successfully.');
+        $this->info('Notifications for unconfirmed sessions have been sent.');
 
-        return $this->respondOk([
-            'status'   => true,
-            'message'   => trans('messages.reminder_send'),
-        ])->setStatusCode(Response::HTTP_OK);
+       
     }
 }

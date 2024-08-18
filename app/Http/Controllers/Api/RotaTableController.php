@@ -218,30 +218,6 @@ class RotaTableController extends APIController
                                         $rolesStatus[$role] = ($status == 1);
                                     }
 
-                                    /*if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-
-                                        if($authUser->primary_role == $user->pivot->role_id){
-
-                                            if($status == 1){
-                                                $rolesStatus['is_available'] = true;
-                                            }else if($status == 2){
-                                                $rolesStatus['is_available'] = false;
-                                            }
-                                        }
-
-                                    }else{
-
-                                        if($status == 1){
-                                            $rolesStatus[$role] = true;
-                                        }else if($status == 2){
-                                            $rolesStatus[$role] = false;
-                                        }
-
-                                    }
-
-                                    if ($user->pivot->status == 1) {
-                                        break;
-                                    }*/
                                 }
                             }
                         }
@@ -258,11 +234,9 @@ class RotaTableController extends APIController
                     }
                 }
 
-                // Assign the records to the room
                 $room->room_records = $room_records;
             }
 
-            //Disable dates
             $model->is_disabled = (isset($weekDays[0]) && Carbon::parse($weekDays[0])->gt(Carbon::now())) ? false : true;
 
             return $this->respondOk([
@@ -325,7 +299,7 @@ class RotaTableController extends APIController
                         $carbonDate = Carbon::parse($date);
                         $dayOfWeek = $carbonDate->format('l'); // 'Monday', 'Tuesday', etc.
                         $currentQuarter = determineQuarter($carbonDate); 
-                        $currentWeekNo = $carbonDate->weekOfYear % 13; // Assuming 13 weeks per quarter
+                        $currentWeekNo = $carbonDate->weekOfYear;
                          
                         $lastQuarterWeekSession = RotaSession::select('speciality_id')
                                     ->where('quarter_id', $currentQuarter)
@@ -337,7 +311,7 @@ class RotaTableController extends APIController
                                     ->orderBy('week_day_date', 'desc')
                                     ->first();
                         
-                        // dd($record,$lastQuarterWeekSession->speciality_id);
+                        // dd($record,$lastQuarterWeekSession,$currentQuarter,$currentWeekNo);
 
                         if( (!$record) && $lastQuarterWeekSession){
                             $room_records[$timeSlot][$key]['value'] = $lastQuarterWeekSession->speciality_id ?? '';
@@ -401,7 +375,7 @@ class RotaTableController extends APIController
                             $isNewCreated = false;
 
                             $start = Carbon::parse($date);
-                            $weekNumber = $start->weekOfYear % 13;
+                            $weekNumber = $start->weekOfYear;
                          
                             // Check if the rota session already exists
                             $rotaSession = RotaSession::where('hospital_id',$hospital_id)
@@ -481,6 +455,8 @@ class RotaTableController extends APIController
 
                                     $user->notify(new SendNotification($messageData));
                                 }
+
+                                $rotaSession->users()->sync([]);
                             }
 
 
