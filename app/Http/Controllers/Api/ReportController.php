@@ -66,7 +66,7 @@ class ReportController extends APIController
         $validatedData = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^(0?[1-9]|1[0-2])$/'],
             'year'  => ['nullable', 'string', 'size:4'], 
-            'hospital_id'  => ['required', 'integer', 'exists:hospital,id,deleted_at,NULL'],
+            'hospital_id'  => ['required', 'exists:hospital,id,deleted_at,NULL'],
         ]);
 
         try {
@@ -78,21 +78,23 @@ class ReportController extends APIController
             $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
                 ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
                 ->where('user_hospital.hospital_id', $hospitalId)
-                ->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
+                // ->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
                 ->where('primary_role', '!=', config('constant.roles.system_admin'))
                 ->whereNull('users.deleted_at');
 
             //Start Filter
             if ($month) {
-                $usersQuery->whereMonth('last_login_at', $month);
+              $usersQuery->where('last_login_at', '>=', Carbon::now()->subMonths($month)->startOfMonth());
+            } else {
+                $usersQuery->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth());
             }
 
             if ($year) {
-                $usersQuery->whereYear('last_login_at', $year);
+                $usersQuery = $usersQuery->whereYear('last_login_at', $year);
             }
             //End Filter
            
-            $usersQuery->groupBy(DB::raw('YEAR(last_login_at)'), DB::raw('MONTH(last_login_at)'))
+            $usersQuery = $usersQuery->groupBy(DB::raw('YEAR(last_login_at)'), DB::raw('MONTH(last_login_at)'))
             ->orderByRaw('YEAR(last_login_at) DESC, MONTH(last_login_at) DESC');
 
             $users = $usersQuery->get();
@@ -138,7 +140,8 @@ class ReportController extends APIController
             return $this->respondOk([
                 'status'    => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
-                'months'    => $months,
+                'months'    => $months, 
+                'years'     => $years,  
                 'data'      => $dataCounts,
             ])->setStatusCode(Response::HTTP_OK);
             
