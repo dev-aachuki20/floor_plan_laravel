@@ -319,7 +319,31 @@ class RotaTableController extends APIController
                             ->first();
 
                         $room_records[$timeSlot][$key]['date'] = $date;
-                        $room_records[$timeSlot][$key]['value'] = ($record && (!is_null($record->speciality_id))) ? $record->speciality_id : '';
+                        $room_records[$timeSlot][$key]['value'] = ($record && (!is_null($record->speciality_id))) ? $record->speciality_id : ''; 
+
+                        //Start Quarters Functionality
+                        $carbonDate = Carbon::parse($date);
+                        $dayOfWeek = $carbonDate->format('l'); // 'Monday', 'Tuesday', etc.
+                        $currentQuarter = determineQuarter($carbonDate); 
+                        $currentWeekNo = $carbonDate->weekOfYear % 13; // Assuming 13 weeks per quarter
+                         
+                        $lastQuarterWeekSession = RotaSession::select('speciality_id')
+                                    ->where('quarter_id', $currentQuarter)
+                                    ->where('hospital_id', $hospitalId)
+                                    ->where('room_id', $room->id)
+                                    ->where('week_no', '<=', $currentWeekNo)
+                                    ->where('time_slot', $timeSlot)
+                                    ->whereRaw("DAYNAME(week_day_date) = ?", [$dayOfWeek])
+                                    ->orderBy('week_day_date', 'desc')
+                                    ->first();
+                        
+                        // dd($record,$lastQuarterWeekSession->speciality_id);
+
+                        if( (!$record) && $lastQuarterWeekSession){
+                            $room_records[$timeSlot][$key]['value'] = $lastQuarterWeekSession->speciality_id ?? '';
+                        }
+                        //End Quarters Functionality
+
                     }
                 }
 
@@ -377,8 +401,8 @@ class RotaTableController extends APIController
                             $isNewCreated = false;
 
                             $start = Carbon::parse($date);
-                            $weekNumber = $start->weekOfYear;
-
+                            $weekNumber = $start->weekOfYear % 13;
+                         
                             // Check if the rota session already exists
                             $rotaSession = RotaSession::where('hospital_id',$hospital_id)
                                 ->where('room_id', $roomId)

@@ -356,3 +356,22 @@ if (!function_exists('sendNotification')) {
 		}
     }
 }
+
+if (!function_exists('determineQuarter')) {
+	
+	function determineQuarter(Carbon $date): int
+	{
+		$month = $date->month;
+		
+		if ($month >= 1 && $month <= 3) {
+			return 1;
+		} elseif ($month >= 4 && $month <= 6) {
+			return 2;
+		} elseif ($month >= 7 && $month <= 9) {
+			return 3;
+		} else {
+			return 4;
+		}
+	}
+
+}
