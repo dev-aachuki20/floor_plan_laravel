@@ -76,14 +76,18 @@ class ReportController extends APIController
             $hospitalId = $validatedData['hospital_id'];
 
             $users = User::select(DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
-                ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
-                ->where('user_hospital.hospital_id', $hospitalId)
-                ->whereYear('last_login_at', $year)
-                ->where('primary_role','!=',config('constant.roles.system_admin'));
+            ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
+            ->where('user_hospital.hospital_id', $hospitalId)
+            ->whereYear('last_login_at', $year)
+            ->where('primary_role', '!=', config('constant.roles.system_admin'))
+            ->whereNull('users.deleted_at');
 
             if ($month) {
-                $users->whereMonth('last_login_at', $month);
+                // Filter by the specific month if provided and group by month
+                $users->whereMonth('last_login_at', $month)
+                    ->groupBy(DB::raw('MONTH(last_login_at)'));
             } else {
+                // Group by month and order by the current month if no specific month is provided
                 $currentMonth = Carbon::now()->month;
                 $users->groupBy(DB::raw('MONTH(last_login_at)'))
                     ->orderByRaw('MONTH(last_login_at) = ? DESC', [$currentMonth])
@@ -92,39 +96,32 @@ class ReportController extends APIController
 
             $users = $users->get();
 
-            // Generate month names dynamically using Carbon
-            $fullMonthNames = collect(range(1, 12))->mapWithKeys(function ($i) {
-                return [$i => Carbon::create()->month($i)->format('F')];
+            $startMonth = $month ?: Carbon::now()->month;
+
+            $monthNames = collect(range(0, 11))->map(function ($i) use ($startMonth) {
+                return Carbon::create()->month(($startMonth + $i - 1) % 12 + 1)->format('F');
             });
 
-          
-            // Reorder month names to start from the current month
-            $monthNames = collect(range(0, 11))->map(function ($i) use ($month, $fullMonthNames) {
-                return $fullMonthNames[($month + $i) % 12 + 1];
-            });
-
-            $data = $monthNames->mapWithKeys(function ($monthName, $index) use ($users, $month) {
-                $currentMonth = ($month + $index - 1) % 12 + 1;
+            $data = $monthNames->map(function ($monthName, $index) use ($users, $startMonth) {
+                $currentMonth = ($startMonth + $index - 1) % 12 + 1;
                 return [
-                    $index => [
-                        'month' => $monthName,
-                        'count' => $users->firstWhere('month', $currentMonth)->count ?? 0,
-                    ]
+                    'month' => $monthName,
+                    'count' => $users->firstWhere('month', $currentMonth)->count ?? 0,
                 ];
             });
 
-            $months = $monthNames->values();
-            $data = $data->values()->pluck('count');
+            $months = $data->pluck('month');
+            $dataCounts = $data->pluck('count');
 
             return $this->respondOk([
                 'status'    => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
                 'months'    => $months,
-                'data'      => $data,
+                'data'      => $dataCounts,
             ])->setStatusCode(Response::HTTP_OK);
             
         } catch (\Exception $e) {
-            dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
 
