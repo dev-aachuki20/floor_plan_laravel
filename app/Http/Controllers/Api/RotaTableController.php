@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Room;
 use App\Models\Rota;
 use App\Models\RotaSession;
+use App\Models\RotaSessionQuarter;
 use App\Models\Quarter;
 use App\Models\Speciality;
 use App\Models\Hospital;
@@ -299,22 +300,20 @@ class RotaTableController extends APIController
                         $carbonDate = Carbon::parse($date);
                         $dayOfWeek = $carbonDate->format('l'); // 'Monday', 'Tuesday', etc.
                         $currentQuarter = determineQuarter($carbonDate); 
-                        $currentWeekNo = $carbonDate->weekOfYear;
-                         
-                        $lastQuarterWeekSession = RotaSession::select('speciality_id')
-                                    ->where('quarter_id', $currentQuarter)
+                        
+                        $quarterYear = $carbonDate->year;
+
+                        $lastQuarterRecord = RotaSessionQuarter::select('speciality_id')
+                                    ->where('quarter_no', $currentQuarter)
+                                    ->where('quarter_year', $quarterYear)
                                     ->where('hospital_id', $hospitalId)
                                     ->where('room_id', $room->id)
-                                    ->where('week_no', '<=', $currentWeekNo)
                                     ->where('time_slot', $timeSlot)
-                                    ->whereRaw("DAYNAME(week_day_date) = ?", [$dayOfWeek])
-                                    ->orderBy('week_day_date', 'desc')
+                                    ->where('day_name', $dayOfWeek)
                                     ->first();
-                        
-                        // dd($record,$lastQuarterWeekSession,$currentQuarter,$currentWeekNo);
-
-                        if( (!$record) && $lastQuarterWeekSession){
-                            $room_records[$timeSlot][$key]['value'] = $lastQuarterWeekSession->speciality_id ?? '';
+                    
+                        if( (!$record) && $lastQuarterRecord){
+                            $room_records[$timeSlot][$key]['value'] = $lastQuarterRecord->speciality_id ?? '';
                         }
                         //End Quarters Functionality
 
@@ -366,6 +365,7 @@ class RotaTableController extends APIController
             foreach ($validatedData['rooms'] as $room) {
                 $roomId = $room['id'];
                 if(isset($room['room_records'])){
+  
                     foreach ($room['room_records'] as $date => $timeSlots) {
                         foreach ($timeSlots as $slotKey => $speciality) {
 
@@ -375,6 +375,7 @@ class RotaTableController extends APIController
                             $isNewCreated = false;
 
                             $start = Carbon::parse($date);
+                            $dayOfWeek = $start->format('l');
                             $weekNumber = $start->weekOfYear;
                          
                             // Check if the rota session already exists
@@ -403,7 +404,6 @@ class RotaTableController extends APIController
                                         $isSpecialityChanged = true;
 
                                         $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
-
                                     }
 
                                 }else{
@@ -420,6 +420,41 @@ class RotaTableController extends APIController
 
                                 $isNewCreated = true;
                             }
+
+                            //Store & Update records for manage quarters functionality
+                           if($validatedData['quarter_id'] && $validatedData['quarter_year']){
+
+                                $quarterNo   = $validatedData['quarter_id'];
+                                $quarterYear = $validatedData['quarter_year'];
+                              
+                                $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
+                                ->where('quarter_no', $quarterNo)
+                                ->where('quarter_year',$quarterYear)
+                                ->where('hospital_id', $hospital_id)
+                                ->where('room_id', $roomId)
+                                ->where('time_slot', $slotKey)
+                                ->where('day_name', $dayOfWeek)
+                                ->first();
+
+                                $quarterRecords = [
+                                    'quarter_no'      => $quarterNo,
+                                    'quarter_year'    => $quarterYear,
+                                    'hospital_id'     => $hospital_id,
+                                    'room_id'         => $roomId,
+                                    'time_slot'       => $slotKey,
+                                    'day_name'        => $dayOfWeek,
+                                    'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                                ];
+
+                                if($quarterWeek){
+                                    // Update existing quarter records
+                                    RotaSessionQuarter::where('id',$quarterWeek->id)->update($quarterRecords);
+                                }else{
+                                    RotaSessionQuarter::create($quarterRecords);
+                                }
+
+                            }
+                            //End Store & Update records for manage quarters functionality
 
                             // Start Availability Users
                            $rolesId = [
@@ -621,7 +656,7 @@ class RotaTableController extends APIController
     public function rotaTableDropdown(Request $request){
 
         $validatedData = $request->validate([
-            'speciality_type'=> ['nullable']
+            'speciality_type'=> ['nullable'],
         ]);
 
         $responseData = [];

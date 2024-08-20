@@ -14,6 +14,7 @@ class SaveRotaRequest extends FormRequest
     {
         return [
             'quarter_id'            => 'nullable',
+            'quarter_year'          => 'nullable',
             'week_days'             => ['required', 'array',/*'size:7'*/],
             'week_days.*'           => ['required', 'date'],
             'hospital_id'           => 'required|exists:hospital,id,deleted_at,NULL',
