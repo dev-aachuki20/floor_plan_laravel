@@ -364,9 +364,16 @@ class RotaTableController extends APIController
                 $quarters[] = [
                     'value' => "{$i}",
                     'label' => "Quarter {$i}",
-                    'enabled' => $i >= $currentQuarter // Enable current and upcoming quarters, disable past quarters
+                    'isDisabled' => !($i >= $currentQuarter) // Enable current and upcoming quarters, disable past quarters
                 ];
             }
+
+            array_unshift($quarters, [
+                'value' => '',
+                'label' => 'Apply to a Quarter',
+                'isDisabled' => false
+            ]);
+
             $hospitalData->current_quarters = $quarters;
 
             return $this->respondOk([
@@ -453,37 +460,41 @@ class RotaTableController extends APIController
                             }
 
                             //Store & Update records for manage quarters functionality
-                           if($validatedData['quarter_id'] && $validatedData['quarter_year']){
+                            if(isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])){
 
-                                $quarterNo   = $validatedData['quarter_id'];
-                                $quarterYear = $validatedData['quarter_year'];
-                              
-                                $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
-                                ->where('quarter_no', $quarterNo)
-                                ->where('quarter_year',$quarterYear)
-                                ->where('hospital_id', $hospital_id)
-                                ->where('room_id', $roomId)
-                                ->where('time_slot', $slotKey)
-                                ->where('day_name', $dayOfWeek)
-                                ->first();
+                                if($validatedData['quarter_id'] && $validatedData['quarter_year']){
 
-                                $quarterRecords = [
-                                    'quarter_no'      => $quarterNo,
-                                    'quarter_year'    => $quarterYear,
-                                    'hospital_id'     => $hospital_id,
-                                    'room_id'         => $roomId,
-                                    'time_slot'       => $slotKey,
-                                    'day_name'        => $dayOfWeek,
-                                    'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
-                                ];
+                                    $quarterNo   = $validatedData['quarter_id'];
+                                    $quarterYear = $validatedData['quarter_year'];
+                                
+                                    $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
+                                    ->where('quarter_no', $quarterNo)
+                                    ->where('quarter_year',$quarterYear)
+                                    ->where('hospital_id', $hospital_id)
+                                    ->where('room_id', $roomId)
+                                    ->where('time_slot', $slotKey)
+                                    ->where('day_name', $dayOfWeek)
+                                    ->first();
 
-                                if($quarterWeek){
-                                    // Update existing quarter records
-                                    RotaSessionQuarter::where('id',$quarterWeek->id)->update($quarterRecords);
-                                }else{
-                                    RotaSessionQuarter::create($quarterRecords);
+                                    $quarterRecords = [
+                                        'quarter_no'      => $quarterNo,
+                                        'quarter_year'    => $quarterYear,
+                                        'hospital_id'     => $hospital_id,
+                                        'room_id'         => $roomId,
+                                        'time_slot'       => $slotKey,
+                                        'day_name'        => $dayOfWeek,
+                                        'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                                    ];
+
+                                    if($quarterWeek){
+                                        // Update existing quarter records
+                                        RotaSessionQuarter::where('id',$quarterWeek->id)->update($quarterRecords);
+                                    }else{
+
+                                        RotaSessionQuarter::create($quarterRecords);
+                                    }
+
                                 }
-
                             }
                             //End Store & Update records for manage quarters functionality
 
@@ -503,7 +514,8 @@ class RotaTableController extends APIController
 
                                     $roleName = $authUser->role->role_name;
 
-                                    $subject = trans('messages.notification_subject.session_cancel',['roleName'=>$roleName]);
+                                    $subject = trans('messages.notify_subject.remove_speciality');
+
                                     $notification_type = array_search(config('constant.notification_type.session_cancelled'), config('constant.notification_type'));
 
                                     $messageContent = $rotaSession->roomDetail->room_name.' - '. $speciality_name_before_changed;
@@ -532,9 +544,8 @@ class RotaTableController extends APIController
                             foreach ($availabilityUsers as $user) {
 
                                 if($isNewCreated || $isSpecialityChanged){
-                                    // $roleName = $authUser->role->role_name;
 
-                                    $subject = trans('messages.notification_subject.available');
+                                    $subject = trans('messages.notify_subject.confirmation');
 
                                     $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
 
@@ -620,7 +631,7 @@ class RotaTableController extends APIController
                             }
 
                             //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
-                                $adminUsers = $rota_session->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
+                             /*   $adminUsers = $rota_session->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
 
                                 $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
                                 if ($superAdmin) {
@@ -661,6 +672,7 @@ class RotaTableController extends APIController
                                     }
 
                                 }
+                            */
                             // End to Notify to admin users
 
                         }

@@ -112,18 +112,20 @@ class LoginController extends APIController
             $user_details['phone']         = $user->phone;
 
 
-            $user_details['trust'] =   $user->trusts ? $user->trusts()->value('id') : null;
-            $user_details['trust_name'] = $user->trusts ? $user->trusts()->value('trust_name') :  null;
+            $user_details['trust']               = $user->trusts ? $user->trusts()->value('id') : null;
+            $user_details['trust_name']          = $user->trusts ? $user->trusts()->value('trust_name') :  null;
 
-            $user_details['hospital'] = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
+            $user_details['hospital']            = $user->getHospitals()->pluck('hospital_name', 'id')->toArray();
             
-            $user_details['speciality'] = $user->specialityDetail()->value('id');
-            $user_details['speciality_name'] = $user->specialityDetail()->value('speciality_name');
+            $user_details['speciality']          = $user->specialityDetail()->value('id');
+            $user_details['speciality_name']     = $user->specialityDetail()->value('speciality_name');
 
-            $user_details['sub_speciality'] = $user->subSpecialityDetail()->value('id');
+            $user_details['sub_speciality']      = $user->subSpecialityDetail()->value('id');
             $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
 
-            $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
+            $user_details['created_by']          = $user->createdBy ? $user->createdBy->full_name : null;
+
+            $user_details['last_login_at']       = $user->last_login_at ? dateFormat($user->last_login_at,'D, d M Y - h:i A') : null;
             
         }
 

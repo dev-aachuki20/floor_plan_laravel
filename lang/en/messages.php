@@ -102,6 +102,11 @@ return [
         'user_profile_updated_hospital' => ':roleName updated hospital for you',
     ],
 
+    'notify_subject' => [
+        'confirmation'      => 'A session awaits your confirmation',
+        'remove_speciality' => 'You have been removed from a session',
+    ],
+
     'notification' => [
         'not_found'          => 'Notification not found',
         'mark_as_read'       => 'Notification marked as read',

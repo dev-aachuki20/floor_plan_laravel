@@ -37,7 +37,7 @@ class UserController extends APIController
 
             $user = auth()->user();
 
-            $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role');
+            $model = User::query()->with(['role:id,role_name'])->select('id', 'uuid', 'full_name', 'primary_role','last_login_at');
 
             //Start Apply filters
             if ($request->search) {
@@ -124,11 +124,12 @@ class UserController extends APIController
 
             if ($getAllRecords->count() > 0) {
                 foreach ($getAllRecords as $record) {
-                    $record->full_name = ucwords($record->full_name);
-                    $record->speciality =   $record->specialityDetail()->value('speciality_name');
-                    $record->sub_speciality = $record->subSpecialityDetail()->value('sub_speciality_name');
-                    $record->trust = $record->trusts()->pluck('trust_name', 'id')->toArray();
-                    $record->hospitals = $record->getHospitals()->pluck('hospital_name')->toArray();
+                    $record->full_name          = ucwords($record->full_name);
+                    $record->speciality         = $record->specialityDetail()->value('speciality_name');
+                    $record->sub_speciality     = $record->subSpecialityDetail()->value('sub_speciality_name');
+                    $record->trust              = $record->trusts()->pluck('trust_name', 'id')->toArray();
+                    $record->hospitals          = $record->getHospitals()->pluck('hospital_name')->toArray();
+                    $record->last_login_at      = $record->last_login_at ? dateFormat($record->last_login_at,'D, d M Y - h:i A') : null;
                 }
             }
 
@@ -219,6 +220,8 @@ class UserController extends APIController
                     $user_details['sub_speciality']      =  $user->subSpecialityDetail()->value('id');
                     $user_details['sub_speciality_name'] = $user->subSpecialityDetail()->value('sub_speciality_name');
                 }
+
+                $user_details['last_login_at'] = $user->last_login_at ? dateFormat($user->last_login_at,'D, d M Y - h:i A') : null;
 
                 $user_details['created_by']    = $user->createdBy ? $user->createdBy->full_name : null;
                 $user_details['deleted_by']    = $user->deletedBy ? $user->deletedBy->full_name : null;
