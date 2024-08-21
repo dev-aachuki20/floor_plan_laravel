@@ -512,13 +512,11 @@ class RotaTableController extends APIController
 
                                 foreach($existingConfirmedUsers as $user){
 
-                                    $roleName = $authUser->role->role_name;
-
                                     $subject = trans('messages.notify_subject.remove_speciality');
 
                                     $notification_type = array_search(config('constant.notification_type.session_cancelled'), config('constant.notification_type'));
 
-                                    $messageContent = $rotaSession->roomDetail->room_name.' - '. $speciality_name_before_changed;
+                                    $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
 
                                     $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
@@ -538,34 +536,72 @@ class RotaTableController extends APIController
                             }
 
 
-                            $availabilityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->whereIn('primary_role', $rolesId)->get() : [];
+                            if($rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
 
-                            //Send notification for available session
-                            foreach ($availabilityUsers as $user) {
+                                //Send notification for session confirmation to speciality lead user
+                                $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->get() : [];
 
-                                if($isNewCreated || $isSpecialityChanged){
+                                foreach ($specialityUsers as $user) {
 
-                                    $subject = trans('messages.notify_subject.confirmation');
+                                    if($isNewCreated || $isSpecialityChanged){
 
-                                    $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+                                        $subject = trans('messages.notify_subject.confirmation');
 
-                                    $messageContent = $rotaSession->roomDetail->room_name.' - '. $rotaSession->specialityDetail->rotaSession;
+                                        $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
 
-                                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+                                        $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
 
-                                    $messageData = [
-                                        'notification_type' => $notification_type,
-                                        'section'           => $key,
-                                        'subject'           => $subject,
-                                        'message'           => $messageContent,
-                                        'rota_session'      => $rotaSession,
-                                        'created_by'        => $authUser->id
-                                    ];
+                                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
-                                    $user->notify(new SendNotification($messageData));
+                                        $messageData = [
+                                            'notification_type' => $notification_type,
+                                            'section'           => $key,
+                                            'subject'           => $subject,
+                                            'message'           => $messageContent,
+                                            'rota_session'      => $rotaSession,
+                                            'created_by'        => $authUser->id
+                                        ];
+
+                                        $user->notify(new SendNotification($messageData));
+                                    }
                                 }
+                                //End send notification for session confirmation to speciality lead user
+
+
+                                //Send notification for session confirmation to anesthetic lead & staff coordinator
+                                $staffRoles = [
+                                    config('constant.roles.staff_coordinator'),
+                                    config('constant.roles.anesthetic_lead'),
+                                ];
+                                $staffUsers = User::whereIn('primary_role', $staffRoles)->get();
+                                foreach ($staffUsers as $user) {
+
+                                    if($isNewCreated || $isSpecialityChanged){
+
+                                        $subject = trans('messages.notify_subject.confirmation');
+
+                                        $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+
+                                        $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
+
+                                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                                        $messageData = [
+                                            'notification_type' => $notification_type,
+                                            'section'           => $key,
+                                            'subject'           => $subject,
+                                            'message'           => $messageContent,
+                                            'rota_session'      => $rotaSession,
+                                            'created_by'        => $authUser->id
+                                        ];
+
+                                        $user->notify(new SendNotification($messageData));
+                                    }
+                                }
+                                //End send notification for session confirmation to anesthetic lead & staff coordinator
                             }
-                            //End send notification for session available
+                           
+
                         }
                     }
                 }
