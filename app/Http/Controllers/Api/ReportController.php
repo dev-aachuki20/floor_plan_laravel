@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use DB;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
@@ -66,7 +67,17 @@ class ReportController extends APIController
         $validatedData = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^(0?[1-9]|1[0-2])$/'],
             'year'  => ['nullable', 'string', 'size:4'], 
-            'hospital_id'  => ['required', 'exists:hospital,id,deleted_at,NULL'],
+            'hospital_id' => [
+                'required',
+                'sometimes',
+                function ($attribute, $value, $fail) {
+                    if ($value != 0) {
+                        if (!DB::table('hospital')->where('id', $value)->whereNull('deleted_at')->exists()) {
+                            $fail('The selected hospital is invalid.');
+                        }
+                    }
+                },
+            ],
         ]);
 
         try {
@@ -76,10 +87,23 @@ class ReportController extends APIController
             $hospitalId = $validatedData['hospital_id'];
 
             $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
-                ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
-                ->where('user_hospital.hospital_id', $hospitalId)
-                // ->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
-                ->where('primary_role', '!=', config('constant.roles.system_admin'))
+                ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id');
+
+        
+            if($hospitalId == '0'){ // All hospital
+
+                if(auth()->user()->is_system_admin){
+                   $allHospital = Hospital::pluck('id')->toArray();
+                }else{
+                    $allHospital = auth()->user()->getHospitals()->pluck('id')->toArray();
+                }
+                $usersQuery =  $usersQuery->whereIn('user_hospital.hospital_id', $allHospital);
+                
+            }else{
+                $usersQuery =  $usersQuery->where('user_hospital.hospital_id', $hospitalId);
+            }
+                
+            $usersQuery = $usersQuery->where('primary_role', '!=', config('constant.roles.system_admin'))
                 ->whereNull('users.deleted_at');
 
             //Start Filter
@@ -102,11 +126,12 @@ class ReportController extends APIController
             $startMonth = $month ?: Carbon::now()->month;
             $startYear = $year ?: Carbon::now()->year;
 
-            // Generate month and year in descending order starting from the current month and year
+            // Generate month and year in ascending order starting from the current month and year
             $monthYearNames = collect(range(0, 11))->map(function ($i) use ($startMonth, $startYear) {
-                $date = Carbon::create($startYear, $startMonth, 1)->subMonths($i);
+                $date = Carbon::create($startYear, $startMonth, 1)->addMonths($i);
                 return [
-                    'month' => $date->format('F'),
+                    'month_year' => $date->format('M Y'),  // Format as "DEC 2024"
+                    'month' => $date->month,
                     'year' => $date->year,
                 ];
             });
@@ -114,34 +139,30 @@ class ReportController extends APIController
             // Prepare data
             $data = $monthYearNames->map(function ($monthYear) use ($users) {
                 $currentYear = $monthYear['year'];
-                $currentMonth = Carbon::parse($monthYear['month'])->month;
+                $currentMonth = $monthYear['month'];
 
                 $userRecord = $users->firstWhere('month', $currentMonth);
-                
+
                 if ($userRecord && $userRecord->year == $currentYear) {
                     return [
-                        'month' => $monthYear['month'],
-                        'year'  => $currentYear,
+                        'month_year' => $monthYear['month_year'],
                         'count' => $userRecord->count,
                     ];
                 } else {
                     return [
-                        'month' => $monthYear['month'],
-                        'year'  => $currentYear,
+                        'month_year' => $monthYear['month_year'],
                         'count' => 0,
                     ];
                 }
             });
 
-            $months = $data->pluck('month');
-            $years = $data->pluck('year');
+            $monthYears = $data->pluck('month_year');
             $dataCounts = $data->pluck('count');
 
             return $this->respondOk([
                 'status'    => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
-                'months'    => $months, 
-                'years'     => $years,  
+                'months'    => $monthYears, 
                 'data'      => $dataCounts,
             ])->setStatusCode(Response::HTTP_OK);
             

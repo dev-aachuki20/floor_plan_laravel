@@ -338,6 +338,37 @@ class RotaTableController extends APIController
 
             $hospitalData->is_disabled = (isset($weekDays[0]) && Carbon::parse($weekDays[0])->gt(Carbon::now())) ? false : true;
 
+
+            //Start Years Dropdown
+            $date = Carbon::parse($weekDays[0]);
+            $years = [
+                ['value' => '', 'label' => 'Select Year']
+            ];
+
+            for ($i = 0; $i < 5; $i++) {
+                $year = $date->copy()->addYears($i)->year;
+                $years[] = [
+                    'value' => (string)$year,
+                    'label' => (string)$year
+                ];
+            }
+            $hospitalData->years = $years;
+            //End Years Dropdown
+
+            //Quarters dropdown according to current year
+            $currentYear = $date->year;
+            $currentQuarter = $date->quarter;
+            
+            $quarters = [];
+            for ($i = 1; $i <= 4; $i++) {
+                $quarters[] = [
+                    'value' => "{$i}",
+                    'label' => "Quarter {$i}",
+                    'enabled' => $i >= $currentQuarter // Enable current and upcoming quarters, disable past quarters
+                ];
+            }
+            $hospitalData->current_quarters = $quarters;
+
             return $this->respondOk([
                 'status'   => true,
                 'message'   => trans('messages.record_retrieved_successfully'),
