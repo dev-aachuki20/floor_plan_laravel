@@ -25,6 +25,7 @@ class RotaSession extends Model
         'time_slot',
         'speciality_id',
         'week_day_date',
+        'status',
         'created_by',
         'created_at',
         'updated_at',

@@ -114,18 +114,12 @@ class HomeController extends APIController
         $validateData = [
             'full_name'         => ['required','string','max:255',new TitleValidationRule],
             'user_email'        => ['required','email:dns','regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i','unique:users,user_email,'.$authUser->id.',id'],
-            'speciality'        => ['required','exists:speciality,id,deleted_at,NULL'],
-            'sub_speciality'    => ['required','exists:sub_speciality,id,deleted_at,NULL'],
         ];
 
         if($request->password){
             $validateData['password']   = ['nullable', 'string', 'min:8'];
         }
 
-        if($request->role == config('constant.roles.booker')){
-            $validateData['speciality']        = ['nullable'];
-            $validateData['sub_speciality']    = ['nullable'];
-        }
 
         $request->validate($validateData,[],[
             'full_name'  => 'name',
@@ -146,29 +140,7 @@ class HomeController extends APIController
             }
 
             $user = User::where('id',auth()->user()->id)->update($updateRecords);
-
-
-            if($authUser->primary_role != config('constant.roles.booker')){
-
-                $currentSpecialities = auth()->user()->specialityDetail()->pluck('speciality_id')->toArray();
-
-                $newSpeciality = $request->speciality;
-
-                $specialities = [
-                    $newSpeciality => ['sub_speciality_id' => $request->sub_speciality],
-                ];
-                
-                auth()->user()->specialityDetail()->sync($specialities);
-
-                if (!in_array($newSpeciality, $currentSpecialities)) {
-                    if (auth()->user()->rotaSessions()->exists()) {
-                        auth()->user()->rotaSessions()->sync([]);
-                    }
-                }
-
-            }
            
-            
             // Fetch the updated user data
             $withRelation = [
                 'role:id,role_name',

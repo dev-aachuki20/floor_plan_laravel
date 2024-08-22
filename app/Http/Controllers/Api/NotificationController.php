@@ -76,6 +76,7 @@ class NotificationController extends APIController
                     $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
                     $formattedDate = $carbonDate->format('D, j M');
                     $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
+                    $notification->session_date = $notification->rotaSession->week_day_date;
                 }
 
                 

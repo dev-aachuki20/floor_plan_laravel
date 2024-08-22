@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use App\Models\User;
 use App\Models\Room;
 use App\Models\Rota;
@@ -20,7 +21,7 @@ use App\Http\Requests\RotaTable\UpdateAvailablityRequest;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use App\Notifications\SendNotification;
-
+use App\Jobs\ProcessRemainingQuarterDays;
 
 
 class RotaTableController extends APIController
@@ -78,8 +79,8 @@ class RotaTableController extends APIController
 
             $model->all_rooms = $model->rooms()->select('id as value', 'room_name as label')->get();
             $model->all_status = [
-                ['value' => 1, 'label' => 'Closed'],
-                ['value' => 2, 'label' => 'At Risk']
+                ['value' => config('constant.session_status.at_risk'), 'label' => 'At Risk'],
+                ['value' => config('constant.session_status.closed'),  'label' => 'Closed'],
             ];
 
             //Start Rooms
@@ -340,12 +341,12 @@ class RotaTableController extends APIController
 
 
             //Start Years Dropdown
-            $date = Carbon::parse($weekDays[0]);
+            $date = Carbon::now();
             $years = [
                 ['value' => '', 'label' => 'Select Year']
             ];
 
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 4; $i++) {
                 $year = $date->copy()->addYears($i)->year;
                 $years[] = [
                     'value' => (string)$year,
@@ -388,7 +389,7 @@ class RotaTableController extends APIController
     }
 
 
-    public function saveRota(SaveRotaRequest $request, $uuid = null)
+    public function saveRota(SaveRotaRequest $request)
     {
         try {
             DB::beginTransaction();
@@ -603,11 +604,43 @@ class RotaTableController extends APIController
                            
 
                         }
+
+
                     }
                 }
 
             }
             // End Rooms
+
+            // Check if remaining days need to be processed
+            if (isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])) {
+                $quarterNo   = $validatedData['quarter_id'];
+                $quarterYear = $validatedData['quarter_year'];
+
+                if(isset($validatedData['week_days'][6])){
+                    // Find the last date processed in the quarter
+                    $lastDate = Carbon::parse($validatedData['week_days'][6]);
+ 
+                    // Get the remaining days in the quarter
+                    $remainingDays = $this->getRemainingQuarterDays($quarterNo, $quarterYear, $lastDate);
+
+                    // dd($remainingDays);
+
+                    // Dispatch the job to handle remaining days
+                   /* if ($remainingDays->count() > 0) {
+                        ProcessRemainingQuarterDays::dispatch([
+                            'quarter_id'    => $quarterNo,
+                            'quarter_year'  => $quarterYear,
+                            'hospital_id'   => $hospital_id,
+                            'room_id'       => $roomId,
+                            'time_slot'     => $slotKey,
+                            'speciality'    => $speciality,
+                            'remaining_days'=> $remainingDays,
+                        ]);
+                    }*/
+                }
+                
+            }
 
             DB::commit();
 
@@ -622,6 +655,34 @@ class RotaTableController extends APIController
             return $this->setStatusCode(500)
                 ->respondWithError(trans('messages.error_message') . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
+    }
+
+    private function getRemainingQuarterDays($quarterNo, $quarterYear, Carbon $lastProcessedDate)
+    {
+        $remainingDays = collect();
+        
+        $quaterDates =  getQuarterDates($quarterNo, $quarterYear);
+      
+        $startOfQuarter = $quaterDates[0] ?? null;
+        $endOfQuarter   = $quaterDates[1] ?? null;
+
+        if($startOfQuarter && $endOfQuarter){
+            
+            // Ensure the start date for remaining days is the day after the last processed date
+            $startFrom = $lastProcessedDate->copy()->addDay();
+           
+            // Generate a period from start date to end of quarter
+            $period = CarbonPeriod::create($startFrom, $endOfQuarter);
+
+            // Collect the dates from the period
+            $remainingDays = collect($period->toArray())->map(function ($date) {
+                return $date->format('Y-m-d');
+            });
+    
+        }
+
+        return $remainingDays;
+        
     }
 
 

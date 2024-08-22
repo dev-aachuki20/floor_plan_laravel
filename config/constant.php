@@ -63,6 +63,11 @@ return [
     ],
 
     'unavailable_speciality_id' => 10,
+
+    'session_status' => [
+        'at_risk' => 1,
+        'closed'  => 2,
+    ]
     
 
 ];

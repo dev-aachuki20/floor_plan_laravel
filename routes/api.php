@@ -340,14 +340,14 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         |  Save Rota Table Record API Route
         |--------------------------------------------------------------------------
         |
-        | Route         : http://localhost:8000/api/rota-table/save/{uuid?}
+        | Route         : http://localhost:8000/api/rota-table/save
         | Header        : Content-Type:application/json
         |               : Authorization : Token
         | Parameters    :
         |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
         | Method        : POST
         */
-        Route::post('/rota-table/save/{uuid?}', [RotaTableController::class, 'saveRota']);
+        Route::post('/rota-table/save', [RotaTableController::class, 'saveRota']);
 
     });
 

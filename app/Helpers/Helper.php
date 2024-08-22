@@ -375,3 +375,25 @@ if (!function_exists('determineQuarter')) {
 	}
 
 }
+
+if (!function_exists('getQuarterDates')) {
+	function getQuarterDates($quarterNo, $year)
+	{
+		$quarters = [
+			1 => ['start' => '01-01', 'end' => '03-31'],
+			2 => ['start' => '04-01', 'end' => '06-30'],
+			3 => ['start' => '07-01', 'end' => '09-30'],
+			4 => ['start' => '10-01', 'end' => '12-31'],
+		];
+	
+		if (!isset($quarters[$quarterNo])) {
+			throw new \InvalidArgumentException('Invalid quarter number.');
+		}
+	
+		$start = Carbon::create($year, ...explode('-', $quarters[$quarterNo]['start']));
+		$end = Carbon::create($year, ...explode('-', $quarters[$quarterNo]['end']));
+	
+		return [$start, $end];
+	}
+}
+
