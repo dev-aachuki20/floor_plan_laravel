@@ -1,6 +1,7 @@
 <?php
 namespace App\Jobs;
 
+use App\Models\Room;
 use App\Models\RotaSession;
 use App\Models\RotaSessionQuarter;
 use Illuminate\Bus\Queueable;
@@ -16,9 +17,6 @@ class ProcessRemainingQuarterDays implements ShouldQueue
     protected $quarterId;
     protected $quarterYear;
     protected $hospitalId;
-    protected $roomId;
-    protected $timeSlot;
-    protected $speciality;
     protected $remainingDays;
 
     /**
@@ -28,12 +26,9 @@ class ProcessRemainingQuarterDays implements ShouldQueue
      */
     public function __construct(array $data)
     {
-        $this->quarterId = $data['quarter_id'];
-        $this->quarterYear = $data['quarter_year'];
-        $this->hospitalId = $data['hospital_id'];
-        $this->roomId = $data['room_id'];
-        $this->timeSlot = $data['time_slot'];
-        $this->speciality = $data['speciality'];
+        $this->quarterId     = $data['quarter_id'];
+        $this->quarterYear   = $data['quarter_year'];
+        $this->hospitalId    = $data['hospital_id'];
         $this->remainingDays = $data['remaining_days'];
     }
 
@@ -44,65 +39,72 @@ class ProcessRemainingQuarterDays implements ShouldQueue
      */
     public function handle()
     {
+        $rooms = Room::select('id', 'room_name')->where('hospital_id',$this->hospitalId)->get();
+        $timeSlots = config('constant.time_slots');
+
         foreach ($this->remainingDays as $date) {
             $start = Carbon::parse($date);
             $dayOfWeek = $start->format('l');
             $weekNumber = $start->weekOfYear;
 
-            // Check if the quarter record already exists
-            $quarterWeek = RotaSessionQuarter::where('quarter_no', $this->quarterId)
-                ->where('quarter_year', $this->quarterYear)
-                ->where('hospital_id', $this->hospitalId)
-                ->where('room_id', $this->roomId)
-                ->where('time_slot', $this->timeSlot)
-                ->where('day_name', $dayOfWeek)
-                ->first();
+            foreach ($rooms as $room) {
+                foreach ($timeSlots as $timeSlot) {
+                    $quarterWeek = RotaSessionQuarter::where('quarter_no', $this->quarterId)
+                    ->where('quarter_year', $this->quarterYear)
+                    ->where('hospital_id', $this->hospitalId)
+                    ->where('day_name', $dayOfWeek)
+                    ->first();
 
-            if ($quarterWeek) {
+                    if ($quarterWeek) {
 
-                // Check if the rota session already exists
-                $rotaSession = RotaSession::where('hospital_id',$this->hospitalId)
-                ->where('room_id', $this->roomId)
-                ->where('time_slot', $slotKey)
-                ->where('week_day_date', $date)
-                ->first();
+                        // Check if the rota session already exists
+                        $rotaSession = RotaSession::where('hospital_id',$this->hospitalId)
+                        ->where('room_id', $this->roomId)
+                        ->where('time_slot', $slotKey)
+                        ->where('week_day_date', $date)
+                        ->first();
 
-                $rotaSessionRecords = [
-                    'quarter_id'      => $validatedData['quarter_id'] ?? null,
-                    'hospital_id'     => $hospital_id,
-                    'week_no'         => $weekNumber,
-                    'room_id'         => $roomId,
-                    'time_slot'       => $slotKey,
-                    'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
-                    'week_day_date'   => $date,
-                ];
+                        $rotaSessionRecords = [
+                            'quarter_id'      => $validatedData['quarter_id'] ?? null,
+                            'hospital_id'     => $hospital_id,
+                            'week_no'         => $weekNumber,
+                            'room_id'         => $roomId,
+                            'time_slot'       => $slotKey,
+                            'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                            'week_day_date'   => $date,
+                        ];
 
 
-                if ($rotaSession) {
+                        if ($rotaSession) {
 
-                    if(!is_null($rotaSession->speciality_id)){
+                            if(!is_null($rotaSession->speciality_id)){
 
-                        if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
-                            $isSpecialityChanged = true;
+                                if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
+                                    $isSpecialityChanged = true;
 
-                            $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
+                                    $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
+                                }
+
+                            }else{
+                                $isNewCreated = true;
+                            }
+                            // Update existing rota session
+                            $rotaSession->update($rotaSessionRecords);
+
+                            $rotaSession = RotaSession::find($rotaSession->id);
+
+                        } else {
+                            // Create new rota session
+                            $rotaSession = RotaSession::create($rotaSessionRecords);
+
+                            $isNewCreated = true;
                         }
-
-                    }else{
-                        $isNewCreated = true;
                     }
-                    // Update existing rota session
-                    $rotaSession->update($rotaSessionRecords);
 
-                    $rotaSession = RotaSession::find($rotaSession->id);
-
-                } else {
-                    // Create new rota session
-                    $rotaSession = RotaSession::create($rotaSessionRecords);
-
-                    $isNewCreated = true;
                 }
+
             }
+
 
 
         }

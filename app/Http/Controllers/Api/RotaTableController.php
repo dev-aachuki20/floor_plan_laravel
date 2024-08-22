@@ -295,13 +295,13 @@ class RotaTableController extends APIController
                             ->first();
 
                         $room_records[$timeSlot][$key]['date'] = $date;
-                        $room_records[$timeSlot][$key]['value'] = ($record && (!is_null($record->speciality_id))) ? $record->speciality_id : ''; 
+                        $room_records[$timeSlot][$key]['value'] = ($record && (!is_null($record->speciality_id))) ? $record->speciality_id : '';
 
                         //Start Quarters Functionality
                         $carbonDate = Carbon::parse($date);
                         $dayOfWeek = $carbonDate->format('l'); // 'Monday', 'Tuesday', etc.
-                        $currentQuarter = determineQuarter($carbonDate); 
-                        
+                        $currentQuarter = determineQuarter($carbonDate);
+
                         $quarterYear = $carbonDate->year;
 
                         $lastQuarterRecord = RotaSessionQuarter::select('speciality_id')
@@ -312,7 +312,7 @@ class RotaTableController extends APIController
                                     ->where('time_slot', $timeSlot)
                                     ->where('day_name', $dayOfWeek)
                                     ->first();
-                    
+
                         if( (!$record) && $lastQuarterRecord){
                             $room_records[$timeSlot][$key]['value'] = $lastQuarterRecord->speciality_id ?? '';
                         }
@@ -359,7 +359,7 @@ class RotaTableController extends APIController
             //Quarters dropdown according to current year
             $currentYear = $date->year;
             $currentQuarter = $date->quarter;
-            
+
             $quarters = [];
             for ($i = 1; $i <= 4; $i++) {
                 $quarters[] = [
@@ -404,7 +404,7 @@ class RotaTableController extends APIController
             foreach ($validatedData['rooms'] as $room) {
                 $roomId = $room['id'];
                 if(isset($room['room_records'])){
-  
+
                     foreach ($room['room_records'] as $date => $timeSlots) {
                         foreach ($timeSlots as $slotKey => $speciality) {
 
@@ -416,7 +416,7 @@ class RotaTableController extends APIController
                             $start = Carbon::parse($date);
                             $dayOfWeek = $start->format('l');
                             $weekNumber = $start->weekOfYear;
-                         
+
                             // Check if the rota session already exists
                             $rotaSession = RotaSession::where('hospital_id',$hospital_id)
                                 ->where('room_id', $roomId)
@@ -467,7 +467,7 @@ class RotaTableController extends APIController
 
                                     $quarterNo   = $validatedData['quarter_id'];
                                     $quarterYear = $validatedData['quarter_year'];
-                                
+
                                     $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
                                     ->where('quarter_no', $quarterNo)
                                     ->where('quarter_year',$quarterYear)
@@ -601,7 +601,7 @@ class RotaTableController extends APIController
                                 }
                                 //End send notification for session confirmation to anesthetic lead & staff coordinator
                             }
-                           
+
 
                         }
 
@@ -617,17 +617,28 @@ class RotaTableController extends APIController
                 $quarterNo   = $validatedData['quarter_id'];
                 $quarterYear = $validatedData['quarter_year'];
 
-                if(isset($validatedData['week_days'][6])){
-                    // Find the last date processed in the quarter
-                    $lastDate = Carbon::parse($validatedData['week_days'][6]);
- 
+                $quaterDates =  getQuarterDates($quarterNo, $quarterYear);
+                $startOfQuarter = $quaterDates[0] ?? null;
+                $endOfQuarter   = $quaterDates[1] ?? null;
+
+                if($startOfQuarter && $endOfQuarter){
+
+                    $lastProcessedDate =  $startOfQuarter;
+
+                    if(isset($validatedData['week_days'][6])){
+                        $dateExistsInQuarter = isDateInQuarter($validatedData['week_days'][6], $startOfQuarter, $endOfQuarter);
+                        if($dateExistsInQuarter){
+                            $lastProcessedDate =  Carbon::parse($validatedData['week_days'][6])->copy()->addDay();
+                        }
+                    }
+
                     // Get the remaining days in the quarter
-                    $remainingDays = $this->getRemainingQuarterDays($quarterNo, $quarterYear, $lastDate);
+                    $remainingDays = $this->getRemainingQuarterDays($startOfQuarter, $endOfQuarter, $lastProcessedDate);
 
                     // dd($remainingDays);
 
                     // Dispatch the job to handle remaining days
-                   /* if ($remainingDays->count() > 0) {
+                    /*if ($remainingDays->count() > 0) {
                         ProcessRemainingQuarterDays::dispatch([
                             'quarter_id'    => $quarterNo,
                             'quarter_year'  => $quarterYear,
@@ -638,8 +649,11 @@ class RotaTableController extends APIController
                             'remaining_days'=> $remainingDays,
                         ]);
                     }*/
+
+
                 }
-                
+
+
             }
 
             DB::commit();
@@ -657,20 +671,15 @@ class RotaTableController extends APIController
         }
     }
 
-    private function getRemainingQuarterDays($quarterNo, $quarterYear, Carbon $lastProcessedDate)
+    private function getRemainingQuarterDays($startOfQuarter, $endOfQuarter, $lastProcessedDate)
     {
         $remainingDays = collect();
-        
-        $quaterDates =  getQuarterDates($quarterNo, $quarterYear);
-      
-        $startOfQuarter = $quaterDates[0] ?? null;
-        $endOfQuarter   = $quaterDates[1] ?? null;
 
         if($startOfQuarter && $endOfQuarter){
-            
+
             // Ensure the start date for remaining days is the day after the last processed date
-            $startFrom = $lastProcessedDate->copy()->addDay();
-           
+            $startFrom = $lastProcessedDate;
+
             // Generate a period from start date to end of quarter
             $period = CarbonPeriod::create($startFrom, $endOfQuarter);
 
@@ -678,11 +687,11 @@ class RotaTableController extends APIController
             $remainingDays = collect($period->toArray())->map(function ($date) {
                 return $date->format('Y-m-d');
             });
-    
+
         }
 
         return $remainingDays;
-        
+
     }
 
 

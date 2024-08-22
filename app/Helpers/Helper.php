@@ -358,11 +358,11 @@ if (!function_exists('sendNotification')) {
 }
 
 if (!function_exists('determineQuarter')) {
-	
+
 	function determineQuarter(Carbon $date): int
 	{
 		$month = $date->month;
-		
+
 		if ($month >= 1 && $month <= 3) {
 			return 1;
 		} elseif ($month >= 4 && $month <= 6) {
@@ -385,15 +385,28 @@ if (!function_exists('getQuarterDates')) {
 			3 => ['start' => '07-01', 'end' => '09-30'],
 			4 => ['start' => '10-01', 'end' => '12-31'],
 		];
-	
+
 		if (!isset($quarters[$quarterNo])) {
 			throw new \InvalidArgumentException('Invalid quarter number.');
 		}
-	
+
 		$start = Carbon::create($year, ...explode('-', $quarters[$quarterNo]['start']));
 		$end = Carbon::create($year, ...explode('-', $quarters[$quarterNo]['end']));
-	
+
 		return [$start, $end];
 	}
 }
+
+if (!function_exists('isDateInQuarter')) {
+    function isDateInQuarter($date, $quarterStartDate, $quarterEndDate) {
+        $date = Carbon::parse($date);
+        $quarterStart = Carbon::parse($quarterStartDate);
+        $quarterEnd = Carbon::parse($quarterEndDate);
+
+        return $date->between($quarterStart, $quarterEnd);
+    }
+}
+
+
+
 
