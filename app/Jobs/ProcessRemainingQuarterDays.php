@@ -48,13 +48,13 @@ class ProcessRemainingQuarterDays implements ShouldQueue
      */
     public function handle()
     {
-       
+
         try {
             DB::beginTransaction();
 
             $newQuarterSet = false;
             $allUsers = [];
-           
+
             $rooms = Room::select('id', 'room_name')->where('hospital_id',$this->hospitalId)->get();
             $timeSlots = config('constant.time_slots');
             foreach ($rooms as $room) {
@@ -171,7 +171,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                 foreach ($specialityUsers as $user) {
 
                                     $allUsers[$user->id][] = $rotaSession->id;
-                                    
+
                                     /*if($isNewCreated || $isSpecialityChanged){
 
                                         $subject = trans('messages.notify_subject.confirmation');
@@ -206,8 +206,8 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                 foreach ($staffUsers as $user) {
 
                                     $allUsers[$user->id][] = $rotaSession->id;
-                                     
-                                   
+
+
 
                                    /* if($isNewCreated || $isSpecialityChanged){
 
@@ -245,7 +245,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
             if($newQuarterSet){
 
                 $userIds = array_keys($allUsers);
-            
+
                 //Send notification to speciality lead, anesthetic lead & staff coordinator
                 $staffUsers = User::whereIn('id', $userIds)->get();
                 foreach ($staffUsers as $user) {
@@ -267,49 +267,58 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                         'message'           => $messageContent,
                         'rota_session'      => null,
                         'created_by'        => $this->created_by,
-                        'session_ids'       => isset($allUsers[$user->id]) ? $allUsers[$user->id] : null,
+                        'hospital_name'     => $hospitalName,
+                        'rota_session_ids'  => isset($allUsers[$user->id]) ? $allUsers[$user->id] : null,
                     ];
 
                     $user->notify(new SendNotification($messageData));
-                    
+
                 }
                 //End send notification to speciality lead, anesthetic lead & staff coordinator
-            } 
+            }
             //End send notification as quarter is set
 
 
             //Notify admin user
-            $authUser = User::where('id', $this->created_by)->first();
+            $hospital = Hospital::find($this->hospitalId);
+            $adminUsers = $hospital->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
 
-            if($authUser){
+            $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
+            if ($superAdmin) {
+                $adminUsers = $adminUsers->concat([$superAdmin]);
+            }
 
-                $subject = trans('messages.notify_subject.quarter_saved',['quarterNo'=>$this->quarterId,'quarterYear' => $this->quarterYear]);
+            if($adminUsers){
+                foreach($adminUsers as $user){
 
-                $notification_type = array_search(config('constant.notification_type.quarter_saved'), config('constant.notification_type'));
-    
-                $hospitalName = Hospital::where('id',$this->hospitalId)->value('hospital_name');
-    
-                $messageContent = $hospitalName;
-    
-                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-    
-                $messageData = [
-                    'notification_type' => $notification_type,
-                    'section'           => $key,
-                    'subject'           => $subject,
-                    'message'           => $messageContent,
-                    'rota_session'      => null,
-                ];
-    
-                $authUser->notify(new SendNotification($messageData));
+                    $subject = trans('messages.notify_subject.quarter_saved',['quarterNo'=>$this->quarterId,'quarterYear' => $this->quarterYear]);
+
+                    $notification_type = array_search(config('constant.notification_type.quarter_saved'), config('constant.notification_type'));
+
+                    $messageContent = $hospital->hospital_name;
+
+                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                    $messageData = [
+                        'notification_type' => $notification_type,
+                        'section'           => $key,
+                        'subject'           => $subject,
+                        'message'           => $messageContent,
+                        'rota_session'      => null,
+                        'quarterNo'         => $this->quarterId,
+                        'quarterYear'       => $this->quarterYear
+                    ];
+
+                    $user->notify(new SendNotification($messageData));
+                }
 
             }
 
-            DB::commit(); 
+            DB::commit();
 
         }catch (\Exception $e) {
-            DB::rollBack(); 
-    
+            DB::rollBack();
+
             \Log::error('Failed to process rota session: ' . $e->getMessage());
 
             throw $e;

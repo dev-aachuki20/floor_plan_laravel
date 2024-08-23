@@ -119,4 +119,10 @@ return [
         'reminder_send'      => 'Reminders sent successfully.',
     ],
 
+    'mail_content' => [
+        'quarter_saved' => "We are pleased to inform you that the session schedule for Quarter :quarterNo of :quarterYear is now available. You can now view and manage the hospital room sessions for this quarter.
+
+        Please make sure to review the scheduled sessions and confirm the details as soon as possible to ensure smooth operations."
+    ]
+
 ];

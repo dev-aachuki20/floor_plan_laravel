@@ -8,8 +8,10 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Mail\UserNotificationMail;
 use App\Mail\AvailablityStatusMail;
+use App\Mail\SetQuarterSessionMail;
 use App\Mail\RotaSessionMail;
 use App\Models\User;
+use App\Models\RotaSession;
 
 
 use Auth;
@@ -61,7 +63,7 @@ class SendNotification extends Notification implements ShouldQueue
 
         }
 
-        if(in_array($this->data['notification_type'], array('session_confirmed','session_cancelled'))){
+        /*if(in_array($this->data['notification_type'], array('session_confirmed','session_cancelled'))){
 
             if(isset($this->data['rota_session'])){
 
@@ -76,14 +78,24 @@ class SendNotification extends Notification implements ShouldQueue
 
                 return (new AvailablityStatusMail($subject, $notifiable, $rotaSession,$authUser,$notificationType))->to($notifiable->user_email);
 
-
             }
 
+        }*/
+
+        if(in_array($this->data['notification_type'], array('quarter_available'))){
+
+            if(isset($this->data['rota_session_ids'])){
+
+               $allRotaSessions = RotaSession::whereIn('id',$this->data['rota_session_ids'])->get();
+                $hospitalName = isset($this->data['hospital_name']) ? $this->data['hospital_name'] : null;
+               return (new SetQuarterSessionMail($subject, $notifiable, $hospitalName ,$allRotaSessions))->to($notifiable->user_email);
+
+            }
         }
 
-        // if(in_array($this->data['notification_type'], array('quarter_available'))){
-
-        // }
+        if(in_array($this->data['notification_type'], array('quarter_saved'))){
+            $message = trans('messages.mail_content.quarter_saved',['quarterNo'=>$this->data['quarterNo'],'quarterYear'=>$this->data['quarterYear']]);
+        }
 
         return (new UserNotificationMail($subject, $userName, $message))->to($notifiable->user_email);
 
