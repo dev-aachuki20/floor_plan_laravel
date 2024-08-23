@@ -106,6 +106,7 @@ return [
         'confirmation'      => 'A session awaits your confirmation',
         'remove_speciality' => 'You have been removed from a session',
         'quarter_available'  => 'Quarter :quarterNo - :quarterYear is now available',
+        'quarter_saved'      => 'Quarter :quarterNo - :quarterYear saved successfully'
     ],
 
     'notification' => [

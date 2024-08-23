@@ -278,6 +278,33 @@ class ProcessRemainingQuarterDays implements ShouldQueue
             //End send notification as quarter is set
 
 
+            //Notify admin user
+            $authUser = User::where('id', $this->created_by)->first();
+
+            if($authUser){
+
+                $subject = trans('messages.notify_subject.quarter_saved',['quarterNo'=>$this->quarterId,'quarterYear' => $this->quarterYear]);
+
+                $notification_type = array_search(config('constant.notification_type.quarter_saved'), config('constant.notification_type'));
+    
+                $hospitalName = Hospital::where('id',$this->hospitalId)->value('hospital_name');
+    
+                $messageContent = $hospitalName;
+    
+                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+    
+                $messageData = [
+                    'notification_type' => $notification_type,
+                    'section'           => $key,
+                    'subject'           => $subject,
+                    'message'           => $messageContent,
+                    'rota_session'      => null,
+                ];
+    
+                $authUser->notify(new SendNotification($messageData));
+
+            }
+
             DB::commit(); 
 
         }catch (\Exception $e) {

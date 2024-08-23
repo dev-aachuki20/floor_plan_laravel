@@ -62,6 +62,7 @@ return [
         'user_profile_updated_hospital' => 'Hospital Updated',
 
         'quarter_available' => 'Quarter Available',
+        'quarter_saved'     => 'Quarter Saved'
 
     ],
 
