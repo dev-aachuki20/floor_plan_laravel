@@ -616,6 +616,7 @@ class RotaTableController extends APIController
             if (isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])) {
                 $quarterNo   = $validatedData['quarter_id'];
                 $quarterYear = $validatedData['quarter_year'];
+                $currentYear = Carbon::now()->year;
 
                 $quaterDates =  getQuarterDates($quarterNo, $quarterYear);
                 $startOfQuarter = $quaterDates[0] ?? null;
@@ -625,7 +626,7 @@ class RotaTableController extends APIController
 
                     $lastProcessedDate =  $startOfQuarter;
 
-                    if(isset($validatedData['week_days'][6])){
+                    if( ($currentYear == $quarterYear) && isset($validatedData['week_days'][6]) ){
                         $dateExistsInQuarter = isDateInQuarter($validatedData['week_days'][6], $startOfQuarter, $endOfQuarter);
                         if($dateExistsInQuarter){
                             $lastProcessedDate =  Carbon::parse($validatedData['week_days'][6])->copy()->addDay();
@@ -729,6 +730,50 @@ class RotaTableController extends APIController
                                 $rota_session->users()->attach($authUser->id, $availability_user[$authUser->id]);
                             }
 
+                            // All user confirm their availablity than notify booker
+                            $rolesId = [
+                                config('constant.roles.speciality_lead'),
+                                config('constant.roles.staff_coordinator'),
+                                config('constant.roles.anesthetic_lead'),
+                            ];
+
+                            $allRolesConfirmed = DB::table('rota_session_users')
+                            ->where('rota_session_id', $rota_session->id)
+                            ->whereIn('role_id', $rolesId)
+                            ->where('status', 1)
+                            ->distinct()
+                            ->count('role_id') === count($rolesId);
+
+                            if($allRolesConfirmed) {
+
+                                $bookerUsers = $rota_session->hospitalDetail->users()->where('primary_role',config('constant.roles.booker'))->get();
+
+                                foreach($bookerUsers as $user){
+
+                                    $subject = trans('messages.notify_subject.confirmed_booking');
+                                    $notification_type = array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type'));
+    
+                                    $messageContent = $rota_session->hospitalDetail->hospital_name.' - '.$rota_session->roomDetail->room_name;
+
+                                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+    
+                                    $messageData = [
+                                        'notification_type' => $notification_type,
+                                        'section'           => $key,
+                                        'subject'           => $subject,
+                                        'message'           => $messageContent,
+                                        'rota_session'      => $rota_session,
+                                        'created_by'        => $authUser->id
+                                    ];
+    
+                                    $user->notify(new SendNotification($messageData));
+
+                                }
+
+                            }
+                           //End  all user confirm their availablity notify booker
+
+
                             //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
                              /*   $adminUsers = $rota_session->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
 
@@ -777,6 +822,8 @@ class RotaTableController extends APIController
                         }
 
                     }
+
+
                 }
             }
 
