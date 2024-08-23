@@ -635,25 +635,17 @@ class RotaTableController extends APIController
                     // Get the remaining days in the quarter
                     $remainingDays = $this->getRemainingQuarterDays($startOfQuarter, $endOfQuarter, $lastProcessedDate);
 
-                    // dd($remainingDays);
-
                     // Dispatch the job to handle remaining days
-                    /*if ($remainingDays->count() > 0) {
+                    if ($remainingDays->count() > 0) {
                         ProcessRemainingQuarterDays::dispatch([
                             'quarter_id'    => $quarterNo,
                             'quarter_year'  => $quarterYear,
                             'hospital_id'   => $hospital_id,
-                            'room_id'       => $roomId,
-                            'time_slot'     => $slotKey,
-                            'speciality'    => $speciality,
                             'remaining_days'=> $remainingDays,
+                            'created_by'    => $authUser->id
                         ]);
-                    }*/
-
-
+                    }
                 }
-
-
             }
 
             DB::commit();
@@ -662,6 +654,7 @@ class RotaTableController extends APIController
                 'status'  => true,
                 'message' => trans('messages.record_saved_successfully'),
             ])->setStatusCode(Response::HTTP_OK);
+
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollBack();

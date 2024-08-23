@@ -40,7 +40,9 @@ class RotaSession extends Model
 
             $model->uuid = Str::uuid();
 
-            $model->created_by = auth()->user() ? auth()->user()->id : null;
+            if(auth()->user()){
+                $model->created_by = auth()->user()->id;
+            }
         });
     }
 

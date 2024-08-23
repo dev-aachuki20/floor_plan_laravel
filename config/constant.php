@@ -60,6 +60,9 @@ return [
         'session_not_approved'  => 'Session Unapproved',
         'user_profile_updated_email'    => 'Email Updated',
         'user_profile_updated_hospital' => 'Hospital Updated',
+
+        'quarter_available' => 'Quarter Available',
+
     ],
 
     'unavailable_speciality_id' => 10,

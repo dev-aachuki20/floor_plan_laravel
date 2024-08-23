@@ -35,7 +35,8 @@ class SendNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
 
-        return ['mail', 'database'];
+        // return ['mail', 'database'];
+        return ['database'];
 
     }
 
@@ -79,6 +80,10 @@ class SendNotification extends Notification implements ShouldQueue
             }
 
         }
+
+        // if(in_array($this->data['notification_type'], array('quarter_available'))){
+
+        // }
 
         return (new UserNotificationMail($subject, $userName, $message))->to($notifiable->user_email);
 
