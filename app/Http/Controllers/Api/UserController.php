@@ -345,7 +345,7 @@ class UserController extends APIController
         } catch (\Exception $e) {
             DB::rollBack();
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
@@ -378,54 +378,55 @@ class UserController extends APIController
 
                    
                     //Send notification to system admin, trust admin and hospital admin
-                    $adminRole = [
-                        config('constant.roles.system_admin'),
-                        config('constant.roles.trust_admin'),
-                        config('constant.roles.hospital_admin'),
-                    ];
-
                     $hospitalIds = $user->getHospitals()->pluck('id')->toArray();
 
-                    if( !in_array($user->primary_role, $adminRole) ){
+                    $hospitals = Hospital::whereIn('id',$hospitalIds)->get();
 
-                        $hospitals = Hospital::whereIn('id',$hospitalIds)->get();
+                    $uniqueUserIds = collect();
 
-                        foreach($hospitals as $hospital){
-                            $adminUsers = $hospital->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
-            
-                            $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
-                            if ($superAdmin) {
-                                $adminUsers = $adminUsers->concat([$superAdmin]);
-                            }
-        
-                            if($adminUsers){
-        
-                                foreach($adminUsers as $user){
-        
-                                   $subject = trans('messages.notify_subject.user_deleted_by_own',['user_name'=>$authUser->full_name]);
-                                   $notification_type = array_search(config('constant.notification_type.user_deleted_by_own'), config('constant.notification_type'));
-        
-                                   $messageContent = null;
-        
-                                   $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-        
-                                   $messageData = [
-                                        'notification_type' => $notification_type,
-                                        'section'           => $key,
-                                        'subject'           => $subject,
-                                        'message'           => $messageContent,
-                                        'rota_session'      => null,
-                                        'created_by'        => $authUser->id,
-                                        'authUser'          => $authUser,
-                                    ];
-        
-                                    $user->notify(new SendNotification($messageData));
-        
-                                }
-        
-                            }
+                    foreach($hospitals as $hospital) {
+                        $adminUsers = $hospital->users()
+                            ->whereIn('primary_role', [
+                                config('constant.roles.trust_admin'),
+                                config('constant.roles.hospital_admin')
+                            ])
+                            ->select('id', 'full_name', 'user_email')
+                            ->get();
+
+                        $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))
+                            ->select('id', 'full_name', 'user_email')
+                            ->first();
+
+                        if ($superAdmin) {
+                            $adminUsers = $adminUsers->concat([$superAdmin]);
                         }
-                        
+
+                        $uniqueUserIds = $uniqueUserIds->merge($adminUsers->pluck('id'));
+                    }
+                    $uniqueUserIds = $uniqueUserIds->unique();
+                     
+                    $adminUsers = User::select('id', 'full_name', 'user_email')->whereIn('id',$uniqueUserIds->toArray())->get();
+
+                    foreach($adminUsers as $user){
+
+                        $subject = trans('messages.notify_subject.user_deleted_by_own',['user_name'=>$authUser->full_name]);
+                        $notification_type = array_search(config('constant.notification_type.user_deleted_by_own'), config('constant.notification_type'));
+
+                        $messageContent = null;
+
+                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                        $messageData = [
+                            'notification_type' => $notification_type,
+                            'section'           => $key,
+                            'subject'           => $subject,
+                            'message'           => $messageContent,
+                            'rota_session'      => null,
+                            'created_by'        => $authUser->id,
+                            'authUser'          => $authUser,
+                        ];
+
+                        $user->notify(new SendNotification($messageData));
                     }
                     //End Send notification to system admin, trust admin and hospital admin
                    
@@ -440,44 +441,34 @@ class UserController extends APIController
                     $authUser = auth()->user();
                     $deletedUser = User::onlyTrashed()->where('uuid', $uuid)->first();
 
-                    $adminRole = [
-                        config('constant.roles.system_admin'),
-                        config('constant.roles.trust_admin'),
-                        config('constant.roles.hospital_admin'),
-                    ];
+                    $subject = trans('messages.notify_subject.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'admin_name'=>$authUser->full_name]);
 
-                 
-                    if( !in_array($deletedUser->primary_role, $adminRole) ){
+                    //Send mail to deleted user
+                    Mail::to($deletedUser->user_email)->queue(new UserDeletedMail($subject, $deletedUser, $authUser));
+                    
 
-                        $subject = trans('messages.notify_subject.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'admin_name'=>$authUser->full_name]);
+                    //Send mail and notification to system admin
+                    if($authUser->primary_role != config('constant.roles.system_admin')){
+                        $systemAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
 
-                        //Send mail to deleted user
-                        Mail::to($deletedUser->user_email)->queue(new UserDeletedMail($subject, $deletedUser, $authUser));
-                        
+                        $notification_type = array_search(config('constant.notification_type.user_deleted_by_admin'), config('constant.notification_type'));
+                        $messageContent = null;
+                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
-                        //Send mail and notification to system admin
-                        if($authUser->primary_role != config('constant.roles.system_admin')){
-                            $systemAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
+                        $messageData = [
+                                'notification_type' => $notification_type,
+                                'section'           => $key,
+                                'subject'           => $subject,
+                                'message'           => $messageContent,
+                                'rota_session'      => null,
+                                'created_by'        => $authUser->id,
+                                'deletedUser'       => $deletedUser,
+                                'authUser'          => $authUser,
+                        ];
 
-                            $notification_type = array_search(config('constant.notification_type.user_deleted_by_admin'), config('constant.notification_type'));
-                            $messageContent = null;
-                            $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-    
-                            $messageData = [
-                                 'notification_type' => $notification_type,
-                                 'section'           => $key,
-                                 'subject'           => $subject,
-                                 'message'           => $messageContent,
-                                 'rota_session'      => null,
-                                 'created_by'        => $authUser->id,
-                                 'deletedUser'       => $deletedUser,
-                                 'authUser'          => $authUser,
-                            ];
-    
-                            $systemAdmin->notify(new SendNotification($messageData));
-                        }
-                        
+                        $systemAdmin->notify(new SendNotification($messageData));
                     }
+                        
                     //End Send notification to system admin, trust admin and hospital admin
                     
                   

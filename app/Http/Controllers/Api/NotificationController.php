@@ -28,27 +28,17 @@ class NotificationController extends APIController
 
                 $filterValue = $request->filter_value;
 
-                $rolesId = [
-                    config('constant.roles.speciality_lead'),
-                    config('constant.roles.staff_coordinator'),
-                    config('constant.roles.anesthetic_lead'),
-                ];
+                if($filterValue == 'read'){
 
-                if( in_array($authUser->primary_role,$rolesId) ){
+                    $notifications = $notifications->whereNotNull('read_at');
 
-                    if($filterValue == 'read'){
+                }else if($filterValue == 'unread'){
 
-                        $notifications = $notifications->whereNotNull('read_at');
+                    $notifications = $notifications->whereNull('read_at');
 
-                    }else if($filterValue == 'unread'){
+                }else if($filterValue == 'unapproved'){
 
-                        $notifications = $notifications->whereNull('read_at');
-
-                    }else if($filterValue == 'unapproved'){
-
-                        $notifications = $notifications->where('notification_type','session_not_approved');
-
-                    }
+                    $notifications = $notifications->where('notification_type','session_not_approved');
 
                 }else{
                     $notifications = $notifications->where('notification_type', $filterValue);

@@ -110,7 +110,10 @@ return [
         'confirmed_booking'  =>  'Session is confirmed for booking',
         'admin_updated_own_user'  =>  'Your Profile updated',
         'user_deleted_by_own'     => ':user_name requested to delete own account.',
-        'user_deleted_by_admin'   => ':admin_name deleted :user_name'
+        'user_deleted_by_admin'   => ':admin_name deleted :user_name',
+        'first_reminder'          => 'Reminder: A session awaits your confirmation',
+        'final_reminder'          => 'Final Reminder: A session awaits your confirmation',
+
     ],
 
     'notification' => [

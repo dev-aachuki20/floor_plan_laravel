@@ -66,6 +66,9 @@ return [
         'user_deleted_by_own'    => 'User Deleted By Own',
         'user_deleted_by_admin'  => 'User Deleted By Admin',
 
+        'first_reminder' => 'First Reminder',
+        'final_reminder' => 'Final Reminder'
+
     ],
 
     'unavailable_speciality_id' => 10,
