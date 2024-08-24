@@ -94,7 +94,22 @@ class SendNotification extends Notification implements ShouldQueue
         }
 
         if(in_array($this->data['notification_type'], array('quarter_saved'))){
-            $message = trans('messages.mail_content.quarter_saved',['quarterNo'=>$this->data['quarterNo'],'quarterYear'=>$this->data['quarterYear']]);
+            $quarterNo = isset($this->data['quarterNo']) ? $this->data['quarterNo'] : null;
+            $quarterYear = isset($this->data['quarterYear']) ? $this->data['quarterYear'] : null;
+            
+            $message = trans('messages.mail_content.quarter_saved',['quarterNo'=>$quarterNo,'quarterYear'=>$quarterYear]);
+        }
+
+        if(in_array($this->data['notification_type'], array('user_deleted_by_own'))){
+            $authUser = isset($this->data['authUser']) ? $this->data['authUser'] : null;
+            $message = trans('messages.mail_content.user_deleted_by_own',['user_name'=> $authUser->full_name,'user_email'=> $authUser->user_email]);
+        }
+
+        if(in_array($this->data['notification_type'], array('user_deleted_by_admin'))){
+            $deletedUser = isset($this->data['deletedUser']) ? $this->data['deletedUser'] : null;
+            $authUser = isset($this->data['authUser']) ? $this->data['authUser'] : null;
+
+            $message = trans('messages.mail_content.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'user_email'=>$deletedUser->user_email,'admin_name'=>$authUser->full_name]);
         }
 
         return (new UserNotificationMail($subject, $userName, $message))->to($notifiable->user_email);

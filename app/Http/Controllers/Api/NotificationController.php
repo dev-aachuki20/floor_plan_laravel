@@ -19,7 +19,7 @@ class NotificationController extends APIController
 
         $authUser = auth()->user();
 
-        $notifications = $authUser->notification()->select('id','subject','message','notification_type','rota_session_id','read_at','created_at');
+        $notifications = $authUser->notification()->select('id','subject','message','data','notification_type','rota_session_id','read_at','created_at');
 
         //Start Apply filters
         if ($request->filter_by) {
@@ -79,8 +79,11 @@ class NotificationController extends APIController
                     $notification->session_date = $notification->rotaSession->week_day_date;
                 }
 
-                
+            }else{
+                $notification->session_date = isset($notification->data['session_date']) ? $notification->data['session_date'] : null;
             }
+
+            $notification->makeHidden(['data']);
 
             return $notification;
         });

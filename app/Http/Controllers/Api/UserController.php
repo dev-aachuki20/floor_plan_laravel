@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Requests\User\StoreRequest;
 use App\Http\Requests\User\UpdateRequest;
@@ -14,6 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Exports\UsersExport;
 use App\Mail\WelcomeEmail;
+use App\Mail\UserUpdatedMail;
+use App\Mail\UserDeletedMail;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Notifications\SendNotification;
@@ -251,17 +254,30 @@ class UserController extends APIController
             DB::beginTransaction();
 
             $authUser = auth()->user();
-            $isEmailChanged = false;
+            $updatedFields = [];
 
             $user = User::where('uuid', $uuid)->firstOrFail();
+            $userEmail = $user->user_email;
 
             $currentHospitalList = $user->getHospitals()->pluck('id')->toArray();
 
-            if($user->user_email != $request->user_email){
-                $isEmailChanged = true;
+            if($user->primary_role != $request->role){
+                $updatedFields['primary_role'] = true;
             }
 
-            $user->update([
+            if($user->full_name != $request->full_name){
+                $updatedFields['full_name'] = true;
+            }
+
+            if($user->user_email != $request->user_email){
+                $updatedFields['user_email'] = true;
+            }
+
+            if ($request->filled('password') && !Hash::check($request->password, $user->password)) {
+                $updatedFields['password'] = true;
+            }
+
+           $user->update([
                 'primary_role' => $request->role,
                 'full_name'    => $request->full_name ?? $user->full_name,
                 'user_email'   => $request->user_email ?? $user->user_email,
@@ -269,34 +285,7 @@ class UserController extends APIController
             ]);
 
             $user = User::where('uuid', $uuid)->first();
-
-            if($isEmailChanged){
-                
-                // Send welcome email
-                Mail::to($user->user_email)->queue(new WelcomeEmail($user, $request->password));
-
-                //Send notification as email updated
-                $roleName = $authUser->role->role_name;
-
-                $subject = trans('messages.notification_subject.user_profile_updated_email',['roleName'=>$roleName]);
-                $notification_type = array_search(config('constant.notification_type.user_profile_updated_email'), config('constant.notification_type'));
-                $messageContent = null;
-                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-        
-                $messageData = [
-                     'notification_type' => $notification_type,
-                     'section'           => $key,
-                     'subject'           => $subject,
-                     'message'           => $messageContent,
-                     'rota_session'      => null,
-                     'created_by'        => $authUser->id
-                 ];
-        
-                $user->notify(new SendNotification($messageData));
-                //End send notification as email updated
-
-            }
-
+         
             $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
@@ -305,25 +294,8 @@ class UserController extends APIController
 
             if (array_diff($currentHospitalList, $updatedHospitalList) || array_diff($updatedHospitalList, $currentHospitalList)) {
 
-                //Send notification as hospital updated
-                $roleName = $authUser->role->role_name;
+                $updatedFields['hospital'] = true;
 
-                $subject = trans('messages.notification_subject.user_profile_updated_hospital',['roleName'=>$roleName]);
-                $notification_type = array_search(config('constant.notification_type.user_profile_updated_hospital'), config('constant.notification_type'));
-                $messageContent = null;
-                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-        
-                $messageData = [
-                     'notification_type' => $notification_type,
-                     'section'           => $key,
-                     'subject'           => $subject,
-                     'message'           => $messageContent,
-                     'rota_session'      => null,
-                     'created_by'        => $authUser->id
-                 ];
-        
-                $user->notify(new SendNotification($messageData));
-                //End send notification as hospital updated
             }
 
             // Sync speciality and sub_speciality
@@ -331,8 +303,16 @@ class UserController extends APIController
 
                 $currentSpecialities = $user->specialityDetail()->pluck('speciality_id')->toArray();
 
-                $newSpeciality = $request->speciality;
+                if (!in_array($request->speciality, $currentSpecialities)) {
+                    $updatedFields['speciality'] = true;
+                }
 
+                $currentSubSpecialities = $user->subSpecialityDetail()->value('id');
+                if($request->sub_speciality != $currentSubSpecialities){
+                    $updatedFields['sub_speciality'] = true;
+                }
+
+                $newSpeciality = $request->speciality;
                 $specialities = [
                     $newSpeciality => ['sub_speciality_id' => $request->sub_speciality],
                 ];
@@ -348,16 +328,24 @@ class UserController extends APIController
                 $user->specialityDetail()->sync([]);
             }
 
+
+            if(count($updatedFields) > 0){
+                $subject  = trans('messages.notify_subject.admin_updated_own_user');
+              
+                Mail::to($userEmail)->queue(new UserUpdatedMail($subject, $user,$updatedFields));
+            }
+
             DB::commit();
 
             return $this->respondOk([
                 'status'   => true,
-                'message'  => $isEmailChanged ? trans('messages.user_updated_and_email_sent') : trans('messages.user_updated_successfully')
+                // 'message'  => $isEmailChanged ? trans('messages.user_updated_and_email_sent') : trans('messages.user_updated_successfully')
+                'message'  => trans('messages.user_updated_successfully')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
             // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
         }
     }
 
@@ -381,15 +369,118 @@ class UserController extends APIController
             if ($user) {
 
                 if ($type == 'confirm') {
+                    $authUser = $user;
+
                     $confirmPassword = $request->confirm_password;
                     if (!Hash::check($confirmPassword, $user->password)) {
                         return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
                     }
-                    $user->delete();
+
+                   
+                    //Send notification to system admin, trust admin and hospital admin
+                    $adminRole = [
+                        config('constant.roles.system_admin'),
+                        config('constant.roles.trust_admin'),
+                        config('constant.roles.hospital_admin'),
+                    ];
+
+                    $hospitalIds = $user->getHospitals()->pluck('id')->toArray();
+
+                    if( !in_array($user->primary_role, $adminRole) ){
+
+                        $hospitals = Hospital::whereIn('id',$hospitalIds)->get();
+
+                        foreach($hospitals as $hospital){
+                            $adminUsers = $hospital->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
+            
+                            $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
+                            if ($superAdmin) {
+                                $adminUsers = $adminUsers->concat([$superAdmin]);
+                            }
+        
+                            if($adminUsers){
+        
+                                foreach($adminUsers as $user){
+        
+                                   $subject = trans('messages.notify_subject.user_deleted_by_own',['user_name'=>$authUser->full_name]);
+                                   $notification_type = array_search(config('constant.notification_type.user_deleted_by_own'), config('constant.notification_type'));
+        
+                                   $messageContent = null;
+        
+                                   $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+        
+                                   $messageData = [
+                                        'notification_type' => $notification_type,
+                                        'section'           => $key,
+                                        'subject'           => $subject,
+                                        'message'           => $messageContent,
+                                        'rota_session'      => null,
+                                        'created_by'        => $authUser->id,
+                                        'authUser'          => $authUser,
+                                    ];
+        
+                                    $user->notify(new SendNotification($messageData));
+        
+                                }
+        
+                            }
+                        }
+                        
+                    }
+                    //End Send notification to system admin, trust admin and hospital admin
+                   
+                    $authUser->delete();
                     auth()->logout();
                     JWTAuth::invalidate(JWTAuth::getToken());
+
                 } else {
                     $user->delete();
+
+                    //Send notification to system admin, trust admin and hospital admin
+                    $authUser = auth()->user();
+                    $deletedUser = User::onlyTrashed()->where('uuid', $uuid)->first();
+
+                    $adminRole = [
+                        config('constant.roles.system_admin'),
+                        config('constant.roles.trust_admin'),
+                        config('constant.roles.hospital_admin'),
+                    ];
+
+                 
+                    if( !in_array($deletedUser->primary_role, $adminRole) ){
+
+                        $subject = trans('messages.notify_subject.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'admin_name'=>$authUser->full_name]);
+
+                        //Send mail to deleted user
+                        Mail::to($deletedUser->user_email)->queue(new UserDeletedMail($subject, $deletedUser, $authUser));
+                        
+
+                        //Send mail and notification to system admin
+                        if($authUser->primary_role != config('constant.roles.system_admin')){
+                            $systemAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
+
+                            $notification_type = array_search(config('constant.notification_type.user_deleted_by_admin'), config('constant.notification_type'));
+                            $messageContent = null;
+                            $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+    
+                            $messageData = [
+                                 'notification_type' => $notification_type,
+                                 'section'           => $key,
+                                 'subject'           => $subject,
+                                 'message'           => $messageContent,
+                                 'rota_session'      => null,
+                                 'created_by'        => $authUser->id,
+                                 'deletedUser'       => $deletedUser,
+                                 'authUser'          => $authUser,
+                            ];
+    
+                            $systemAdmin->notify(new SendNotification($messageData));
+                        }
+                        
+                    }
+                    //End Send notification to system admin, trust admin and hospital admin
+                    
+                  
                 }
             }
 

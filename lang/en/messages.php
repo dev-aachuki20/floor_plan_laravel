@@ -107,7 +107,10 @@ return [
         'remove_speciality' => 'You have been removed from a session',
         'quarter_available'  => 'Quarter :quarterNo - :quarterYear is now available',
         'quarter_saved'      => 'Quarter :quarterNo - :quarterYear saved successfully',
-        'confirmed_booking'  =>  'Session is confirmed for booking'
+        'confirmed_booking'  =>  'Session is confirmed for booking',
+        'admin_updated_own_user'  =>  'Your Profile updated',
+        'user_deleted_by_own'     => ':user_name requested to delete own account.',
+        'user_deleted_by_admin'   => ':admin_name deleted :user_name'
     ],
 
     'notification' => [
@@ -122,7 +125,13 @@ return [
     'mail_content' => [
         'quarter_saved' => "We are pleased to inform you that the session schedule for Quarter :quarterNo of :quarterYear is now available. You can now view and manage the hospital room sessions for this quarter.
 
-        Please make sure to review the scheduled sessions and confirm the details as soon as possible to ensure smooth operations."
+        Please make sure to review the scheduled sessions and confirm the details as soon as possible to ensure smooth operations.",
+
+        'admin_updated_own_user' => 'Your user data was updated',
+
+        'user_deleted_by_own'   => 'This is to inform you that :user_name has requested to delete their account associated with the email address :user_email.',
+        
+        'user_deleted_by_admin' => 'We are writing to inform you that your account associated with :user_name - :user_email has been deleted by :admin_name'
     ]
 
 ];

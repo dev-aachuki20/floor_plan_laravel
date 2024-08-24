@@ -269,6 +269,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                         'created_by'        => $this->created_by,
                         'hospital_name'     => $hospitalName,
                         'rota_session_ids'  => isset($allUsers[$user->id]) ? $allUsers[$user->id] : null,
+                        'session_date'      => isset($this->remainingDays[0]) ? $this->remainingDays[0] : null,
                     ];
 
                     $user->notify(new SendNotification($messageData));
@@ -306,7 +307,8 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                         'message'           => $messageContent,
                         'rota_session'      => null,
                         'quarterNo'         => $this->quarterId,
-                        'quarterYear'       => $this->quarterYear
+                        'quarterYear'       => $this->quarterYear,
+                        'session_date'      => isset($this->remainingDays[0]) ? $this->remainingDays[0] : null,
                     ];
 
                     $user->notify(new SendNotification($messageData));

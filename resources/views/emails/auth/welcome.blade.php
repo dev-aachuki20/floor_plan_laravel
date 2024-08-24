@@ -8,7 +8,6 @@
     <p style="font-size: 18px; line-height: 25.5px; font-weight: 600; font-family: 'Nunito Sans', sans-serif; color: #464B70; margin-bottom: 27px;">Here are your account details:</p>
     <ul>
         <li><strong>Email:</strong> {{ $user->user_email ?? '' }}</li>
-        <li><strong>Password:</strong> {{ $password ?? '' }}</li>
         <li><strong>Role:</strong> {{ $user->role->role_name ?? '' }}</li>
     </ul>
 

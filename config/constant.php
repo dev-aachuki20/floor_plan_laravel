@@ -62,7 +62,9 @@ return [
         'user_profile_updated_hospital' => 'Hospital Updated',
 
         'quarter_available' => 'Quarter Available',
-        'quarter_saved'     => 'Quarter Saved'
+        'quarter_saved'     => 'Quarter Saved',
+        'user_deleted_by_own'    => 'User Deleted By Own',
+        'user_deleted_by_admin'  => 'User Deleted By Admin',
 
     ],
 

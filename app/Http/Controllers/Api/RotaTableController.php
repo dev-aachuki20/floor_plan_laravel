@@ -167,6 +167,12 @@ class RotaTableController extends APIController
                                 $record = $record->whereIn('speciality_id', $request->filter_value);
 
                             }
+
+                            if ($request->filter_by == 'status' && $request->filter_value) {
+
+                                $record = $record->whereIn('status', $request->filter_value);
+
+                            }
                         }
                         //End Apply filters
 
