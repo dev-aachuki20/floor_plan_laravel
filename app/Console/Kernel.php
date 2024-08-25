@@ -13,8 +13,16 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
-       /* $schedule->command('unconfirmed-sessions:reminder')->daily()->withoutOverlapping();
-        $schedule->command('reminders:upcomming_week')->daily()->withoutOverlapping();*/
+
+        // Schedule the reminder 5 weeks before the session date at midnight
+        $schedule->command('notify:reminder five_weeks')->dailyAt('00:00')->withoutOverlapping();
+
+        // Schedule the reminder 4 weeks before the session date at midnight
+        $schedule->command('notify:reminder four_weeks')->dailyAt('00:00')->withoutOverlapping();
+
+        // Schedule the reminder 2 weeks before the session date at midnight
+        $schedule->command('notify:reminder two_weeks')->dailyAt('00:00')->withoutOverlapping();
+
     }
 
     /**

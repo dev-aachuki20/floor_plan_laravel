@@ -113,6 +113,7 @@ return [
         'user_deleted_by_admin'   => ':admin_name deleted :user_name',
         'first_reminder'          => 'Reminder: A session awaits your confirmation',
         'final_reminder'          => 'Final Reminder: A session awaits your confirmation',
+        'session_closed'          => 'Session Closed',
 
     ],
 
@@ -133,7 +134,7 @@ return [
         'admin_updated_own_user' => 'Your user data was updated',
 
         'user_deleted_by_own'   => 'This is to inform you that :user_name has requested to delete their account associated with the email address :user_email.',
-        
+
         'user_deleted_by_admin' => 'We are writing to inform you that your account associated with :user_name - :user_email has been deleted by :admin_name'
     ]
 

@@ -22,7 +22,7 @@ return [
         'booker'            => 7,
         'chair'             => 8,
     ],
-  
+
     'date_format' => [
         'date' => 'd-m-Y',
         'time' => 'H:i',
@@ -43,7 +43,7 @@ return [
 
     'availability_status' =>[
         0 => 'Pending',
-        1 => 'Confirm', 
+        1 => 'Confirm',
         2 => 'Decline'
     ],
 
@@ -67,7 +67,8 @@ return [
         'user_deleted_by_admin'  => 'User Deleted By Admin',
 
         'first_reminder' => 'First Reminder',
-        'final_reminder' => 'Final Reminder'
+        'final_reminder' => 'Final Reminder',
+        'session_closed' => 'Session Closed',
 
     ],
 
@@ -77,6 +78,6 @@ return [
         'at_risk' => 1,
         'closed'  => 2,
     ]
-    
+
 
 ];

@@ -10,6 +10,7 @@ use App\Mail\UserNotificationMail;
 use App\Mail\AvailablityStatusMail;
 use App\Mail\SetQuarterSessionMail;
 use App\Mail\RotaSessionMail;
+use App\Mail\RotaSessionClosedMail;
 use App\Models\User;
 use App\Models\RotaSession;
 
@@ -52,12 +53,23 @@ class SendNotification extends Notification implements ShouldQueue
         $userName = $notifiable->full_name;
         $message = $this->data['message'];
 
-        if($this->data['notification_type'] == 'session_available'){
+        if(in_array($this->data['notification_type'], array('session_available','first_reminder','final_reminder'))){
 
             if(isset($this->data['rota_session'])){
 
                 $rotaSession = $this->data['rota_session'];
                 return (new RotaSessionMail($subject, $notifiable, $rotaSession))->to($notifiable->user_email);
+
+            }
+
+        }
+
+        if(in_array($this->data['notification_type'], array('session_closed'))){
+
+            if(isset($this->data['rota_session'])){
+
+                $rotaSession = $this->data['rota_session'];
+                return (new RotaSessionClosedMail($subject, $notifiable, $rotaSession))->to($notifiable->user_email);
 
             }
 
@@ -96,7 +108,7 @@ class SendNotification extends Notification implements ShouldQueue
         if(in_array($this->data['notification_type'], array('quarter_saved'))){
             $quarterNo = isset($this->data['quarterNo']) ? $this->data['quarterNo'] : null;
             $quarterYear = isset($this->data['quarterYear']) ? $this->data['quarterYear'] : null;
-            
+
             $message = trans('messages.mail_content.quarter_saved',['quarterNo'=>$quarterNo,'quarterYear'=>$quarterYear]);
         }
 
