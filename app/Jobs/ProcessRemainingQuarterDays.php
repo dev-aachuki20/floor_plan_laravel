@@ -167,8 +167,12 @@ class ProcessRemainingQuarterDays implements ShouldQueue
 
                             if($rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
 
+                                $hospital_id = $this->hospitalId;
+
                                 //Send notification for session confirmation to speciality lead user
-                                $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->get() : [];
+                                $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->whereHas('getHospitals', function ($query) use($hospital_id) {
+                                    $query->where('hospital_id', $hospital_id);
+                                })->get() : [];
 
                                 foreach ($specialityUsers as $user) {
 
@@ -204,7 +208,9 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                     config('constant.roles.staff_coordinator'),
                                     config('constant.roles.anesthetic_lead'),
                                 ];
-                                $staffUsers = User::whereIn('primary_role', $staffRoles)->get();
+                                $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                                    $query->where('hospital_id', $hospital_id);
+                                })->get();
                                 foreach ($staffUsers as $user) {
 
                                     $allUsers[$user->id][] = $rotaSession->id;
@@ -246,8 +252,12 @@ class ProcessRemainingQuarterDays implements ShouldQueue
 
                 $userIds = array_keys($allUsers);
 
+                $hospital_id = $this->hospitalId;
+                
                 //Send notification to speciality lead, anesthetic lead & staff coordinator
-                $staffUsers = User::whereIn('id', $userIds)->get();
+                $staffUsers = User::whereIn('id', $userIds)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                    $query->where('hospital_id', $hospital_id);
+                })->get();
                 foreach ($staffUsers as $user) {
 
                     $subject = trans('messages.notify_subject.quarter_available',['quarterNo'=>$this->quarterId,'quarterYear' => $this->quarterYear]);

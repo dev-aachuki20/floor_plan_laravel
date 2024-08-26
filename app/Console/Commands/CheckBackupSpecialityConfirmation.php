@@ -24,20 +24,21 @@ class CheckBackupSpecialityConfirmation extends Command
     {
         $currentDate = Carbon::now();
 
+      
         $backupSpecialities = BackupSpeciality::whereHas('user',function($query){
             $query->where('primary_role',config('constant.roles.speciality_lead'));
         })->get();
-
+    
         foreach ($backupSpecialities as $backupSpeciality) {
             $userId = $backupSpeciality->user_id;
             $days = $backupSpeciality->days;
 
             $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
-            ->where('week_day_date', $currentDate->addDays($days))
+            ->whereDate('week_day_date', $currentDate->addDays($days))
             ->where('status', 2)
             ->get();
-            
+ 
             foreach ($rotaSessions as $session) {
 
                 $existingRecordWithStatusOne = $session->users()
@@ -46,7 +47,9 @@ class CheckBackupSpecialityConfirmation extends Command
                 ->wherePivot('status', 1)
                 ->first();
 
-                if( (!$existingRecordWithStatusOne) && staffUnavailablityStatus($session)){
+                if( (!$existingRecordWithStatusOne) && $this->staffUnavailablityStatus($session)){
+
+                    $hospital_id = $session->hospital_id;
 
                     $session->status = config('constant.session_status.failed');
                     $session->save();
@@ -59,7 +62,7 @@ class CheckBackupSpecialityConfirmation extends Command
                     $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
                     $messageData = [
-                        'notification_type' => $notification_type,
+                        'notification_type' => $notificationType,
                         'section'           => $key,
                         'subject'           => $subject,
                         'message'           => $messageContent,
@@ -68,7 +71,10 @@ class CheckBackupSpecialityConfirmation extends Command
                     ];
 
                     
-                    $backupSpecialityUser = User::where('id',$userId)->first();
+                    $backupSpecialityUser = User::where('id',$userId)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                        $query->where('hospital_id', $hospital_id);
+                    })->first();
+
                     $backupSpecialityUser->notify(new SendNotification($messageData));
 
                     //Send notification for session confirmation to anesthetic lead & staff coordinator
@@ -76,7 +82,9 @@ class CheckBackupSpecialityConfirmation extends Command
                         config('constant.roles.staff_coordinator'),
                         config('constant.roles.anesthetic_lead'),
                     ];
-                    $staffUsers = User::whereIn('primary_role', $staffRoles)->get();
+                    $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                        $query->where('hospital_id', $hospital_id);
+                    })->get();
                     foreach ($staffUsers as $user) {
                         $user->notify(new SendNotification($messageData));
                     }

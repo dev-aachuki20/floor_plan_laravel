@@ -59,7 +59,7 @@ class ReminderNotification extends Command
                 }
 
                 $session->save();
-                
+
             }
 
         }
@@ -83,7 +83,10 @@ class ReminderNotification extends Command
             ->exists();
 
         if (!$confirmedUserExists) {
-            $users = User::where('primary_role', $roleConstant)->get();
+            $hospital_id = $session->hospital_id;
+            $users = User::where('primary_role', $roleConstant)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                $query->where('hospital_id', $hospital_id);
+            })->get();
             foreach ($users as $user) {
                 $this->sendNotification($session, $user,$weeks);
             }
@@ -148,6 +151,8 @@ class ReminderNotification extends Command
             $query->where('primary_role',config('constant.roles.speciality_lead'));
         })->first();
 
+        $hospital_id = $session->hospital_id;
+
         if($backupSpeciality){
             
             $existingRecordWithStatusOne = $session->users()
@@ -197,7 +202,9 @@ class ReminderNotification extends Command
                     'created_by'        => $createdBy->id
                 ];
 
-                $user = User::where('id',$backupSpeciality->user_id)->first();
+                $user = User::where('id',$backupSpeciality->user_id)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                    $query->where('hospital_id', $hospital_id);
+                })->first();
 
                 $user->notify(new SendNotification($messageData));
 
@@ -209,7 +216,11 @@ class ReminderNotification extends Command
                 config('constant.roles.staff_coordinator'),
                 config('constant.roles.anesthetic_lead'),
             ];
-            $staffUsers = User::whereIn('primary_role', $staffRoles)->get();
+
+            $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                $query->where('hospital_id', $hospital_id);
+            })->get();
+            
             foreach ($staffUsers as $user) {
 
                 $subject = trans('messages.notify_subject.confirmation');
