@@ -35,6 +35,7 @@ class CheckBackupSpecialityConfirmation extends Command
             $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
             ->where('week_day_date', $currentDate->addDays($days))
+            ->where('status', 2)
             ->get();
             
             foreach ($rotaSessions as $session) {

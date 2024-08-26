@@ -174,7 +174,7 @@ class RotaTableController extends APIController
                                 if(in_array(config('constant.session_status.closed'),$request->filter_value)){
                                     $request->filter_value[] = config('constant.session_status.failed');
                                 }
-                                
+
                                 $record = $record->whereIn('status', $request->filter_value);
 
                             }
@@ -934,7 +934,15 @@ class RotaTableController extends APIController
                 })->where('user_id',auth()->user()->id)->first();
 
                 if($backupSpeciality){
-                    return false;
+
+                    $existingRecord = $session->users()
+                    ->wherePivot('role_id', config('constant.roles.speciality_lead'))
+                    ->wherePivot('user_id', $backupSpeciality->user_id)->first();
+
+                    if( $existingRecord ){
+                        return false;
+                    }
+
                 }
 
                 return true;
