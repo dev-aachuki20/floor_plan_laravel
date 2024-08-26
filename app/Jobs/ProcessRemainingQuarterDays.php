@@ -132,6 +132,8 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                 config('constant.roles.anesthetic_lead'),
                             ];
 
+                            $createdBy = User::where('primary_role',config('constant.roles.system_admin'))->first();
+
                             if($isSpecialityChanged){
 
                                 //If Speciality changed than send notification to all confirm user that session has been cancelled
@@ -153,7 +155,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                         'subject'           => $subject,
                                         'message'           => $messageContent,
                                         'rota_session'      => $rotaSession,
-                                        'created_by'        => $authUser->id
+                                        'created_by'        => $createdBy->id
                                     ];
 
                                     $user->notify(new SendNotification($messageData));
@@ -172,7 +174,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
 
                                     $allUsers[$user->id][] = $rotaSession->id;
 
-                                    /*if($isNewCreated || $isSpecialityChanged){
+                                    if($isNewCreated || $isSpecialityChanged){
 
                                         $subject = trans('messages.notify_subject.confirmation');
 
@@ -188,11 +190,11 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                             'subject'           => $subject,
                                             'message'           => $messageContent,
                                             'rota_session'      => $rotaSession,
-                                            'created_by'        => $authUser->id
+                                            'created_by'        => $createdBy->id
                                         ];
 
                                         $user->notify(new SendNotification($messageData));
-                                    }*/
+                                    }
                                 }
                                 //End send notification for session confirmation to speciality lead user
 
@@ -207,9 +209,7 @@ class ProcessRemainingQuarterDays implements ShouldQueue
 
                                     $allUsers[$user->id][] = $rotaSession->id;
 
-
-
-                                   /* if($isNewCreated || $isSpecialityChanged){
+                                   if($isNewCreated || $isSpecialityChanged){
 
                                         $subject = trans('messages.notify_subject.confirmation');
 
@@ -225,11 +225,11 @@ class ProcessRemainingQuarterDays implements ShouldQueue
                                             'subject'           => $subject,
                                             'message'           => $messageContent,
                                             'rota_session'      => $rotaSession,
-                                            'created_by'        => $authUser->id
+                                            'created_by'        => $createdBy->id
                                         ];
 
                                         $user->notify(new SendNotification($messageData));
-                                    }*/
+                                    }
                                 }
                                 //End send notification for session confirmation to anesthetic lead & staff coordinator
                             }

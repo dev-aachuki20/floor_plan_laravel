@@ -114,7 +114,7 @@ return [
         'first_reminder'          => 'Reminder: A session awaits your confirmation',
         'final_reminder'          => 'Final Reminder: A session awaits your confirmation',
         'session_closed'          => 'Session Closed',
-
+        'session_failed'          => 'Session Closed',
     ],
 
     'notification' => [

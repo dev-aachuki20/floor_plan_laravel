@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('time_slot', ['AM', 'PM', 'EVE']);
             $table->foreignId('speciality_id')->nullable()->constrained('speciality');
             $table->date('week_day_date');
-            $table->tinyInteger('status')->nullable()->comment('1 => At Risk, 2 => Closed');
+            $table->tinyInteger('status')->nullable()->comment('1 => At Risk, 2 => Closed, 3 => Failed');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->timestamps();
         });

@@ -69,6 +69,7 @@ return [
         'first_reminder' => 'First Reminder',
         'final_reminder' => 'Final Reminder',
         'session_closed' => 'Session Closed',
+        'session_failed' => 'Session Failed'
 
     ],
 
@@ -77,6 +78,7 @@ return [
     'session_status' => [
         'at_risk' => 1,
         'closed'  => 2,
+        'failed'  => 3,
     ]
 
 

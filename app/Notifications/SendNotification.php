@@ -64,7 +64,7 @@ class SendNotification extends Notification implements ShouldQueue
 
         }
 
-        if(in_array($this->data['notification_type'], array('session_closed'))){
+        if(in_array($this->data['notification_type'], array('session_closed','session_failed'))){
 
             if(isset($this->data['rota_session'])){
 

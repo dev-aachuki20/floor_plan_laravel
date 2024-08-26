@@ -9,6 +9,7 @@ use App\Models\Room;
 use App\Models\Rota;
 use App\Models\RotaSession;
 use App\Models\RotaSessionQuarter;
+use App\Models\BackupSpeciality;
 use App\Models\Quarter;
 use App\Models\Speciality;
 use App\Models\Hospital;
@@ -170,6 +171,10 @@ class RotaTableController extends APIController
 
                             if ($request->filter_by == 'status' && $request->filter_value) {
 
+                                if(in_array(config('constant.session_status.closed'),$request->filter_value)){
+                                    $request->filter_value[] = config('constant.session_status.failed');
+                                }
+                                
                                 $record = $record->whereIn('status', $request->filter_value);
 
                             }
@@ -236,9 +241,12 @@ class RotaTableController extends APIController
                         $room_records[$timeSlot][$key]['date'] = $formattedDate;
                         $room_records[$timeSlot][$key]['is_disabled'] = (isset($date) && Carbon::parse($date)->gt(Carbon::now())) ? false : true;
                         $room_records[$timeSlot][$key]['rota_session_id'] = $record ? $record->id : null;
+
+                        $room_records[$timeSlot][$key]['rota_session_status'] = $this->rotaSessionStatus($record) ? true : false;
+
                         $room_records[$timeSlot][$key]['speciality_id']   = $record ? $record->speciality_id : null;
                         $room_records[$timeSlot][$key]['speciality_name'] = $record ? $record->specialityDetail ? $record->specialityDetail->speciality_name : null : null;
-                        $room_records[$timeSlot][$key]['roles_status'] = $rolesStatus;
+                        $room_records[$timeSlot][$key]['roles_status']    = $rolesStatus;
                     }
                 }
 
@@ -911,6 +919,34 @@ class RotaTableController extends APIController
             'message'   => trans('messages.record_retrieved_successfully'),
             'data'      => $responseData,
         ])->setStatusCode(Response::HTTP_OK);
+
+    }
+
+
+    private function rotaSessionStatus($session){
+
+        if($session){
+
+            if($session->status == 2){
+
+                $backupSpeciality = BackupSpeciality::whereHas('user',function($query){
+                    $query->where('primary_role',config('constant.roles.speciality_lead'));
+                })->where('user_id',auth()->user()->id)->first();
+
+                if($backupSpeciality){
+                    return false;
+                }
+
+                return true;
+
+            }elseif($session->status == 3){
+
+                return true;
+            }
+
+        }
+
+        return false;
 
     }
 
