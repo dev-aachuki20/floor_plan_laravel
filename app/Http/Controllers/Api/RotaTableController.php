@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use App\Notifications\SendNotification;
 use App\Jobs\ProcessRemainingQuarterDays;
+use App\Jobs\SetQuarterDays;
 
 
 class RotaTableController extends APIController
@@ -656,7 +657,7 @@ class RotaTableController extends APIController
 
                     // Dispatch the job to handle remaining days
                     if ($remainingDays->count() > 0) {
-                        ProcessRemainingQuarterDays::dispatch([
+                        SetQuarterDays::dispatch([
                             'quarter_id'    => $quarterNo,
                             'quarter_year'  => $quarterYear,
                             'hospital_id'   => $hospital_id,

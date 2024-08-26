@@ -24,7 +24,6 @@ class CheckBackupSpecialityConfirmation extends Command
     {
         $currentDate = Carbon::now();
 
-      
         $backupSpecialities = BackupSpeciality::whereHas('user',function($query){
             $query->where('primary_role',config('constant.roles.speciality_lead'));
         })->get();
@@ -75,7 +74,9 @@ class CheckBackupSpecialityConfirmation extends Command
                         $query->where('hospital_id', $hospital_id);
                     })->first();
 
-                    $backupSpecialityUser->notify(new SendNotification($messageData));
+                    if($backupSpecialityUser){
+                        $backupSpecialityUser->notify(new SendNotification($messageData));
+                    }
 
                     //Send notification for session confirmation to anesthetic lead & staff coordinator
                     $staffRoles = [
