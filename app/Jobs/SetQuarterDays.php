@@ -264,9 +264,9 @@ class SetQuarterDays implements ShouldQueue
 
                     $notification_type = array_search(config('constant.notification_type.quarter_available'), config('constant.notification_type'));
 
-                    $hospitalName = Hospital::where('id',$this->hospitalId)->value('hospital_name');
+                    $hospital = Hospital::where('id',$this->hospitalId)->first();
 
-                    $messageContent = $hospitalName;
+                    $messageContent = $hospital->hospital_name;
 
                     $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
@@ -277,7 +277,8 @@ class SetQuarterDays implements ShouldQueue
                         'message'           => $messageContent,
                         'rota_session'      => null,
                         'created_by'        => $this->created_by,
-                        'hospital_name'     => $hospitalName,
+                        'hospital_id'       => $hospital->id,
+                        'hospital_name'     => $hospital->hospital_name,
                         'rota_session_ids'  => isset($allUsers[$user->id]) ? $allUsers[$user->id] : null,
                         'session_date'      => isset($this->remainingDays[0]) ? $this->remainingDays[0] : null,
                     ];
@@ -318,6 +319,7 @@ class SetQuarterDays implements ShouldQueue
                         'rota_session'      => null,
                         'quarterNo'         => $this->quarterId,
                         'quarterYear'       => $this->quarterYear,
+                        'hospital_id'       => $hospital->id,
                         'session_date'      => isset($this->remainingDays[0]) ? $this->remainingDays[0] : null,
                     ];
 

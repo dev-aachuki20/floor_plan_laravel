@@ -62,14 +62,14 @@ class NotificationController extends APIController
 
             if($notification->rotaSession){
 
-                if($notification->notification_type != config('constant.user_profile_updated')){
-                    $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
-                    $formattedDate = $carbonDate->format('D, j M');
-                    $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
-                    $notification->session_date = $notification->rotaSession->week_day_date;
-                }
+                $carbonDate = Carbon::parse($notification->rotaSession->week_day_date);
+                $formattedDate = $carbonDate->format('D, j M');
+                $notification->slot = $formattedDate.' - '.$notification->rotaSession->time_slot;
+                $notification->hospital_id = $notification->rotaSession->hospital_id;
+                $notification->session_date = $notification->rotaSession->week_day_date;
 
             }else{
+                $notification->hospital_id = isset($notification->data['hospital_id']) ? $notification->data['hospital_id'] : null;
                 $notification->session_date = isset($notification->data['session_date']) ? $notification->data['session_date'] : null;
             }
 
