@@ -91,12 +91,20 @@ class ReportController extends APIController
         
             if($hospitalId == '0'){ 
                 
-               /* if(auth()->user()->is_system_admin){
-                   $allHospital = Hospital::pluck('id')->toArray();
-                }else{
+               if(!auth()->user()->is_system_admin){
                     $allHospital = auth()->user()->getHospitals()->pluck('id')->toArray();
+
+                    $usersQuery = $usersQuery->whereRelation('getHospitals', function ($query) use ($allHospital) {
+                        $query->whereIn('hospital.id', $allHospital);
+                    }); 
+                    
+                    if(auth()->user()->is_trust_admin){
+                        $usersQuery = $usersQuery->where('primary_role', '!=', config('constant.roles.trust_admin'));
+                    }else if(auth()->user()->is_hospital_admin){
+                        $usersQuery = $usersQuery->whereNotIn('primary_role', [config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')]);
+                    }
+
                 }
-               */
                 
             }else{
                 $usersQuery = $usersQuery->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
