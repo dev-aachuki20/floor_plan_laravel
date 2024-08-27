@@ -86,21 +86,21 @@ class ReportController extends APIController
             $month = $validatedData['month'] ?? null;
             $hospitalId = $validatedData['hospital_id'];
 
-            $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'))
-                ->join('user_hospital', 'user_hospital.user_id', '=', 'users.id');
+            $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'));
 
         
-            if($hospitalId == '0'){ // All hospital
-
-                if(auth()->user()->is_system_admin){
+            if($hospitalId == '0'){ 
+                
+               /* if(auth()->user()->is_system_admin){
                    $allHospital = Hospital::pluck('id')->toArray();
                 }else{
                     $allHospital = auth()->user()->getHospitals()->pluck('id')->toArray();
                 }
-                $usersQuery =  $usersQuery->whereIn('user_hospital.hospital_id', $allHospital);
+               */
                 
             }else{
-                $usersQuery =  $usersQuery->where('user_hospital.hospital_id', $hospitalId);
+                $usersQuery = $usersQuery->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
+                ->where('user_hospital.hospital_id', $hospitalId);
             }
                 
             $usersQuery = $usersQuery->where('primary_role', '!=', config('constant.roles.system_admin'))
