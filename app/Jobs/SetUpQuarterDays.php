@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Notifications\SendNotification;
 
 
-class SetQuarterDays implements ShouldQueue
+class SetUpQuarterDays implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
