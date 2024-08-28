@@ -500,10 +500,13 @@ class RotaTableController extends APIController
                             }
 
                             //Store & Update records for manage quarters functionality
+                            $isQuarterSet = false;
                             if(isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])){
 
                                 if($validatedData['quarter_id'] && $validatedData['quarter_year']){
 
+                                    $isQuarterSet = true;
+                                    
                                     $quarterNo   = $validatedData['quarter_id'];
                                     $quarterYear = $validatedData['quarter_year'];
 
@@ -576,7 +579,7 @@ class RotaTableController extends APIController
                             }
 
 
-                            if($rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
+                            if((!$isQuarterSet) && $rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
 
                                 //Send notification for session confirmation to speciality lead user
                                 $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->whereHas('getHospitals', function ($query) use($hospital_id) {

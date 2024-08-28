@@ -7,11 +7,11 @@
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">We are writing to inform you that the session scheduled at {{ $rota_session_detail->roomDetail->hospital->hospital_name ?? ''}} on {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }} during the {{ $rota_session_detail->time_slot ?? '' }} time slot has been closed. Please find the session details below:</p>
 
-    <ul>
-        <li><strong>Hospital:</strong> {{ $rota_session_detail->roomDetail->hospital->hospital_name ?? '' }}</li>
-        <li><strong>Room Name:</strong> {{ $rota_session_detail->roomDetail->room_name ?? '' }}</li>
-        <li><strong>Time Slot:</strong> {{ $rota_session_detail->time_slot ?? '' }}</li>
-        <li><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
+    <ul style="padding: 0;margin: 0;list-style: none;">
+        <li style="display: block;color: #000;"><strong>Hospital:</strong> {{ $rota_session_detail->roomDetail->hospital->hospital_name ?? '' }}</li>
+        <li style="display: block;color: #000;"><strong>Room Name:</strong> {{ $rota_session_detail->roomDetail->room_name ?? '' }}</li>
+        <li style="display: block;color: #000;"><strong>Time Slot:</strong> {{ $rota_session_detail->time_slot ?? '' }}</li>
+        <li style="display: block;color: #000;"><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
     </ul>
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: 600;color: #000; margin-bottom: 0; margin-top:27px;">Thank you</p>

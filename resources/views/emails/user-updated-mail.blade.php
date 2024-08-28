@@ -13,35 +13,35 @@
     @endphp
     <ul>
 
-        @if(isset($updatedFields['user_email']) && $updatedFields['user_email'] === true)
+        @if(isset($updatedFields['user_email']) && ($updatedFields['user_email'] == true))
             <li><strong>Email:</strong> {{ $user->user_email ?? '' }}</li>
         @endif
 
-        @if(isset($updatedFields['primary_role']) && $updatedFields['primary_role'] === true)
+        @if(isset($updatedFields['primary_role']) && ($updatedFields['primary_role'] == true))
             <li><strong>Role:</strong> {{ $user->role->role_name ?? '' }}</li>
         @endif
 
-        @if(isset($updatedFields['trust']) && $updatedFields['trust'] === true)
+        @if(isset($updatedFields['trust']) && ($updatedFields['trust'] == true))
         <li><strong>Trust:</strong> {{ $user->trusts ? $user->trusts()->value('trust_name') : null }}</li>
         @endif
 
-        @if(isset($updatedFields['hospital']) && $updatedFields['hospital'] === true)
+        @if(isset($updatedFields['hospital']) && ($updatedFields['hospital'] == true))
             <li><strong>Hospital:</strong> {{ $hospitals }}</li>
         @endif
 
         @if($user->primary_role != config('constant.roles.booker'))
 
-            @if(isset($updatedFields['speciality']) && $updatedFields['speciality'] === true)
+            @if(isset($updatedFields['speciality']) && ($updatedFields['speciality'] == true))
             <li><strong>Speciality:</strong> {{ $user->specialityDetail()->value('speciality_name') }}</li>
             @endif
 
-            @if(isset($updatedFields['sub_speciality']) && $updatedFields['sub_speciality'] === true)
+            @if(isset($updatedFields['sub_speciality']) && ($updatedFields['sub_speciality'] == true))
             <li><strong>Sub Speciality:</strong> {{ $user->subSpecialityDetail()->value('sub_speciality_name') }}</li>
             @endif
 
         @endif
 
-        @if(isset($updatedFields['password']) && $updatedFields['password'] === true)
+        @if(isset($updatedFields['password']) && ($updatedFields['password'] == true))
          <li><strong>Your password has been changed</strong>
         @endif
 
