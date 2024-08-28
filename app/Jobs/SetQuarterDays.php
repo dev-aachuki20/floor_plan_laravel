@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Notifications\SendNotification;
 
 
-class SetUpQuarterDays implements ShouldQueue
+class SetQuarterDays implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -178,7 +178,7 @@ class SetUpQuarterDays implements ShouldQueue
 
                                     $allUsers[$user->id][] = $rotaSession->id;
 
-                                    if($isNewCreated || $isSpecialityChanged){
+                                    /*if($isNewCreated || $isSpecialityChanged){
 
                                         $subject = trans('messages.notify_subject.confirmation');
 
@@ -198,7 +198,7 @@ class SetUpQuarterDays implements ShouldQueue
                                         ];
 
                                         $user->notify(new SendNotification($messageData));
-                                    }
+                                    }*/
                                 }
                                 //End send notification for session confirmation to speciality lead user
 
@@ -211,11 +211,12 @@ class SetUpQuarterDays implements ShouldQueue
                                 $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
                                     $query->where('hospital_id', $hospital_id);
                                 })->get();
+
                                 foreach ($staffUsers as $user) {
 
                                     $allUsers[$user->id][] = $rotaSession->id;
 
-                                   if($isNewCreated || $isSpecialityChanged){
+                                   /*if($isNewCreated || $isSpecialityChanged){
 
                                         $subject = trans('messages.notify_subject.confirmation');
 
@@ -235,7 +236,7 @@ class SetUpQuarterDays implements ShouldQueue
                                         ];
 
                                         $user->notify(new SendNotification($messageData));
-                                    }
+                                    }*/
                                 }
                                 //End send notification for session confirmation to anesthetic lead & staff coordinator
                             }
@@ -258,6 +259,7 @@ class SetUpQuarterDays implements ShouldQueue
                 $staffUsers = User::whereIn('id', $userIds)->whereHas('getHospitals', function ($query) use($hospital_id) {
                     $query->where('hospital_id', $hospital_id);
                 })->get();
+
                 foreach ($staffUsers as $user) {
 
                     $subject = trans('messages.notify_subject.quarter_available',['quarterNo'=>$this->quarterId,'quarterYear' => $this->quarterYear]);

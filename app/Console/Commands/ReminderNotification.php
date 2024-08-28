@@ -164,20 +164,22 @@ class ReminderNotification extends Command
 
                 $existingRecord = $session->users()
                 ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-                ->wherePivot('status', 1)
+                ->wherePivot('rota_session_id',$session->id)
                 ->first();
         
                 if ($existingRecord) {
         
-                    $session->users()
-                    ->newPivotStatement()
-                    ->where('rota_session_id', $session->id)
-                    ->where('role_id', config('constant.roles.speciality_lead'))
-                    ->update([
-                        'user_id' => $backupSpeciality->user_id,
-                        'status'  => 0,
-                    ]);
-        
+                    if($existingRecord->pivot->status != 1){
+                        $session->users()
+                        ->newPivotStatement()
+                        ->where('rota_session_id', $session->id)
+                        ->where('role_id', config('constant.roles.speciality_lead'))
+                        ->update([
+                            'user_id' => $backupSpeciality->user_id,
+                            'status'  => 0,
+                        ]);
+                    }
+
                 } else {
                     $availability_user[$backupSpeciality->user_id] = ['role_id' => config('constant.roles.speciality_lead'),'status' => 0];
                     $session->users()->attach($backupSpeciality->user_id, $availability_user[$backupSpeciality->user_id]);
