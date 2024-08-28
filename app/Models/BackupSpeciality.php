@@ -16,6 +16,7 @@ class BackupSpeciality extends Model
 
     protected $fillable = [
         'user_id',
+        'hospital_id',
         'days',
         'created_at',
         'updated_at',
@@ -24,6 +25,11 @@ class BackupSpeciality extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function hospitalDetail()
+    {
+        return $this->belongsTo(Hospital::class);
     }
 
 

@@ -30,11 +30,12 @@ class CheckBackupSpecialityConfirmation extends Command
     
         foreach ($backupSpecialities as $backupSpeciality) {
             $userId = $backupSpeciality->user_id;
-            $days = $backupSpeciality->days;
+            $days = $backupSpeciality->days+1;
 
             $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
             ->whereDate('week_day_date', $currentDate->addDays($days))
+            ->where('hospital_id',$backupSpeciality->hospital_id)
             ->where('status', 2)
             ->get();
  

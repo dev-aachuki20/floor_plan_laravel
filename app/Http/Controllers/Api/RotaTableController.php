@@ -115,6 +115,7 @@ class RotaTableController extends APIController
                     foreach ($weekDays as $key => $date) {
 
                         if($authUser->is_speciality_lead){
+
                             $specialities = $authUser->specialityDetail()->pluck('id')->toArray();
 
                             $record = RotaSession:: with(['users'=>function ($query) use ($authUser) {
@@ -122,10 +123,23 @@ class RotaTableController extends APIController
                                     ->withPivot('status', 'role_id')
                                     ->wherePivot('role_id', $authUser->primary_role);
 
-                            }])->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                            }])->select('id', 'hospital_id','speciality_id', 'time_slot','status')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
-                                ->where('time_slot', $timeSlot)
-                                ->whereIn('speciality_id',$specialities);
+                                ->where('time_slot', $timeSlot);
+
+
+                            $backupSpecialityUser = BackupSpeciality::whereHas('user',function($query){
+                                $query->where('primary_role',config('constant.roles.speciality_lead'));
+                            })->where('user_id',$authUser->id)->where('hospital_id',$hospitalId)->first();
+                
+                            if($backupSpecialityUser){
+                                $rotaSessionIds = $backupSpecialityUser->user->rotaSessions()->pluck('id')->toArray();
+                                $record = $record->where(function($query) use($specialities,$rotaSessionIds){
+                                    $query->whereIn('speciality_id',$specialities)->orWhereIn('id',$rotaSessionIds);
+                                });
+                            }else{
+                                $record = $record->whereIn('speciality_id',$specialities);
+                            }
 
                         }else if($authUser->is_booker){
 
@@ -135,7 +149,7 @@ class RotaTableController extends APIController
                                     ->where('rota_session_users.status', 1)
                                     ->whereIn('rota_session_users.role_id', $rolesId);
 
-                            })->select('id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                            })->select('id', 'hospital_id','speciality_id', 'time_slot','status')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot)
                                 ->where('speciality_id','!=',config('constant.unavailable_speciality_id'));
@@ -147,7 +161,7 @@ class RotaTableController extends APIController
                                     ->withPivot('status', 'role_id')
                                     ->wherePivotIn('role_id', $rolesId);
 
-                            }])->select('id', 'uuid', 'quarter_id', 'hospital_id', 'speciality_id', 'time_slot')->where('room_id', $room->id)
+                            }])->select('id', 'uuid', 'quarter_id', 'hospital_id', 'speciality_id', 'time_slot','status')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot);
 
@@ -946,7 +960,7 @@ class RotaTableController extends APIController
 
                 $backupSpeciality = BackupSpeciality::whereHas('user',function($query){
                     $query->where('primary_role',config('constant.roles.speciality_lead'));
-                })->where('user_id',auth()->user()->id)->first();
+                })->where('user_id',auth()->user()->id)->where('hospital_id',$session->hospital_id)->first();
 
                 if($backupSpeciality){
 

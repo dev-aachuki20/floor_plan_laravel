@@ -147,11 +147,11 @@ class ReminderNotification extends Command
 
     private function assignToBackupSpeciality($session){
 
+        $hospital_id = $session->hospital_id;
+
         $backupSpeciality = BackupSpeciality::whereHas('user',function($query){
             $query->where('primary_role',config('constant.roles.speciality_lead'));
-        })->first();
-
-        $hospital_id = $session->hospital_id;
+        })->where('hospital_id',$hospital_id)->first();
 
         if($backupSpeciality){
             
