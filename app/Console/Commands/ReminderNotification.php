@@ -26,13 +26,13 @@ class ReminderNotification extends Command
 
         switch ($weeks) {
             case 'five_weeks':
-                $dateThreshold = Carbon::now()->addWeeks(5)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addWeeks(5)->addDays(1)->format('Y-m-d');
                 break;
             case 'four_weeks':
-                $dateThreshold = Carbon::now()->addWeeks(4)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addWeeks(4)->addDays(1)->format('Y-m-d');
                 break;
             case 'two_weeks':
-                $dateThreshold = Carbon::now()->addWeeks(2)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addWeeks(2)->addDays(1)->format('Y-m-d');
                 break;
             default:
                 $this->error('Invalid weeks parameter provided.');
