@@ -172,10 +172,20 @@ class RotaTableController extends APIController
 
                             if ($request->filter_by == 'status' && $request->filter_value) {
 
-                                if(in_array(config('constant.session_status.closed'),$request->filter_value)){
-                                    $request->filter_value[] = config('constant.session_status.failed');
-                                }
+                                $filterValue = $request->filter_value;
 
+                                if (!is_array($filterValue)) {
+                                    $filterValue = [$filterValue];
+                                }
+                            
+                        
+                                if (in_array(config('constant.session_status.closed'), $filterValue)) {
+                                    $filterValue[] = config('constant.session_status.failed');
+                                    $filterValue = array_unique($filterValue);
+                                }
+                            
+                                $request->merge(['filter_value' => $filterValue]);
+                            
                                 $record = $record->whereIn('status', $request->filter_value);
 
                             }
