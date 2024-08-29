@@ -13,6 +13,10 @@
     @endphp
     <ul>
 
+        @if(isset($updatedFields['full_name']) && ($updatedFields['full_name'] == true))
+            <li><strong>Full Name:</strong> {{ $user->full_name ?? '' }}</li>
+        @endif
+
         @if(isset($updatedFields['user_email']) && ($updatedFields['user_email'] == true))
             <li><strong>Email:</strong> {{ $user->user_email ?? '' }}</li>
         @endif

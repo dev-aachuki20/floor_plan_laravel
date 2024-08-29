@@ -259,6 +259,7 @@ class UserController extends APIController
             $user = User::where('uuid', $uuid)->firstOrFail();
             $userEmail = $user->user_email;
 
+            $currentTrust = $user->getHospitals()->groupBy('trust_id')->value('trust_id');
             $currentHospitalList = $user->getHospitals()->pluck('id')->toArray();
 
             if($user->primary_role != $request->role){
@@ -289,6 +290,10 @@ class UserController extends APIController
             $trustId = $this->getEditUserTrustId($request, $user);
             $user->getHospitals()->detach();
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
+
+            if($currentTrust != $trustId){
+                $updatedFields['trust'] = true;
+            }
 
             $updatedHospitalList = $user->getHospitals()->pluck('id')->toArray();
 

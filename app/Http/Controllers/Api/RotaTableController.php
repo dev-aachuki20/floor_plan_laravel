@@ -451,93 +451,101 @@ class RotaTableController extends APIController
                             $speciality_name_before_changed = null;
 
                             $isNewCreated = false;
+                            $isQuarterSet = false;
 
                             $start = Carbon::parse($date);
                             $dayOfWeek = $start->format('l');
                             $weekNumber = $start->weekOfYear;
 
-                            // Check if the rota session already exists
-                            $rotaSession = RotaSession::where('hospital_id',$hospital_id)
-                                ->where('room_id', $roomId)
-                                ->where('time_slot', $slotKey)
-                                ->where('week_day_date', $date)
-                                ->first();
-
-                            $rotaSessionRecords = [
-                                'quarter_id'      => $validatedData['quarter_id'] ?? null,
-                                'hospital_id'     => $hospital_id,
-                                'week_no'         => $weekNumber,
-                                'room_id'         => $roomId,
-                                'time_slot'       => $slotKey,
-                                'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
-                                'week_day_date'   => $date,
-                            ];
-
-
-                            if ($rotaSession) {
-
-                                if(!is_null($rotaSession->speciality_id)){
-
-                                    if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
-                                        $isSpecialityChanged = true;
-
-                                        $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
-                                    }
-
-                                }else{
-                                    $isNewCreated = true;
-                                }
-                                // Update existing rota session
-                                $rotaSession->update($rotaSessionRecords);
-
-                                $rotaSession = RotaSession::find($rotaSession->id);
-
-                            } else {
-                                // Create new rota session
-                                $rotaSession = RotaSession::create($rotaSessionRecords);
-
-                                $isNewCreated = true;
-                            }
-
-                            //Store & Update records for manage quarters functionality
-                            $isQuarterSet = false;
+                            $isCurrentQuarter = false;
                             if(isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])){
 
                                 if($validatedData['quarter_id'] && $validatedData['quarter_year']){
-
                                     $isQuarterSet = true;
-                                    
-                                    $quarterNo   = $validatedData['quarter_id'];
-                                    $quarterYear = $validatedData['quarter_year'];
+                                    $isCurrentQuarter = $this->isCurrentQuarter($validatedData);
+                                }
 
-                                    $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
-                                    ->where('quarter_no', $quarterNo)
-                                    ->where('quarter_year',$quarterYear)
-                                    ->where('hospital_id', $hospital_id)
+                            }
+
+                            if($isCurrentQuarter || (!$isQuarterSet)){
+
+                                // Check if the rota session already exists
+                                $rotaSession = RotaSession::where('hospital_id',$hospital_id)
                                     ->where('room_id', $roomId)
                                     ->where('time_slot', $slotKey)
-                                    ->where('day_name', $dayOfWeek)
+                                    ->where('week_day_date', $date)
                                     ->first();
 
-                                    $quarterRecords = [
-                                        'quarter_no'      => $quarterNo,
-                                        'quarter_year'    => $quarterYear,
-                                        'hospital_id'     => $hospital_id,
-                                        'room_id'         => $roomId,
-                                        'time_slot'       => $slotKey,
-                                        'day_name'        => $dayOfWeek,
-                                        'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
-                                    ];
+                                $rotaSessionRecords = [
+                                    'quarter_id'      => $validatedData['quarter_id'] ?? null,
+                                    'hospital_id'     => $hospital_id,
+                                    'week_no'         => $weekNumber,
+                                    'room_id'         => $roomId,
+                                    'time_slot'       => $slotKey,
+                                    'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                                    'week_day_date'   => $date,
+                                ];
 
-                                    if($quarterWeek){
-                                        // Update existing quarter records
-                                        RotaSessionQuarter::where('id',$quarterWeek->id)->update($quarterRecords);
+
+                                if ($rotaSession) {
+
+                                    if(!is_null($rotaSession->speciality_id)){
+
+                                        if($rotaSession->speciality_id != $rotaSessionRecords['speciality_id']){
+                                            $isSpecialityChanged = true;
+
+                                            $speciality_name_before_changed = $rotaSession->specialityDetail->speciality_name;
+                                        }
+
                                     }else{
-
-                                        RotaSessionQuarter::create($quarterRecords);
+                                        $isNewCreated = true;
                                     }
+                                    // Update existing rota session
+                                    $rotaSession->update($rotaSessionRecords);
 
+                                    $rotaSession = RotaSession::find($rotaSession->id);
+
+                                } else {
+                                    // Create new rota session
+                                    $rotaSession = RotaSession::create($rotaSessionRecords);
+
+                                    $isNewCreated = true;
                                 }
+
+                            }
+
+                            //Store & Update records for manage quarters functionality
+                            if($isQuarterSet){
+
+                                $quarterNo   = $validatedData['quarter_id'];
+                                $quarterYear = $validatedData['quarter_year'];
+
+                                $quarterWeek = RotaSessionQuarter::select('id','speciality_id')
+                                ->where('quarter_no', $quarterNo)
+                                ->where('quarter_year',$quarterYear)
+                                ->where('hospital_id', $hospital_id)
+                                ->where('room_id', $roomId)
+                                ->where('time_slot', $slotKey)
+                                ->where('day_name', $dayOfWeek)
+                                ->first();
+
+                                $quarterRecords = [
+                                    'quarter_no'      => $quarterNo,
+                                    'quarter_year'    => $quarterYear,
+                                    'hospital_id'     => $hospital_id,
+                                    'room_id'         => $roomId,
+                                    'time_slot'       => $slotKey,
+                                    'day_name'        => $dayOfWeek,
+                                    'speciality_id'   => $speciality ?? config('constant.unavailable_speciality_id'),
+                                ];
+
+                                if($quarterWeek){
+                                    // Update existing quarter records
+                                    RotaSessionQuarter::where('id',$quarterWeek->id)->update($quarterRecords);
+                                }else{
+                                    RotaSessionQuarter::create($quarterRecords);
+                                }
+                                  
                             }
                             //End Store & Update records for manage quarters functionality
 
@@ -579,73 +587,75 @@ class RotaTableController extends APIController
                             }
 
 
-                            if((!$isQuarterSet) && $rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
+                            if((!$isQuarterSet) && isset($rotaSession)){
+                                if($rotaSession->speciality_id != config('constant.unavailable_speciality_id')){
 
-                                //Send notification for session confirmation to speciality lead user
-                                $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->whereHas('getHospitals', function ($query) use($hospital_id) {
-                                    $query->where('hospital_id', $hospital_id);
-                                })->get() : [];
+                                    //Send notification for session confirmation to speciality lead user
+                                    $specialityUsers = $rotaSession->specialityDetail ? $rotaSession->specialityDetail->users()->where('primary_role', config('constant.roles.speciality_lead'))->whereHas('getHospitals', function ($query) use($hospital_id) {
+                                        $query->where('hospital_id', $hospital_id);
+                                    })->get() : [];
 
-                                foreach ($specialityUsers as $user) {
+                                    foreach ($specialityUsers as $user) {
 
-                                    if($isNewCreated || $isSpecialityChanged){
+                                        if($isNewCreated || $isSpecialityChanged){
 
-                                        $subject = trans('messages.notify_subject.confirmation');
+                                            $subject = trans('messages.notify_subject.confirmation');
 
-                                        $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+                                            $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
 
-                                        $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
+                                            $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
 
-                                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+                                            $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
-                                        $messageData = [
-                                            'notification_type' => $notification_type,
-                                            'section'           => $key,
-                                            'subject'           => $subject,
-                                            'message'           => $messageContent,
-                                            'rota_session'      => $rotaSession,
-                                            'created_by'        => $authUser->id
-                                        ];
+                                            $messageData = [
+                                                'notification_type' => $notification_type,
+                                                'section'           => $key,
+                                                'subject'           => $subject,
+                                                'message'           => $messageContent,
+                                                'rota_session'      => $rotaSession,
+                                                'created_by'        => $authUser->id
+                                            ];
 
-                                        $user->notify(new SendNotification($messageData));
+                                            $user->notify(new SendNotification($messageData));
+                                        }
                                     }
-                                }
-                                //End send notification for session confirmation to speciality lead user
+                                    //End send notification for session confirmation to speciality lead user
 
 
-                                //Send notification for session confirmation to anesthetic lead & staff coordinator
-                                $staffRoles = [
-                                    config('constant.roles.staff_coordinator'),
-                                    config('constant.roles.anesthetic_lead'),
-                                ];
-                                $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
-                                    $query->where('hospital_id', $hospital_id);
-                                })->get();
-                                foreach ($staffUsers as $user) {
+                                    //Send notification for session confirmation to anesthetic lead & staff coordinator
+                                    $staffRoles = [
+                                        config('constant.roles.staff_coordinator'),
+                                        config('constant.roles.anesthetic_lead'),
+                                    ];
+                                    $staffUsers = User::whereIn('primary_role', $staffRoles)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                                        $query->where('hospital_id', $hospital_id);
+                                    })->get();
+                                    foreach ($staffUsers as $user) {
 
-                                    if($isNewCreated || $isSpecialityChanged){
+                                        if($isNewCreated || $isSpecialityChanged){
 
-                                        $subject = trans('messages.notify_subject.confirmation');
+                                            $subject = trans('messages.notify_subject.confirmation');
 
-                                        $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+                                            $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
 
-                                        $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
+                                            $messageContent = $rotaSession->hospitalDetail->hospital_name.' - '.$rotaSession->roomDetail->room_name;
 
-                                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+                                            $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
-                                        $messageData = [
-                                            'notification_type' => $notification_type,
-                                            'section'           => $key,
-                                            'subject'           => $subject,
-                                            'message'           => $messageContent,
-                                            'rota_session'      => $rotaSession,
-                                            'created_by'        => $authUser->id
-                                        ];
+                                            $messageData = [
+                                                'notification_type' => $notification_type,
+                                                'section'           => $key,
+                                                'subject'           => $subject,
+                                                'message'           => $messageContent,
+                                                'rota_session'      => $rotaSession,
+                                                'created_by'        => $authUser->id
+                                            ];
 
-                                        $user->notify(new SendNotification($messageData));
+                                            $user->notify(new SendNotification($messageData));
+                                        }
                                     }
+                                    //End send notification for session confirmation to anesthetic lead & staff coordinator
                                 }
-                                //End send notification for session confirmation to anesthetic lead & staff coordinator
                             }
 
 
@@ -659,7 +669,7 @@ class RotaTableController extends APIController
             // End Rooms
 
             // Check if remaining days need to be processed
-            if (isset($validatedData['quarter_id']) && isset($validatedData['quarter_year'])) {
+            if ($isQuarterSet) {
                 $quarterNo   = $validatedData['quarter_id'];
                 $quarterYear = $validatedData['quarter_year'];
                 $currentYear = Carbon::now()->year;
@@ -990,4 +1000,29 @@ class RotaTableController extends APIController
 
     }
 
+
+    private function isCurrentQuarter($validatedData){
+        $quarterNo   = $validatedData['quarter_id'];
+        $quarterYear = $validatedData['quarter_year'];
+        $currentYear = Carbon::now()->year;
+
+        $quaterDates =  getQuarterDates($quarterNo, $quarterYear);
+        $startOfQuarter = $quaterDates[0] ?? null;
+        $endOfQuarter   = $quaterDates[1] ?? null;
+
+        if($startOfQuarter && $endOfQuarter){
+
+            $lastProcessedDate =  $startOfQuarter;
+
+            if( ($currentYear == $quarterYear) && isset($validatedData['week_days'][6]) ){
+                $dateExistsInQuarter = isDateInQuarter($validatedData['week_days'][6], $startOfQuarter, $endOfQuarter);
+                if($dateExistsInQuarter){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+            
+    }
 }
