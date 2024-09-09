@@ -91,24 +91,16 @@ Route::group(['namespace' => 'Api'], function () {
     */
     // Route::get('/email/verify/{uuid}/{hash}', [RegisterController::class, 'verifyEmail']);
 
+});
 
-    /*
-    |--------------------------------------------------------------------------
-    | Open API Routes
-    |--------------------------------------------------------------------------
-    | Method        : Get
-    |
-    */
+Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
 
     Route::get('get-trusts', [HomeController::class, 'getTrusts']);
 
     Route::get('get-specialities/{type?}', [HomeController::class, 'getSpecialities']);
 
     Route::get('get-sub-specialities/{speciality?}', [HomeController::class, 'getSubSpecialities']);
-});
-
-Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
-
+    
     Route::get('get-hospitals/{trust?}', [HomeController::class, 'getHospitals']);
 
     Route::get('get-roles', [HomeController::class, 'getRoles']);

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\RotaSession;
 use App\Models\BackupSpeciality;
+use App\Models\Setting;
 use Illuminate\Console\Command;
 use App\Notifications\SendNotification;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +24,19 @@ class ReminderNotification extends Command
     public function handle()
     {
         $weeks = $this->argument('weeks');
+        // $setting = Setting::first();
 
         switch ($weeks) {
             case 'five_weeks':
+                
+                // $beforeDays = ($setting && $setting->session_at_risk) ? (int)$setting->session_at_risk : 35;
+              
                 $dateThreshold = Carbon::now()->addWeeks(5)->addDays(1)->format('Y-m-d');
+                // $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
                 break;
             case 'four_weeks':
+                // $beforeDays = ($setting && $setting->session_at_risk) ? (int)$setting->session_at_risk : 35;
+              
                 $dateThreshold = Carbon::now()->addWeeks(4)->addDays(1)->format('Y-m-d');
                 break;
             case 'two_weeks':
@@ -39,6 +47,8 @@ class ReminderNotification extends Command
                 return 1;
         }
 
+        dd($dateThreshold);
+        
         $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
             ->where('week_day_date', $dateThreshold)
