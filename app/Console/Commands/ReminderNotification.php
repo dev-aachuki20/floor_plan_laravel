@@ -47,7 +47,7 @@ class ReminderNotification extends Command
                 return 1;
         }
 
-        dd($dateThreshold);
+        // dd($dateThreshold);
         
         $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
