@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\RotaSession;
 use App\Models\BackupSpeciality;
-use App\Models\Setting;
 use Illuminate\Console\Command;
 use App\Notifications\SendNotification;
 use Illuminate\Support\Facades\Log;
@@ -24,23 +23,27 @@ class ReminderNotification extends Command
     public function handle()
     {
         $weeks = $this->argument('weeks');
-        // $setting = Setting::first();
+
+        $beforeDays = '';
 
         switch ($weeks) {
             case 'five_weeks':
                 
-                // $beforeDays = ($setting && $setting->session_at_risk) ? (int)$setting->session_at_risk : 35;
-              
-                $dateThreshold = Carbon::now()->addWeeks(5)->addDays(1)->format('Y-m-d');
-                // $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+                $beforeDays = getSetting('first_reminder') ? (int)getSetting('first_reminder') : 35;
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+
                 break;
             case 'four_weeks':
-                // $beforeDays = ($setting && $setting->session_at_risk) ? (int)$setting->session_at_risk : 35;
-              
-                $dateThreshold = Carbon::now()->addWeeks(4)->addDays(1)->format('Y-m-d');
+
+                $beforeDays = getSetting('final_reminder') ? (int)getSetting('final_reminder') : 28;
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+
                 break;
             case 'two_weeks':
-                $dateThreshold = Carbon::now()->addWeeks(2)->addDays(1)->format('Y-m-d');
+               
+                $beforeDays = getSetting('assign_backup_speciality') ? (int)getSetting('assign_backup_speciality') : 14;
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+
                 break;
             default:
                 $this->error('Invalid weeks parameter provided.');
@@ -75,8 +78,8 @@ class ReminderNotification extends Command
         }
 
         if ($rotaSessions->count() > 0) {
-            Log::info("Reminder sent for sessions {$weeks} before.");
-            $this->info("Reminder sent for sessions {$weeks} before.");
+            Log::info("Reminder sent for sessions {$beforeDays} day before.");
+            $this->info("Reminder sent for sessions {$beforeDays} day before.");
         }
 
         return 0;

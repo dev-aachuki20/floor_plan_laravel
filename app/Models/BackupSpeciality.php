@@ -17,7 +17,6 @@ class BackupSpeciality extends Model
     protected $fillable = [
         'user_id',
         'hospital_id',
-        'days',
         'created_at',
         'updated_at',
     ];

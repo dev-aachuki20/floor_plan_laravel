@@ -23,14 +23,14 @@ class CheckBackupSpecialityConfirmation extends Command
     public function handle()
     {
         $currentDate = Carbon::now();
-
         $backupSpecialities = BackupSpeciality::whereHas('user',function($query){
             $query->where('primary_role',config('constant.roles.speciality_lead'));
         })->get();
     
         foreach ($backupSpecialities as $backupSpeciality) {
             $userId = $backupSpeciality->user_id;
-            $days = $backupSpeciality->days+1;
+            $days = getSetting('session_closed') ? (int)getSetting('session_closed') : 7;
+            $days = $days + 1;
 
             $rotaSessions = RotaSession::whereNotNull('speciality_id')
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
