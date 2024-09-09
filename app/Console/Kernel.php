@@ -12,6 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        \Log::info('Schedule cron job is running');
+
         $schedule->command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
 
         // Schedule the reminder 5 weeks before the session date 

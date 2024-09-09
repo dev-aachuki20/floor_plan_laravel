@@ -71,6 +71,8 @@ class PasswordResetController  extends APIController
             $subject = 'Reset Password Notification';
             Mail::to($email_id)->queue(new ResetPasswordMail($user->full_name,$reset_password_url,$subject));
 
+            \Log::info('Sent Forgot Password Mail');
+
             DB::commit();
 
             return $this->respondOk([
