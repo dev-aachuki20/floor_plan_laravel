@@ -7,7 +7,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Mail\UserNotificationMail;
-use App\Mail\AvailablityStatusMail;
 use App\Mail\SetQuarterSessionMail;
 use App\Mail\RotaSessionMail;
 use App\Mail\RotaSessionClosedMail;
@@ -75,24 +74,6 @@ class SendNotification extends Notification implements ShouldQueue
 
         }
 
-        /*if(in_array($this->data['notification_type'], array('session_confirmed','session_cancelled'))){
-
-            if(isset($this->data['rota_session'])){
-
-                $rotaSession = $this->data['rota_session'];
-
-                $authUser = null;
-                if($this->data['created_by']){
-                    $authUser = User::find($this->data['created_by']);
-                }
-
-                $notificationType = $this->data['notification_type'];
-
-                return (new AvailablityStatusMail($subject, $notifiable, $rotaSession,$authUser,$notificationType))->to($notifiable->user_email);
-
-            }
-
-        }*/
 
         if(in_array($this->data['notification_type'], array('quarter_available'))){
 

@@ -86,12 +86,6 @@ class UserController extends APIController
 
             if ($user->is_trust_admin) {
 
-                // $trustIds = $user->trusts()->select('trust_id')->groupBy('trust_id')->pluck('trust_id')->toArray();
-
-                // $model = $model->whereRelation('trusts', function ($query) use ($trustIds) {
-                //     $query->whereIn('trust.id', $trustIds);
-                // });
-
                 $hospital_ids = $user->getHospitals()->select('hospital_id')->groupBy('hospital_id')->pluck('hospital_id')->toArray();
 
                 $model = $model->whereRelation('getHospitals', function ($query) use ($hospital_ids) {
@@ -142,7 +136,7 @@ class UserController extends APIController
                 'data'      => $getAllRecords,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            // dd($e->getMessage().'->'.$e->getLine());
+            \Log::info('Error in UserController::index (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -189,8 +183,8 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message').$e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in UserController::store (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
@@ -239,7 +233,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
+            \Log::info('Error in UserController::show (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -344,12 +338,11 @@ class UserController extends APIController
 
             return $this->respondOk([
                 'status'   => true,
-                // 'message'  => $isEmailChanged ? trans('messages.user_updated_and_email_sent') : trans('messages.user_updated_successfully')
                 'message'  => trans('messages.user_updated_successfully')
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in UserController::update (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -485,7 +478,7 @@ class UserController extends APIController
                 'message'   => trans('messages.user_deleted_successfully'),
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in UserController::destroy (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -493,7 +486,6 @@ class UserController extends APIController
     public function exportUserData(Request $request)
     {
         $user = auth()->user();
-        // Export users based on role
         return Excel::download(new UsersExport($user), 'users.xlsx');
     }
 
@@ -565,7 +557,7 @@ class UserController extends APIController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
+            \Log::info('Error in UserController::updateIstos (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
 

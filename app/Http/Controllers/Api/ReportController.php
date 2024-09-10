@@ -13,6 +13,25 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ReportController extends APIController
 {
+    /**
+     * Display a listing of reports filtered by week days and hospital.
+     *
+     * Validates the request data before proceeding and returns a JSON response.
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     *         The incoming request containing 'week_days' and 'hospital' data.
+     * 
+     * @return \Symfony\Component\HttpFoundation\Response
+     *         JSON-encoded response containing success message and validated data 
+     *         or error message if the process fails.
+     * 
+     * @throws \Illuminate\Validation\ValidationException
+     *         Throws an exception if the request validation fails.
+     *
+     * Validations:
+     * - 'week_days': Must be provided as an array of days.
+     * - 'hospital': Must be an integer and reference an existing, non-deleted hospital.
+     */
     public function index(Request $request)
     {
         $validatedData = $request->validate([
@@ -56,12 +75,35 @@ class ReportController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
 
         }catch (\Exception $e) {
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in ReportController::index (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
-
+    /**
+     * Generate a report chart filtered by month, year, and hospital.
+     *
+     * This function validates the incoming request data and applies custom validation 
+     * logic for the hospital_id. If validation passes, the chart data can be processed.
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     *         The incoming request containing optional 'month', 'year', and required 'hospital_id'.
+     * 
+     * @return \Symfony\Component\HttpFoundation\Response
+     *         A JSON response with the report chart data (to be implemented).
+     * 
+     * @throws \Illuminate\Validation\ValidationException
+     *         Throws an exception if the request validation fails.
+     *
+     * Validations:
+     * - 'month': Optional string, must be a valid month (01-12) using a regular expression.
+     * - 'year': Optional string, must be exactly 4 characters long.
+     * - 'hospital_id': Required and must reference an existing, non-deleted hospital if not 0.
+     * 
+     * Custom Logic:
+     * - 'hospital_id': If not 0, a custom validation checks the existence of the hospital
+     *   in the database, ensuring it hasn't been deleted (checked via the 'deleted_at' field).
+     */
     public function reportChart(Request $request){
        
         $validatedData = $request->validate([
@@ -175,7 +217,7 @@ class ReportController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
             
         } catch (\Exception $e) {
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in ReportController::reportChart (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
 

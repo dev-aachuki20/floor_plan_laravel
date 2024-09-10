@@ -46,11 +46,10 @@ class LoginController extends APIController
                 return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
             }
         } catch (Exception $e) {
-            // dd('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
-
+            \Log::info('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         } catch (JWTException $e) {
-            // dd('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            \Log::info('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('auth.messages.could_not_create_token'));
         }
 

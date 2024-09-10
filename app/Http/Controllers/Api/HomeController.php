@@ -9,10 +9,6 @@ use App\Models\Trust;
 use App\Models\Hospital;
 use App\Models\Speciality;
 use App\Models\SubSpeciality;
-use Auth;
-use Illuminate\Validation\Rule;
-
-
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +19,7 @@ use App\Rules\TitleValidationRule;
 class HomeController extends APIController
 {
     public function getRoles(){
-        $user = Auth::User();
+        $user = auth()->user();
         if ($user->is_trust_admin) {
             $roles = Role::whereNotIn('id', [config('constant.roles.system_admin'), config('constant.roles.trust_admin')])->pluck('role_name', 'id');
         }else if ($user->is_hospital_admin) {
@@ -70,17 +66,12 @@ class HomeController extends APIController
     }
 
     public function getSpecialities($type = null){
-        $specialities = Speciality::where('id','!=',10)->pluck('speciality_name','id');
+        $specialities = Speciality::where('id','!=',config('constant.unavailable_speciality_id'))->pluck('speciality_name','id');
         
        if($type == 'list'){
-            // $specialities[null] = 'Unavailable';
-
-            // $specialities = collect($specialities);
-
             $specialities = Speciality::pluck('speciality_name','id');
        }
         
-
         return $this->respondOk([
             'status'   => true,
             'message'   => trans('messages.record_retrieved_successfully'),
@@ -193,10 +184,7 @@ class HomeController extends APIController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // \Log::info($e->getMessage().' '.$e->getFile().' '.$e->getLine());
-         
-            // dd($e->getMessage().' '.$e->getFile().' '.$e->getLine());
-
+            \Log::info('Error in HomeController::updateProfile (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
 

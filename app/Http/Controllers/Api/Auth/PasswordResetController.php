@@ -82,7 +82,7 @@ class PasswordResetController  extends APIController
 
         }catch(\Exception $e){
             DB::rollBack();
-            // dd($e->getMessage().'->'.$e->getLine());
+            \Log::info('Error in PasswordResetController::sendResetLinkEmail (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
@@ -130,7 +130,7 @@ class PasswordResetController  extends APIController
             }
         }catch(\Exception $e){
             DB::rollBack();
-            // dd($e->getMessage().'->'.$e->getLine());
+            \Log::info('Error in PasswordResetController::resetPassword (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }

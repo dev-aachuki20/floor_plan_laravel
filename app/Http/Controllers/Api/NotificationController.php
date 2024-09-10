@@ -110,34 +110,9 @@ class NotificationController extends APIController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // return $this->throwValidation([$e->getMessage()]);
             return $this->throwValidation([trans('messages.error_message')]);
         }
     }
-
-
-    public function sendmailToUser($user){
-
-        $user = User::find($user);
-
-        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-        $messageData = [
-            'notification_type' => array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type')),
-            'section'           => $key,
-            'subject'           => 'Session is available',
-            'message'           => 'Hello session is available',
-            'rota_session'      => null,
-        ];
-
-        $user->notify(new SendNotification($messageData));
-
-
-        return $this->respondOk([
-            'status'   => true,
-            'message'   => 'Send Notification',
-        ])->setStatusCode(Response::HTTP_OK);
-    }
-
 
 
 }

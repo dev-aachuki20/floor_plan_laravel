@@ -372,11 +372,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     */
     Route::post('reports-chart', [ReportController::class, 'reportChart']);
 
-
-    Route::get('test-notification/{user}', [NotificationController::class, 'sendmailToUser']);
-
-
-
     /*
     |--------------------------------------------------------------------------
     |  Notifications API Routes

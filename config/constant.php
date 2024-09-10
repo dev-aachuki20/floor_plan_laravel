@@ -1,16 +1,6 @@
 <?php
 
 return [
-    'default' => [
-        'logo'      => 'default/hipl-logo-white.png',
-        'favicon'   => 'default/favicon.png',
-        'no_image'  => 'default/no-image.jpg',
-        'user_icon' => 'default/user-icon.svg',
-        'page_loader' => 'default/page-loader.gif',
-    ],
-
-    'profile_max_size' => 2048,
-    'profile_max_size_in_mb' => '2MB',
 
     'roles' =>[
         'system_admin'      => 1,

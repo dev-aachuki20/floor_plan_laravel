@@ -14,15 +14,12 @@ use App\Models\Quarter;
 use App\Models\Speciality;
 use App\Models\Hospital;
 use Illuminate\Http\Request;
-use App\Mail\RotaSessionMail;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\RotaTable\SaveRotaRequest;
 use App\Http\Requests\RotaTable\UpdateAvailablityRequest;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use App\Notifications\SendNotification;
-use App\Jobs\ProcessRemainingQuarterDays;
 use App\Jobs\SetQuarterDays;
 
 
@@ -287,8 +284,9 @@ class RotaTableController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {
-            // dd($e->getMessage() . '->' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message') . $e->getMessage() . '->' . $e->getLine());
+            \Log::info('Error in RotaTableController::index (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
@@ -422,8 +420,8 @@ class RotaTableController extends APIController
                 'data'      => $hospitalData,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            // dd($e->getMessage() . '->' . $e->getLine());
-            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message') . $e->getMessage() . '->' . $e->getLine());
+            \Log::info('Error in RotaTableController::getDetails (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
@@ -715,9 +713,8 @@ class RotaTableController extends APIController
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollBack();
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)
-                ->respondWithError(trans('messages.error_message') . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in RotaTableController::saveRota (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
@@ -828,53 +825,6 @@ class RotaTableController extends APIController
 
                             }
                            //End  all user confirm their availablity notify booker
-
-
-                            //Notify to admin users (System Admin, Trust Admins, Hospital Admins)
-                             /*   $adminUsers = $rota_session->hospitalDetail->users()->whereIn('primary_role',[config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')])->select('id','full_name','user_email')->get();
-
-                                $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
-                                if ($superAdmin) {
-                                    $adminUsers = $adminUsers->concat([$superAdmin]);
-                                }
-
-                                if($adminUsers){
-
-                                    foreach($adminUsers as $user){
-
-                                       $roleName = $authUser->role->role_name;
-
-                                       $subject = trans('messages.notification_subject.confirm',['roleName'=>$roleName]);
-                                       $notification_type = array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type'));
-
-                                       if($is_available == 2){
-                                            $subject = trans('messages.notification_subject.cancel',['roleName'=>$roleName]);
-
-                                            $notification_type = array_search(config('constant.notification_type.session_cancelled'), config('constant.notification_type'));
-                                       }
-
-
-                                       $messageContent = $rota_session->roomDetail->room_name.' - '. $rota_session->specialityDetail->speciality_name;
-
-                                       $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                                       $messageData = [
-                                            'notification_type' => $notification_type,
-                                            'section'           => $key,
-                                            'subject'           => $subject,
-                                            'message'           => $messageContent,
-                                            'rota_session'      => $rota_session,
-                                            'created_by'        => $authUser->id
-                                        ];
-
-                                        $user->notify(new SendNotification($messageData));
-
-                                    }
-
-                                }
-                            */
-                            // End to Notify to admin users
-
                         }
 
                     }
@@ -891,9 +841,8 @@ class RotaTableController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
-            return $this->setStatusCode(500)
-                ->respondWithError(trans('messages.error_message') . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
+            \Log::info('Error in RotaTableController::updateAvailability (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
 
