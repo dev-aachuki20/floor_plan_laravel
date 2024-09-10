@@ -38,7 +38,6 @@ class SendNotification extends Notification implements ShouldQueue
     {
 
         return ['mail', 'database'];
-        // return ['database'];
 
     }
 
