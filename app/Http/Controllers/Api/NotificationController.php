@@ -7,7 +7,6 @@ use DB;
 use App\Models\User;
 use App\Models\RotaSession;
 use Illuminate\Support\Carbon;
-use App\Notifications\SendNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
