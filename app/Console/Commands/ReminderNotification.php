@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ReminderNotification extends Command
 {
-    protected $signature = 'notify:reminder {weeks}';
+    protected $signature = 'notify:reminder {type}';
     protected $description = 'Send reminder for session';
 
     public function __construct()
@@ -22,31 +22,33 @@ class ReminderNotification extends Command
 
     public function handle()
     {
-        $weeks = $this->argument('weeks');
+        $type = $this->argument('type');
 
+        Log::info('Start Sending Notfication for '.$type);
+        
         $beforeDays = '';
 
-        switch ($weeks) {
-            case 'five_weeks':
+        switch ($type) {
+            case 'first_reminder':
                 
                 $beforeDays = getSetting('first_reminder') ? (int)getSetting('first_reminder') : 35;
                 $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
 
                 break;
-            case 'four_weeks':
+            case 'final_reminder':
 
                 $beforeDays = getSetting('final_reminder') ? (int)getSetting('final_reminder') : 28;
                 $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
 
                 break;
-            case 'two_weeks':
+            case 'assign_backup_speciality':
                
                 $beforeDays = getSetting('assign_backup_speciality') ? (int)getSetting('assign_backup_speciality') : 14;
                 $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
 
                 break;
             default:
-                $this->error('Invalid weeks parameter provided.');
+                $this->error('Invalid type parameter provided.');
                 return 1;
         }
 
@@ -58,13 +60,13 @@ class ReminderNotification extends Command
             ->get();
 
         foreach ($rotaSessions as $session) {
-            $this->checkAndSendNotifications($session, 'speciality_lead', $weeks);
-            $this->checkAndSendNotifications($session, 'anesthetic_lead', $weeks);
-            $this->checkAndSendNotifications($session, 'staff_coordinator', $weeks);
+            $this->checkAndSendNotifications($session, 'speciality_lead', $type);
+            $this->checkAndSendNotifications($session, 'anesthetic_lead', $type);
+            $this->checkAndSendNotifications($session, 'staff_coordinator', $type);
 
             if ($this->isSessionAtRisk($session)) {
                 
-                if($weeks == 'two_weeks'){
+                if($type == 'assign_backup_speciality'){
                     $session->status = config('constant.session_status.closed');
                     $this->assignToBackupSpeciality($session);
                 }else{
@@ -85,7 +87,7 @@ class ReminderNotification extends Command
         return 0;
     }
 
-    private function checkAndSendNotifications($session, $role, $weeks)
+    private function checkAndSendNotifications($session, $role, $type)
     {
         $roleConstant = config("constant.roles.$role");
 
@@ -101,7 +103,7 @@ class ReminderNotification extends Command
                 $query->where('hospital_id', $hospital_id);
             })->get();
             foreach ($users as $user) {
-                $this->sendNotification($session, $user,$weeks);
+                $this->sendNotification($session, $user,$type);
             }
         }
     }
@@ -126,18 +128,18 @@ class ReminderNotification extends Command
         return false;
     }
 
-    private function sendNotification($rotaSession, $user, $weeks)
+    private function sendNotification($rotaSession, $user, $type)
     {
         $subject = trans('messages.notify_subject.first_reminder');
         $notificationType = array_search(config('constant.notification_type.first_reminder'), config('constant.notification_type'));
         $messageContent = "{$rotaSession->hospitalDetail->hospital_name} - {$rotaSession->roomDetail->room_name}";
 
-        if($weeks == 'four_weeks'){
+        if($type == 'final_reminder'){
             $subject = trans('messages.notify_subject.final_reminder');
             $notificationType = array_search(config('constant.notification_type.final_reminder'), config('constant.notification_type'));
         }
 
-        if($weeks == 'two_weeks'){
+        if($type == 'assign_backup_speciality'){
             $subject = trans('messages.notify_subject.session_closed');
             $notificationType = array_search(config('constant.notification_type.session_closed'), config('constant.notification_type'));
         }

@@ -16,14 +16,14 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
 
-        // Schedule the reminder 5 weeks before the session date 
-        $schedule->command('notify:reminder five_weeks')->daily()->withoutOverlapping();
+        // Schedule the first reminder before the session date 
+        $schedule->command('notify:reminder first_reminder')->daily()->withoutOverlapping();
 
-        // Schedule the reminder 4 weeks before the session date 
-        $schedule->command('notify:reminder four_weeks')->daily()->withoutOverlapping();
+        // Schedule the final reminder before the session date 
+        $schedule->command('notify:reminder final_reminder')->daily()->withoutOverlapping();
 
-        // Schedule the reminder 2 weeks before the session date 
-        $schedule->command('notify:reminder two_weeks')->daily()->withoutOverlapping();
+        // Schedule the assign backup speciality reminder before the session date 
+        $schedule->command('notify:reminder assign_backup_speciality')->daily()->withoutOverlapping();
 
         $schedule->command('check:backup-speciality-confirmation')->daily()->withoutOverlapping();
 
