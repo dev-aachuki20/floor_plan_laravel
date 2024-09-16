@@ -125,7 +125,7 @@ class RotaTableController extends APIController
                                 ->where('time_slot', $timeSlot);
 
 
-                           
+
                            // Backup Speciality
                           /*
                            $backupSpeciality = BackupSpeciality::whereIn('speciality_id', $specialities)
@@ -152,7 +152,7 @@ class RotaTableController extends APIController
                                 }
                             });
                          */
-                            
+
 
                             $record = $record->whereIn('speciality_id',$specialities);
 
@@ -206,15 +206,15 @@ class RotaTableController extends APIController
                                 if (!is_array($filterValue)) {
                                     $filterValue = [$filterValue];
                                 }
-                            
-                        
+
+
                                 if (in_array(config('constant.session_status.closed'), $filterValue)) {
                                     $filterValue[] = config('constant.session_status.failed');
                                     $filterValue = array_unique($filterValue);
                                 }
-                            
+
                                 $request->merge(['filter_value' => $filterValue]);
-                            
+
                                 $record = $record->whereIn('status', $request->filter_value);
 
                             }
@@ -561,7 +561,7 @@ class RotaTableController extends APIController
                                 }else{
                                     RotaSessionQuarter::create($quarterRecords);
                                 }
-                                  
+
                             }
                             //End Store & Update records for manage quarters functionality
 
@@ -823,11 +823,11 @@ class RotaTableController extends APIController
 
                                     $subject = trans('messages.notify_subject.confirmed_booking');
                                     $notification_type = array_search(config('constant.notification_type.session_confirmed'), config('constant.notification_type'));
-    
+
                                     $messageContent = $rota_session->hospitalDetail->hospital_name.' - '.$rota_session->roomDetail->room_name;
 
                                     $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-    
+
                                     $messageData = [
                                         'notification_type' => $notification_type,
                                         'section'           => $key,
@@ -836,7 +836,7 @@ class RotaTableController extends APIController
                                         'rota_session'      => $rota_session,
                                         'created_by'        => $authUser->id
                                     ];
-    
+
                                     $user->notify(new SendNotification($messageData));
 
                                 }
@@ -938,7 +938,7 @@ class RotaTableController extends APIController
 
             if($session->status == 2){
 
-                dd($session->status);
+                // dd($session->status);
                /*
                 $backupSpeciality = BackupSpeciality::whereIn('speciality_id', $session->speciality_id)
                 ->where('hospital_id', $session->hospital_id)
@@ -962,9 +962,9 @@ class RotaTableController extends APIController
                         }
 
                     }
-                    
+
                 }*/
-                
+
                 return true;
 
             }elseif($session->status == 3){
@@ -1001,6 +1001,6 @@ class RotaTableController extends APIController
         }
 
         return false;
-            
+
     }
 }

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 use App\Channels\DatabaseChannel;
+use Illuminate\Support\Facades\Config;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,5 +25,9 @@ class AppServiceProvider extends ServiceProvider
         Notification::extend('database', function ($app) {
             return new DatabaseChannel();
         });
+
+
+        $ttl = getSetting('lifespan_token') ? (int)getSetting('lifespan_token') : 60;
+        Config::set('jwt.ttl', (int) $ttl);
     }
 }

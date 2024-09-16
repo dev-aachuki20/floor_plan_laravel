@@ -66,7 +66,20 @@ class SettingSeeder extends Seeder
                 'status'        => 1,
                 'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
             ],
-           
+
+            [
+                'key'           => 'lifespan_token',
+                'value'         => 60,
+                'type'          => 'number',
+                'display_name'  => 'Lifespan Of Token (Minutes)',
+                'group'         => 'site',
+                'details'       => null,
+                'status'        => 1,
+                'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
+            ],
+
+
+
         ];
 
         Setting::insert($settings);
