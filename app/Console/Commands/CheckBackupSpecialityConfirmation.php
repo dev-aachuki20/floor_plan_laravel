@@ -26,6 +26,19 @@ class CheckBackupSpecialityConfirmation extends Command
         $backupSpecialities = BackupSpeciality::whereHas('user',function($query){
             $query->where('primary_role',config('constant.roles.speciality_lead'));
         })->get();
+
+        
+       /* $backupSpeciality = BackupSpeciality::where('hospital_id',$hospital_id)->first();
+
+        $backupSpecialityLeadUsers = $backupSpeciality->speciality->users()->where('primary_role',config('constant.roles.speciality_lead'))->pluck('id');
+
+        if($backupSpecialityLeadUsers->count() > 0 ){
+
+            foreach($backupSpecialityLeadUsers as $userId){
+
+            }
+        }*/
+
     
         foreach ($backupSpecialities as $backupSpeciality) {
             $userId = $backupSpeciality->user_id;

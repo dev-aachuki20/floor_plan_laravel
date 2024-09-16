@@ -11,6 +11,7 @@
     <ul style="padding: 0;margin: 0;list-style: none;">
         <li style="display: block;color: #000;"><strong>Hospital:</strong> {{ $rota_session_detail->roomDetail->hospital->hospital_name ?? '' }}</li>
         <li style="display: block;color: #000;"><strong>Room Name:</strong> {{ $rota_session_detail->roomDetail->room_name ?? '' }}</li>
+        <li style="display: block;color: #000;"><strong>Speciality:</strong> {{ $rota_session_detail->specialityDetail->speciality_name ?? '' }}</li>
         <li style="display: block;color: #000;"><strong>Time Slot:</strong> {{ $rota_session_detail->time_slot ?? '' }}</li>
         <li style="display: block;color: #000;"><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
     </ul>

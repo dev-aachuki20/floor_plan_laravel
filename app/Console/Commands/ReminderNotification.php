@@ -32,19 +32,19 @@ class ReminderNotification extends Command
             case 'first_reminder':
                 
                 $beforeDays = getSetting('first_reminder') ? (int)getSetting('first_reminder') : 35;
-                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->format('Y-m-d');
 
                 break;
             case 'final_reminder':
 
                 $beforeDays = getSetting('final_reminder') ? (int)getSetting('final_reminder') : 28;
-                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->format('Y-m-d');
 
                 break;
             case 'assign_backup_speciality':
                
                 $beforeDays = getSetting('assign_backup_speciality') ? (int)getSetting('assign_backup_speciality') : 14;
-                $dateThreshold = Carbon::now()->addDays($beforeDays)->addDays(1)->format('Y-m-d');
+                $dateThreshold = Carbon::now()->addDays($beforeDays)->format('Y-m-d');
 
                 break;
             default:
@@ -58,16 +58,17 @@ class ReminderNotification extends Command
             ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
             ->where('week_day_date', $dateThreshold)
             ->get();
-
+    
         foreach ($rotaSessions as $session) {
             $this->checkAndSendNotifications($session, 'speciality_lead', $type);
             $this->checkAndSendNotifications($session, 'anesthetic_lead', $type);
             $this->checkAndSendNotifications($session, 'staff_coordinator', $type);
-
+ 
             if ($this->isSessionAtRisk($session)) {
                 
                 if($type == 'assign_backup_speciality'){
                     $session->status = config('constant.session_status.closed');
+                
                     $this->assignToBackupSpeciality($session);
                 }else{
                     $session->status = config('constant.session_status.at_risk');
@@ -164,69 +165,76 @@ class ReminderNotification extends Command
 
         $hospital_id = $session->hospital_id;
 
-        $backupSpeciality = BackupSpeciality::whereHas('user',function($query){
-            $query->where('primary_role',config('constant.roles.speciality_lead'));
-        })->where('hospital_id',$hospital_id)->first();
+        $backupSpeciality = BackupSpeciality::where('hospital_id',$hospital_id)->first();
 
-        if($backupSpeciality){
-            
-            $existingRecordWithStatusOne = $session->users()
-            ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-            ->wherePivot('status', 1)
-            ->first();
-    
-            if (!$existingRecordWithStatusOne) {
+        $backupSpecialityLeadUsers = $backupSpeciality->speciality->users()->where('primary_role',config('constant.roles.speciality_lead'))->pluck('id');
 
-                $existingRecord = $session->users()
+        if($backupSpecialityLeadUsers->count() > 0 ){
+
+            foreach($backupSpecialityLeadUsers as $userId){
+
+                $existingRecordWithStatusOne = $session->users()
+                ->wherePivot('user_id', $userId)
                 ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-                ->wherePivot('rota_session_id',$session->id)
+                ->wherePivot('status', 1)
                 ->first();
         
-                if ($existingRecord) {
-        
-                    if($existingRecord->pivot->status != 1){
-                        $session->users()
-                        ->newPivotStatement()
-                        ->where('rota_session_id', $session->id)
-                        ->where('role_id', config('constant.roles.speciality_lead'))
-                        ->update([
-                            'user_id' => $backupSpeciality->user_id,
-                            'status'  => 0,
-                        ]);
+                if (!$existingRecordWithStatusOne) {
+
+                    $existingRecord = $session->users()
+                    ->wherePivot('user_id', $userId)
+                    ->wherePivot('role_id', config('constant.roles.speciality_lead'))
+                    ->wherePivot('rota_session_id',$session->id)
+                    ->first();
+            
+                    if ($existingRecord) {
+            
+                        if($existingRecord->pivot->status != 1){
+                            $session->users()
+                            ->newPivotStatement()
+                            ->where('rota_session_id', $session->id)
+                            ->where('role_id', config('constant.roles.speciality_lead'))
+                            ->update([
+                                'user_id' => $userId,
+                                'status'  => 0,
+                            ]);
+                        }
+
+                    } else {
+                        $availability_user[$userId] = ['role_id' => config('constant.roles.speciality_lead'),'status' => 0];
+                        $session->users()->attach($userId, $availability_user[$userId]);
                     }
 
-                } else {
-                    $availability_user[$backupSpeciality->user_id] = ['role_id' => config('constant.roles.speciality_lead'),'status' => 0];
-                    $session->users()->attach($backupSpeciality->user_id, $availability_user[$backupSpeciality->user_id]);
+
+                    //Send notification to backup speciality lead
+                    $subject = trans('messages.notify_subject.confirmation');
+                    $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
+                    $messageContent = $session->hospitalDetail->hospital_name.' - '.$session->roomDetail->room_name;
+
+                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                    $createdBy = User::where('primary_role',config('constant.roles.system_admin'))->first();
+
+                    $messageData = [
+                        'notification_type' => $notification_type,
+                        'section'           => $key,
+                        'subject'           => $subject,
+                        'message'           => $messageContent,
+                        'rota_session'      => $session,
+                        'created_by'        => $createdBy->id
+                    ];
+
+                    $user = User::where('id',$userId)->whereHas('getHospitals', function ($query) use($hospital_id) {
+                        $query->where('hospital_id', $hospital_id);
+                    })->first();
+
+                    if($user){
+                        $user->notify(new SendNotification($messageData));
+                    }
+
                 }
-
-
-                //Send notification to backup speciality lead
-                $subject = trans('messages.notify_subject.confirmation');
-                $notification_type = array_search(config('constant.notification_type.session_available'), config('constant.notification_type'));
-                $messageContent = $session->hospitalDetail->hospital_name.' - '.$session->roomDetail->room_name;
-
-                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                $createdBy = User::where('primary_role',config('constant.roles.system_admin'))->first();
-
-                $messageData = [
-                    'notification_type' => $notification_type,
-                    'section'           => $key,
-                    'subject'           => $subject,
-                    'message'           => $messageContent,
-                    'rota_session'      => $session,
-                    'created_by'        => $createdBy->id
-                ];
-
-                $user = User::where('id',$backupSpeciality->user_id)->whereHas('getHospitals', function ($query) use($hospital_id) {
-                    $query->where('hospital_id', $hospital_id);
-                })->first();
-
-                $user->notify(new SendNotification($messageData));
-
+                
             }
-
 
             //Send notification for session confirmation to anesthetic lead & staff coordinator
             $staffRoles = [

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('backup_speciality', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users');
+            $table->foreignId('speciality_id')->nullable()->constrained('speciality');
             $table->foreignId('hospital_id')->nullable()->constrained('hospital');
             $table->timestamps();
         });

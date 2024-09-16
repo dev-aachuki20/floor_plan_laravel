@@ -15,15 +15,15 @@ class BackupSpeciality extends Model
     ];
 
     protected $fillable = [
-        'user_id',
+        'speciality_id',
         'hospital_id',
         'created_at',
         'updated_at',
     ];
 
-    public function user()
+    public function speciality()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Speciality::class);
     }
 
     public function hospitalDetail()
