@@ -352,125 +352,47 @@ class UserController extends APIController
      */
     public function destroy(Request $request, $uuid)
     {
-        $type = $request->type;
-        if ($type == 'confirm') {
-            $request->validate([
-                'confirm_password' => ['required', 'string', 'min:8'],
-            ],[],[
-                'confirm_password' => 'password',
-            ]);
-        }
-
         try {
             $user = User::where('uuid', $uuid)->firstOrFail();
 
             if ($user) {
 
-                if ($type == 'confirm') {
-                    $authUser = $user;
+                $authUser = auth()->user();
 
-                    $confirmPassword = $request->confirm_password;
-                    if (!Hash::check($confirmPassword, $user->password)) {
-                        return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
-                    }
+                $user->delete();
 
-                   
-                    //Send notification to system admin, trust admin and hospital admin
-                    $hospitalIds = $user->getHospitals()->pluck('id')->toArray();
+                //Send notification to system admin, trust admin and hospital admin
+                $deletedUser = User::onlyTrashed()->where('uuid', $uuid)->first();
 
-                    $hospitals = Hospital::whereIn('id',$hospitalIds)->get();
+                $subject = trans('messages.notify_subject.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'admin_name'=>$authUser->full_name]);
 
-                    $uniqueUserIds = collect();
+                //Send mail to deleted user
+                Mail::to($deletedUser->user_email)->queue(new UserDeletedMail($subject, $deletedUser, $authUser));
+                
 
-                    foreach($hospitals as $hospital) {
-                        $adminUsers = $hospital->users()
-                            ->whereIn('primary_role', [
-                                config('constant.roles.trust_admin'),
-                                config('constant.roles.hospital_admin')
-                            ])
-                            ->select('id', 'full_name', 'user_email')
-                            ->get();
+                //Send mail and notification to system admin
+                if($authUser->primary_role != config('constant.roles.system_admin')){
+                    $systemAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
 
-                        $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))
-                            ->select('id', 'full_name', 'user_email')
-                            ->first();
+                    $notification_type = array_search(config('constant.notification_type.user_deleted_by_admin'), config('constant.notification_type'));
+                    $messageContent = null;
+                    $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
 
-                        if ($superAdmin) {
-                            $adminUsers = $adminUsers->concat([$superAdmin]);
-                        }
-
-                        $uniqueUserIds = $uniqueUserIds->merge($adminUsers->pluck('id'));
-                    }
-                    $uniqueUserIds = $uniqueUserIds->unique();
-                     
-                    $adminUsers = User::select('id', 'full_name', 'user_email')->whereIn('id',$uniqueUserIds->toArray())->get();
-
-                    foreach($adminUsers as $user){
-
-                        $subject = trans('messages.notify_subject.user_deleted_by_own',['user_name'=>$authUser->full_name]);
-                        $notification_type = array_search(config('constant.notification_type.user_deleted_by_own'), config('constant.notification_type'));
-
-                        $messageContent = null;
-
-                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                        $messageData = [
+                    $messageData = [
                             'notification_type' => $notification_type,
                             'section'           => $key,
                             'subject'           => $subject,
                             'message'           => $messageContent,
                             'rota_session'      => null,
                             'created_by'        => $authUser->id,
+                            'deletedUser'       => $deletedUser,
                             'authUser'          => $authUser,
-                        ];
+                    ];
 
-                        $user->notify(new SendNotification($messageData));
-                    }
-                    //End Send notification to system admin, trust admin and hospital admin
-                   
-                    $authUser->delete();
-                    auth()->logout();
-                    JWTAuth::invalidate(JWTAuth::getToken());
-
-                } else {
-                    $user->delete();
-
-                    //Send notification to system admin, trust admin and hospital admin
-                    $authUser = auth()->user();
-                    $deletedUser = User::onlyTrashed()->where('uuid', $uuid)->first();
-
-                    $subject = trans('messages.notify_subject.user_deleted_by_admin',['user_name'=>$deletedUser->full_name,'admin_name'=>$authUser->full_name]);
-
-                    //Send mail to deleted user
-                    Mail::to($deletedUser->user_email)->queue(new UserDeletedMail($subject, $deletedUser, $authUser));
-                    
-
-                    //Send mail and notification to system admin
-                    if($authUser->primary_role != config('constant.roles.system_admin')){
-                        $systemAdmin = User::where('primary_role', config('constant.roles.system_admin'))->select('id', 'full_name', 'user_email')->first();
-
-                        $notification_type = array_search(config('constant.notification_type.user_deleted_by_admin'), config('constant.notification_type'));
-                        $messageContent = null;
-                        $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
-
-                        $messageData = [
-                                'notification_type' => $notification_type,
-                                'section'           => $key,
-                                'subject'           => $subject,
-                                'message'           => $messageContent,
-                                'rota_session'      => null,
-                                'created_by'        => $authUser->id,
-                                'deletedUser'       => $deletedUser,
-                                'authUser'          => $authUser,
-                        ];
-
-                        $systemAdmin->notify(new SendNotification($messageData));
-                    }
-                        
-                    //End Send notification to system admin, trust admin and hospital admin
-                    
-                  
+                    $systemAdmin->notify(new SendNotification($messageData));
                 }
+                    
+                //End Send notification to system admin, trust admin and hospital admin     
             }
 
             return $this->respondOk([
@@ -481,6 +403,94 @@ class UserController extends APIController
             \Log::info('Error in UserController::destroy (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function authUserDestroy(Request $request)
+    {
+        $request->validate([
+            'confirm_password' => ['required', 'string', 'min:8'],
+        ],[],[
+            'confirm_password' => 'password',
+        ]);
+
+        try {
+            $authUser = auth()->user();
+
+            $confirmPassword = $request->confirm_password;
+            if (!Hash::check($confirmPassword, $authUser->password)) {
+                return $this->setStatusCode(500)->respondWithError(trans('messages.invalid_password'));
+            }
+
+            //Send notification to system admin, trust admin and hospital admin
+            $hospitalIds = $authUser->getHospitals()->pluck('id')->toArray();
+
+            $hospitals = Hospital::whereIn('id',$hospitalIds)->get();
+
+            $uniqueUserIds = collect();
+
+            foreach($hospitals as $hospital) {
+                $adminUsers = $hospital->users()
+                    ->whereIn('primary_role', [
+                        config('constant.roles.trust_admin'),
+                        config('constant.roles.hospital_admin')
+                    ])
+                    ->select('id', 'full_name', 'user_email')
+                    ->get();
+
+                $superAdmin = User::where('primary_role', config('constant.roles.system_admin'))
+                    ->select('id', 'full_name', 'user_email')
+                    ->first();
+
+                if ($superAdmin) {
+                    $adminUsers = $adminUsers->concat([$superAdmin]);
+                }
+
+                $uniqueUserIds = $uniqueUserIds->merge($adminUsers->pluck('id'));
+            }
+            $uniqueUserIds = $uniqueUserIds->unique();
+            
+            $adminUsers = User::select('id', 'full_name', 'user_email')->whereIn('id',$uniqueUserIds->toArray())->get();
+
+            foreach($adminUsers as $user){
+
+                $subject = trans('messages.notify_subject.user_deleted_by_own',['user_name'=>$authUser->full_name]);
+                $notification_type = array_search(config('constant.notification_type.user_deleted_by_own'), config('constant.notification_type'));
+
+                $messageContent = null;
+
+                $key = array_search(config('constant.notification_section.announcements'), config('constant.notification_section'));
+
+                $messageData = [
+                    'notification_type' => $notification_type,
+                    'section'           => $key,
+                    'subject'           => $subject,
+                    'message'           => $messageContent,
+                    'rota_session'      => null,
+                    'created_by'        => $authUser->id,
+                    'authUser'          => $authUser,
+                ];
+
+                $user->notify(new SendNotification($messageData));
+            }
+            //End Send notification to system admin, trust admin and hospital admin
+        
+            $authUser->delete();
+            auth()->logout();
+            JWTAuth::invalidate(JWTAuth::getToken());
+
+            return $this->respondOk([
+                'status'   => true,
+                'message'   => trans('messages.user_deleted_successfully'),
+            ])->setStatusCode(Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            \Log::info('Error in UserController::authUserDestroy (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+        }
+
     }
 
     public function exportUserData(Request $request)

@@ -178,14 +178,14 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     |  Delete User Record API Route
     |--------------------------------------------------------------------------
     |
-    | Route         : http://localhost:8000/api/user/delete/uuid
+    | Route         : http://localhost:8000/api/auth-user/delete
     | Header        : Content-Type:application/json
     |               : Authorization : Token
     | Parameters    :
-    |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+    |            
     | Method        : POST
     */
-    Route::post('user/delete/{uuid}', [UserController::class, 'destroy']);
+    Route::post('auth-user/delete', [UserController::class, 'authUserDestroy']);
 
     /*
     |--------------------------------------------------------------------------
@@ -312,6 +312,19 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         Route::put('user/update/{uuid}', [UserController::class, 'update']);
 
 
+        /*
+        |--------------------------------------------------------------------------
+        |  Delete User Record API Route
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/user/delete/uuid
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :
+        |                 - uuid: string (e.g., /bbb6d5a6-36eb-4d8e-8397-c09e53cc96c2)
+        | Method        : GET
+        */
+        Route::get('user/delete/{uuid}', [UserController::class, 'destroy']);
 
         /*
         |--------------------------------------------------------------------------

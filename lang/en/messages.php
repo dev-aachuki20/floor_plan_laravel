@@ -136,6 +136,8 @@ return [
         'user_deleted_by_own'   => 'This is to inform you that :user_name has requested to delete their account associated with the email address :user_email.',
 
         'user_deleted_by_admin' => 'We are writing to inform you that your account associated with :user_name - :user_email has been deleted by :admin_name'
-    ]
+    ],
+
+    'unauthorized_access' => 'You do not have permission to access this resource.',
 
 ];
