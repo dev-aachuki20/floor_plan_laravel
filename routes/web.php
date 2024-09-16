@@ -14,6 +14,10 @@ Route::get('/cache-clear', function () {
     return '<h1>All Cache cleared</h1>';
 });
 
-Route::get('/api/login', function () {
-    abort(404);
+Route::get('/', function () {
+    return redirect(config('app.site_url').'/login');
+});
+
+Route::get('/api', function () {
+    return redirect(config('app.site_url').'/login');
 });
