@@ -95,15 +95,13 @@ Route::group(['namespace' => 'Api'], function () {
 
 Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:api']], function () {
 
-    Route::get('get-trusts', [HomeController::class, 'getTrusts']);
-
+  
     Route::get('get-specialities/{type?}', [HomeController::class, 'getSpecialities']);
 
     Route::get('get-sub-specialities/{speciality?}', [HomeController::class, 'getSubSpecialities']);
     
     Route::get('get-hospitals/{trust?}', [HomeController::class, 'getHospitals']);
 
-    Route::get('get-roles', [HomeController::class, 'getRoles']);
 
     /*
     |--------------------------------------------------------------------------
@@ -186,36 +184,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
     | Method        : POST
     */
     Route::post('auth-user/delete', [UserController::class, 'authUserDestroy']);
-
-    /*
-    |--------------------------------------------------------------------------
-    |  Get Rota Table Dropdown API Routes
-    |--------------------------------------------------------------------------
-    |
-    | Route         : http://localhost:8000/api/rota-table/dropdowns
-    | Header        : Content-Type:application/json
-    |               : Authorization : Token
-    | Parameters    :
-    |
-    | Method        : POST
-    |
-    */
-    Route::post('rota-table/dropdowns', [RotaTableController::class, 'rotaTableDropdown']);
-
-    /*
-    |--------------------------------------------------------------------------
-    |  Get Rota Table Filter Dropdown API Routes
-    |--------------------------------------------------------------------------
-    |
-    | Route         : http://localhost:8000/api/rota-table/filter-dropdowns
-    | Header        : Content-Type:application/json
-    |               : Authorization : Token
-    | Parameters    :
-    |
-    | Method        : POST
-    |
-    */
-    Route::post('rota-table/filter-dropdowns', [RotaTableController::class, 'rotaTableFitlerDropdown']);
 
     /*
     |--------------------------------------------------------------------------
@@ -356,34 +324,72 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
 
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    |  Report API Routes
-    |--------------------------------------------------------------------------
-    |
-    | Route         : http://localhost:8000/api/reports
-    | Header        : Content-Type:application/json
-    |               : Authorization : Token
-    | Parameters    :- week_days, hospital
-    | Method        : Post
-    |
-    */
-    Route::post('reports', [ReportController::class, 'index']);
+    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin'),config('constant.roles.chair')])]], function () {
+
+        Route::get('get-trusts', [HomeController::class, 'getTrusts']);
+
+        Route::get('get-roles', [HomeController::class, 'getRoles']);
+    
+        
+        /*
+        |--------------------------------------------------------------------------
+        |  Get Rota Table Dropdown API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/dropdowns
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :
+        |
+        | Method        : POST
+        |
+        */
+        Route::post('rota-table/dropdowns', [RotaTableController::class, 'rotaTableDropdown']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Get Rota Table Filter Dropdown API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/rota-table/filter-dropdowns
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :
+        |
+        | Method        : POST
+        |
+        */
+        Route::post('rota-table/filter-dropdowns', [RotaTableController::class, 'rotaTableFitlerDropdown']);
+
+        /*
+        |--------------------------------------------------------------------------
+        |  Report API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/reports
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :- week_days, hospital
+        | Method        : Post
+        |
+        */
+        Route::post('reports', [ReportController::class, 'index']);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    |  Report chart API Routes
-    |--------------------------------------------------------------------------
-    |
-    | Route         : http://localhost:8000/api/reports-chart
-    | Header        : Content-Type:application/json
-    |               : Authorization : Token
-    | Parameters    :- year,month, hospital
-    | Method        : Post
-    |
-    */
-    Route::post('reports-chart', [ReportController::class, 'reportChart']);
+        /*
+        |--------------------------------------------------------------------------
+        |  Report chart API Routes
+        |--------------------------------------------------------------------------
+        |
+        | Route         : http://localhost:8000/api/reports-chart
+        | Header        : Content-Type:application/json
+        |               : Authorization : Token
+        | Parameters    :- year,month, hospital
+        | Method        : Post
+        |
+        */
+        Route::post('reports-chart', [ReportController::class, 'reportChart']);
+    });
 
     /*
     |--------------------------------------------------------------------------
