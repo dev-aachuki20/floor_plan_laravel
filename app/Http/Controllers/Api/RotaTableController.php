@@ -123,9 +123,7 @@ class RotaTableController extends APIController
                             }])->select('id', 'hospital_id','speciality_id', 'time_slot','status')->where('room_id', $room->id)
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot);
-
-
-
+                                
                            // Backup Speciality
                           /*
                            $backupSpeciality = BackupSpeciality::whereIn('speciality_id', $specialities)
@@ -964,6 +962,14 @@ class RotaTableController extends APIController
                     }
 
                 }*/
+
+                $backupSpeciality = BackupSpeciality::where('speciality_id', $session->speciality_id)
+                ->where('hospital_id', $session->hospital_id)
+                ->first();
+
+                if($backupSpeciality){
+                    return false;
+                }
 
                 return true;
 

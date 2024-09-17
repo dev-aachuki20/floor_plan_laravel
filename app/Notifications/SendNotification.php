@@ -67,7 +67,9 @@ class SendNotification extends Notification implements ShouldQueue
             if(isset($this->data['rota_session'])){
 
                 $rotaSession = $this->data['rota_session'];
-                return (new RotaSessionClosedMail($subject, $notifiable, $rotaSession))->to($notifiable->user_email);
+                $remainingRolesToConfirm = isset($this->data['remaining_roles_to_confirm']) ? $this->data['remaining_roles_to_confirm'] : null;
+                
+                return (new RotaSessionClosedMail($subject, $notifiable, $rotaSession,$remainingRolesToConfirm))->to($notifiable->user_email);
 
             }
 

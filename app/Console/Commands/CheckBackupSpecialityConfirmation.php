@@ -9,6 +9,8 @@ use App\Models\BackupSpeciality;
 use Illuminate\Console\Command;
 use App\Notifications\SendNotification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RotaSessionClosedToAdmins;
 
 class CheckBackupSpecialityConfirmation extends Command
 {
@@ -34,7 +36,7 @@ class CheckBackupSpecialityConfirmation extends Command
                 $backupSpecialityLeadUsers = $backupSpecialityLeadUsers->count() > 0 ? $backupSpecialityLeadUsers->toArray() : [];
 
                 $days = getSetting('session_closed') ? (int)getSetting('session_closed') : 7;
-
+                
                 $rotaSessions = RotaSession::whereNotNull('speciality_id')
                 ->where('speciality_id', '!=', config('constant.unavailable_speciality_id'))
                 ->whereDate('week_day_date', $currentDate->addDays($days))
@@ -98,6 +100,29 @@ class CheckBackupSpecialityConfirmation extends Command
                     }
 
                 }
+
+                if($rotaSessions->count() > 0){
+
+                    //Send mail to admin roles
+                    $subject = trans('messages.notify_subject.session_failed');
+
+                    $hospitalName = $backupSpeciality->hospitalDetail ? $backupSpeciality->hospitalDetail->hospital_name : null;
+
+                    $adminRoles = [
+                        config('constant.roles.hospital_admin'),
+                        config('constant.roles.chair'),
+                    ];
+                    $adminUsers = User::whereIn('primary_role', $adminRoles)->whereHas('getHospitals', function ($query) use($backupSpeciality) {
+                        $query->where('hospital_id', $backupSpeciality->hospital_id);
+                    })->get();
+                    foreach ($adminUsers as $user) {
+                        Mail::to($user->user_email)->queue(new RotaSessionClosedToAdmins($subject, $user, $hospitalName ,$rotaSessions));
+                    }
+
+                }
+
+               
+
             }
         }
 

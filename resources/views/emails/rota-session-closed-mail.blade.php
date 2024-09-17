@@ -15,6 +15,11 @@
         <li style="display: block;color: #000;"><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
     </ul>
 
+    @if(isset($remainingRolesToConfirm))
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px; margin-top:20px;">The session has closed because {{ isset($remainingRolesToConfirm) ? $remainingRolesToConfirm : '' }} did not confirm </p>
+    @endif    
+
+
     <p style="font-size: 16px; line-height: 25.5px; font-weight: 600;color: #000; margin-bottom: 0; margin-top:27px;">Thank you</p>
     <div class="regards" style="color: #000; font-weight: 700; font-size: 16px;margin-bottom: 20px;">Regards,<br> {{ config('app.name') }}</div>
 @endsection

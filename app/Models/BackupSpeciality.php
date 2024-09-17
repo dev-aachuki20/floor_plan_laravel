@@ -28,7 +28,7 @@ class BackupSpeciality extends Model
 
     public function hospitalDetail()
     {
-        return $this->belongsTo(Hospital::class);
+        return $this->belongsTo(Hospital::class,'hospital_id');
     }
 
 

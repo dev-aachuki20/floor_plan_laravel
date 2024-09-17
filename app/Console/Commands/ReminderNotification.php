@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\RotaSession;
 use App\Models\BackupSpeciality;
 use Illuminate\Console\Command;
@@ -149,14 +150,46 @@ class ReminderNotification extends Command
 
         $createdBy = User::where('primary_role',config('constant.roles.system_admin'))->first();
 
-        $messageData = [
-            'notification_type' => $notificationType,
-            'section'           => $sectionKey,
-            'subject'           => $subject,
-            'message'           => $messageContent,
-            'rota_session'      => $rotaSession,
-            'created_by'        => $createdBy->id,
-        ];
+        if($type == 'assign_backup_speciality'){
+            //Start Roles that is not confirm
+            $roleIds = [
+                config('constant.roles.speciality_lead'),
+                config('constant.roles.staff_coordinator'),
+                config('constant.roles.anesthetic_lead'),
+            ];
+            
+            $usersRole = $rotaSession->users()
+                ->wherePivot('status', 1)
+                ->pluck('role_id')->toArray();
+            
+            $remainingRolesToConfirmIds = array_diff($roleIds, $usersRole);
+            
+            $roles = Role::whereIn('id',$remainingRolesToConfirmIds)->pluck('role_name')->toArray();
+            
+            $remainingRolesToConfirm = implode(', ',$roles);
+            //End Roles that is not confirm
+
+
+            $messageData = [
+                'notification_type' => $notificationType,
+                'section'           => $sectionKey,
+                'subject'           => $subject,
+                'message'           => $messageContent,
+                'rota_session'      => $rotaSession,
+                'created_by'        => $createdBy->id,
+                'remaining_roles_to_confirm' => $remainingRolesToConfirm,
+            ];
+
+        }else{
+            $messageData = [
+                'notification_type' => $notificationType,
+                'section'           => $sectionKey,
+                'subject'           => $subject,
+                'message'           => $messageContent,
+                'rota_session'      => $rotaSession,
+                'created_by'        => $createdBy->id,
+            ];
+        }
 
         $user->notify(new SendNotification($messageData));
     }
@@ -170,6 +203,9 @@ class ReminderNotification extends Command
         if ($backupSpeciality) {
             if ($backupSpeciality->speciality) {
 
+                $session->speciality_id = $backupSpeciality->speciality->id;
+                $session->save();
+                
                 $backupSpecialityLeadUsers = $backupSpeciality->speciality->users()->where('primary_role',config('constant.roles.speciality_lead'))->pluck('id');
 
                 $backupSpecialityLeadUsers = $backupSpecialityLeadUsers->count() > 0 ? $backupSpecialityLeadUsers->toArray() : [];
@@ -179,42 +215,14 @@ class ReminderNotification extends Command
                     ->wherePivot('rota_session_id',$session->id)
                     ->first();
 
-                    if($existingRecordSession){
+                        if($existingRecordSession){
 
-                        $session->users()
-                        ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-                        ->wherePivot('rota_session_id',$session->id)
-                        ->delete();
+                            $session->users()->detach($existingRecordSession->id, [
+                                'role_id' => config('constant.roles.speciality_lead'),
+                                'rota_session_id' => $session->id,
+                            ]);
 
-                    }
-
-                    // else {
-
-                        /*
-                            $existingRecord = $session->users()
-                            ->wherePivotIn('user_id', $backupSpecialityLeadUsers)
-                            ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-                            ->wherePivot('rota_session_id',$session->id)
-                            ->first();
-
-                            if ($existingRecord) {
-
-                                if($existingRecord->pivot->status != 1){
-                                    $session->users()
-                                    ->newPivotStatement()
-                                    ->where('rota_session_id', $session->id)
-                                    ->where('role_id', config('constant.roles.speciality_lead'))
-                                    ->update([
-                                        'user_id' => $userId,
-                                        'status'  => 0,
-                                    ]);
-                                }
-
-                            } else {
-                                $availability_user[$userId] = ['role_id' => config('constant.roles.speciality_lead'),'status' => 0];
-                                $session->users()->attach($userId, $availability_user[$userId]);
-                            }
-                        */
+                        }
 
                         //Send notification to backup speciality lead
                         $subject = trans('messages.notify_subject.confirmation');
@@ -241,8 +249,6 @@ class ReminderNotification extends Command
                         foreach($backupSpecialityUsers as $user){
                             $user->notify(new SendNotification($messageData));
                         }
-
-                    // }
 
 
                     //Send notification for session confirmation to anesthetic lead & staff coordinator
