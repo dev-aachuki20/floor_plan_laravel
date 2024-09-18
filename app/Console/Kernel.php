@@ -16,16 +16,20 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
 
-        // Schedule the first reminder before the session date 
-        $schedule->command('notify:reminder first_reminder')->daily()->withoutOverlapping();
+        // Schedule the first reminder before the session date with time 24 hour format
+        $firstReminderTime = getSetting('first_reminder_time') ? getSetting('first_reminder_time') : '00:00';
+        $schedule->command('notify:reminder first_reminder')->dailyAt($firstReminderTime)->withoutOverlapping();
 
-        // Schedule the final reminder before the session date 
-        $schedule->command('notify:reminder final_reminder')->daily()->withoutOverlapping();
+        // Schedule the final reminder before the session date with time 24 hour format
+        $finalReminderTime = getSetting('final_reminder_time') ? getSetting('final_reminder_time') : '00:00';
+        $schedule->command('notify:reminder final_reminder')->dailyAt($finalReminderTime)->withoutOverlapping();
 
-        // Schedule the assign backup speciality reminder before the session date 
-        $schedule->command('notify:reminder assign_backup_speciality')->daily()->withoutOverlapping();
+        // Schedule the assign backup speciality reminder before the session date with time 24 hour format
+        $assignBackupTime = getSetting('assign_backup_speciality_time') ? getSetting('assign_backup_speciality_time') : '00:00';
+        $schedule->command('notify:reminder assign_backup_speciality')->dailyAt($assignBackupTime)->withoutOverlapping();
 
-        $schedule->command('check:backup-speciality-confirmation')->daily()->withoutOverlapping();
+        $sessionClosedTime = getSetting('session_closed_time') ? getSetting('session_closed_time') : '00:00';
+        $schedule->command('check:backup-speciality-confirmation')->dailyAt($sessionClosedTime)->withoutOverlapping();
 
     }
 
