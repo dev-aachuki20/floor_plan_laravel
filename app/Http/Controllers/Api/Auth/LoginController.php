@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use DB;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\UserActivity;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Hash;
@@ -56,6 +57,19 @@ class LoginController extends APIController
         $user = JWTAuth::user();
 
         $user->update(['last_login_at'=>now()]);
+
+        //User Activity
+        if (!auth()->user()->is_system_admin) {
+            $hospitals = $user->getHospitals()->get();
+            if($hospitals->count() > 0){
+                $login_date  = date('Y-m-d');
+                foreach($hospitals as $hospital){
+                    $userActivityRecord = ['user_id' => $user->id, 'hospital_id' => $hospital->id, 'login_date' => $login_date];
+                    UserActivity::firstOrCreate($userActivityRecord);
+                }
+            }
+        }
+
 
         $data = [
             'uuid'                  => $user->uuid,

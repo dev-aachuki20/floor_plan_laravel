@@ -6,6 +6,7 @@ use DB;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Hospital;
+use App\Models\UserActivity;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
@@ -104,11 +105,11 @@ class ReportController extends APIController
      * - 'hospital_id': If not 0, a custom validation checks the existence of the hospital
      *   in the database, ensuring it hasn't been deleted (checked via the 'deleted_at' field).
      */
-    public function reportChart(Request $request){
-       
+    public function reportChart(Request $request)
+    {
         $validatedData = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^(0?[1-9]|1[0-2])$/'],
-            'year'  => ['nullable', 'string', 'size:4'], 
+            'year'  => ['nullable', 'string', 'size:4'],
             'hospital_id' => [
                 'required',
                 'sometimes',
@@ -123,55 +124,66 @@ class ReportController extends APIController
         ]);
 
         try {
-                
             $year = $validatedData['year'] ?? Carbon::now()->year;
             $month = $validatedData['month'] ?? null;
             $hospitalId = $validatedData['hospital_id'];
 
-            $usersQuery = User::select(DB::raw('YEAR(last_login_at) as year'), DB::raw('MONTH(last_login_at) as month'), DB::raw('COUNT(*) as count'));
+            $userActivityQuery = UserActivity::select(
+                DB::raw('YEAR(login_date) as year'),
+                DB::raw('MONTH(login_date) as month'),
+                DB::raw('COUNT(DISTINCT user_id) as count')
+            );
 
-        
-            if($hospitalId == '0'){ 
+            $user = auth()->user();
+            if (!auth()->user()->is_system_admin) {
                 
-               if(!auth()->user()->is_system_admin){
-                    $allHospital = auth()->user()->getHospitals()->pluck('id')->toArray();
-
-                    $usersQuery = $usersQuery->whereRelation('getHospitals', function ($query) use ($allHospital) {
-                        $query->whereIn('hospital.id', $allHospital);
-                    }); 
+               $userActivityQuery = $userActivityQuery->whereHas('user', function ($query) use ($user) {
                     
-                    if(auth()->user()->is_trust_admin){
-                        $usersQuery = $usersQuery->where('primary_role', '!=', config('constant.roles.trust_admin'));
-                    }else if(auth()->user()->is_hospital_admin){
-                        $usersQuery = $usersQuery->whereNotIn('primary_role', [config('constant.roles.trust_admin'),config('constant.roles.hospital_admin')]);
-                    }
+                    $query->withTrashed();
 
-                }
-                
-            }else{
-                $usersQuery = $usersQuery->join('user_hospital', 'user_hospital.user_id', '=', 'users.id')
-                ->where('user_hospital.hospital_id', $hospitalId);
+                    $query->when($user->is_trust_admin, function ($q) {
+                        $q->whereNotIn('primary_role', [config('constant.roles.trust_admin')]);
+                    })
+                    ->when($user->is_hospital_admin, function ($q) {
+                        $q->whereNotIn('primary_role', [
+                            config('constant.roles.trust_admin'), 
+                            config('constant.roles.hospital_admin'),
+                            config('constant.roles.chair')
+                        ]);
+                    })
+                    ->when($user->is_chair, function ($q) {
+                        $q->whereNotIn('primary_role', [
+                            config('constant.roles.trust_admin'), 
+                            config('constant.roles.chair')
+                        ]);
+                    });
+                });
+
+                $allHospitalIds = auth()->user()->getHospitals()->pluck('id')->toArray();
+                $userActivityQuery = $userActivityQuery->whereIn('hospital_id', $allHospitalIds);
             }
-                
-            $usersQuery = $usersQuery->where('primary_role', '!=', config('constant.roles.system_admin'))
-                ->whereNull('users.deleted_at');
 
-            //Start Filter
+            if ($hospitalId != '0') {
+                $userActivityQuery = $userActivityQuery->where('hospital_id', $hospitalId);
+            }
+
+           
             if ($month) {
-              $usersQuery->where('last_login_at', '>=', Carbon::now()->subMonths($month)->startOfMonth());
+                $userActivityQuery->where('login_date', '>=', Carbon::now()->subMonths($month)->startOfMonth());
             } else {
-                $usersQuery->where('last_login_at', '>=', Carbon::now()->subMonths(11)->startOfMonth());
+                $userActivityQuery->where('login_date', '>=', Carbon::now()->subMonths(11)->startOfMonth());
             }
 
             if ($year) {
-                $usersQuery = $usersQuery->whereYear('last_login_at', $year);
+                $userActivityQuery = $userActivityQuery->whereYear('login_date', $year);
             }
-            //End Filter
-           
-            $usersQuery = $usersQuery->groupBy(DB::raw('YEAR(last_login_at)'), DB::raw('MONTH(last_login_at)'))
-            ->orderByRaw('YEAR(last_login_at) DESC, MONTH(last_login_at) DESC');
 
-            $users = $usersQuery->get();
+            
+            $userActivityQuery = $userActivityQuery->groupBy(DB::raw('YEAR(login_date)'), DB::raw('MONTH(login_date)'))
+                ->orderByRaw('YEAR(login_date) DESC, MONTH(login_date) DESC');
+
+            // Get results
+            $userActivities = $userActivityQuery->get();
 
             $startMonth = $month ?: Carbon::now()->month;
             $startYear = $year ?: Carbon::now()->year;
@@ -180,23 +192,23 @@ class ReportController extends APIController
             $monthYearNames = collect(range(0, 11))->map(function ($i) use ($startMonth, $startYear) {
                 $date = Carbon::create($startYear, $startMonth, 1)->addMonths($i);
                 return [
-                    'month_year' => $date->format('M Y'),  // Format as "DEC 2024"
+                    'month_year' => $date->format('M Y'),
                     'month' => $date->month,
                     'year' => $date->year,
                 ];
             });
 
             // Prepare data
-            $data = $monthYearNames->map(function ($monthYear) use ($users) {
+            $data = $monthYearNames->map(function ($monthYear) use ($userActivities) {
                 $currentYear = $monthYear['year'];
                 $currentMonth = $monthYear['month'];
 
-                $userRecord = $users->firstWhere('month', $currentMonth);
+                $userActivityRecord = $userActivities->firstWhere('month', $currentMonth);
 
-                if ($userRecord && $userRecord->year == $currentYear) {
+                if ($userActivityRecord && $userActivityRecord->year == $currentYear) {
                     return [
                         'month_year' => $monthYear['month_year'],
-                        'count' => $userRecord->count,
+                        'count' => $userActivityRecord->count,
                     ];
                 } else {
                     return [
@@ -210,18 +222,18 @@ class ReportController extends APIController
             $dataCounts = $data->pluck('count');
 
             return $this->respondOk([
-                'status'    => true,
-                'message'   => trans('messages.record_retrieved_successfully'),
-                'months'    => $monthYears, 
-                'data'      => $dataCounts,
+                'status' => true,
+                'message' => trans('messages.record_retrieved_successfully'),
+                'months' => $monthYears,
+                'data' => $dataCounts,
             ])->setStatusCode(Response::HTTP_OK);
-            
+
         } catch (\Exception $e) {
+            dd('Error in ReportController::reportChart (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+
             \Log::info('Error in ReportController::reportChart (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
-
-
     }
 
 }

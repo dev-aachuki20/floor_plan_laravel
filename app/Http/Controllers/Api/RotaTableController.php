@@ -124,33 +124,6 @@ class RotaTableController extends APIController
                                 ->whereDate('week_day_date', $date)
                                 ->where('time_slot', $timeSlot);
                                 
-                           // Backup Speciality
-                          /*
-                           $backupSpeciality = BackupSpeciality::whereIn('speciality_id', $specialities)
-                            ->where('hospital_id', $hospitalId)
-                            ->first();
-
-                            $rotaSessionIds = [];
-                            if ($backupSpeciality) {
-                                $backupSpecialityUser = $backupSpeciality->speciality
-                                        ->users()
-                                        ->where('primary_role', config('constant.roles.speciality_lead'))
-                                        ->get();
-
-                                if ($backupSpecialityUser->isNotEmpty()) {
-                                    $rotaSessionIds = $backupSpecialityUser->pluck('rotaSessions.*.id')->flatten()->toArray();
-                                }
-                            }
-
-                            $record = $record->where(function($query) use ($specialities, $rotaSessionIds) {
-                                $query->whereIn('speciality_id', $specialities);
-
-                                if (!empty($rotaSessionIds)) {
-                                    $query->orWhereIn('id', $rotaSessionIds);
-                                }
-                            });
-                         */
-
 
                             $record = $record->whereIn('speciality_id',$specialities);
 
@@ -935,33 +908,6 @@ class RotaTableController extends APIController
         if($session){
 
             if($session->status == 2){
-
-                // dd($session->status);
-               /*
-                $backupSpeciality = BackupSpeciality::whereIn('speciality_id', $session->speciality_id)
-                ->where('hospital_id', $session->hospital_id)
-                ->first();
-
-                if ($backupSpeciality) {
-                    $backupSpecialityUser = $backupSpeciality->speciality
-                            ->users()
-                            ->where('id',auth()->user()->id)
-                            ->where('primary_role', config('constant.roles.speciality_lead'))
-                            ->first();
-
-                    if($backupSpecialityUser){
-
-                        $existingRecord = $session->users()
-                        ->wherePivot('role_id', config('constant.roles.speciality_lead'))
-                        ->wherePivot('user_id', $backupSpecialityUser->id)->first();
-
-                        if( $existingRecord ){
-                            return false;
-                        }
-
-                    }
-
-                }*/
 
                 $backupSpeciality = BackupSpeciality::where('speciality_id', $session->speciality_id)
                 ->where('hospital_id', $session->hospital_id)
