@@ -109,7 +109,7 @@ class ReportController extends APIController
     {
         $validatedData = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^(0?[1-9]|1[0-2])$/'],
-            'year'  => ['nullable', 'string', 'size:4'],
+            'year' => ['nullable', 'string', 'size:4'],
             'hospital_id' => [
                 'required',
                 'sometimes',
@@ -127,70 +127,76 @@ class ReportController extends APIController
             $year = $validatedData['year'] ?? Carbon::now()->year;
             $month = $validatedData['month'] ?? null;
             $hospitalId = $validatedData['hospital_id'];
-
-            $userActivityQuery = UserActivity::select(
-                DB::raw('YEAR(login_date) as year'),
-                DB::raw('MONTH(login_date) as month'),
-                DB::raw('COUNT(DISTINCT user_id) as count')
-            );
-
             $user = auth()->user();
-            if (!auth()->user()->is_system_admin) {
-                
-               $userActivityQuery = $userActivityQuery->whereHas('user', function ($query) use ($user) {
-                    
-                    $query->withTrashed();
 
-                    $query->when($user->is_trust_admin, function ($q) {
-                        $q->whereNotIn('primary_role', [config('constant.roles.trust_admin')]);
-                    })
-                    ->when($user->is_hospital_admin, function ($q) {
-                        $q->whereNotIn('primary_role', [
-                            config('constant.roles.trust_admin'), 
-                            config('constant.roles.hospital_admin'),
-                            config('constant.roles.chair')
-                        ]);
-                    })
-                    ->when($user->is_chair, function ($q) {
-                        $q->whereNotIn('primary_role', [
-                            config('constant.roles.trust_admin'), 
-                            config('constant.roles.chair')
-                        ]);
-                    });
+            // Determine hospital IDs based on user role
+            $allHospitalIds = $user->is_system_admin
+                ? Hospital::pluck('id')->toArray()
+                : $user->getHospitals()->pluck('id')->toArray();
+
+            // Set the start date based on the month
+            $startDate = Carbon::now()->subMonths($month ?? 11)->startOfMonth()->format('Y-m-d');
+
+            // Create the subquery for counting distinct users
+            $subQuery = DB::table('user_activities')
+                ->select(
+                    DB::raw('YEAR(login_date) AS year'),
+                    DB::raw('MONTH(login_date) AS month'),
+                    'hospital_id',
+                    DB::raw('COUNT(DISTINCT user_id) AS count')
+                )
+                ->whereIn('hospital_id', $allHospitalIds)
+                ->where('login_date', '>=', $startDate)
+                ->when($year, function ($query) use ($year) {
+                    return $query->whereYear('login_date', $year);
+                })
+                ->when($hospitalId != '0', function ($query) use ($hospitalId) {
+                    return $query->where('hospital_id', $hospitalId);
                 });
 
-                $allHospitalIds = auth()->user()->getHospitals()->pluck('id')->toArray();
-                $userActivityQuery = $userActivityQuery->whereIn('hospital_id', $allHospitalIds);
-            }
+                if (!$user->is_system_admin) {
+                    $subQuery->whereIn('user_id', function ($query) use ($user) {
+                        $query->select('id')->from('users')
+                            ->when($user->is_trust_admin, function ($q) {
+                                $q->whereNotIn('primary_role', [config('constant.roles.trust_admin')]);
+                            })
+                            ->when($user->is_hospital_admin, function ($q) {
+                                $q->whereNotIn('primary_role', [
+                                    config('constant.roles.trust_admin'), 
+                                    config('constant.roles.hospital_admin'),
+                                    config('constant.roles.chair')
+                                ]);
+                            })
+                            ->when($user->is_chair, function ($q) {
+                                $q->whereNotIn('primary_role', [
+                                    config('constant.roles.trust_admin'), 
+                                    config('constant.roles.chair')
+                                ]);
+                            });
+                    });
+                }
 
-            if ($hospitalId != '0') {
-                $userActivityQuery = $userActivityQuery->where('hospital_id', $hospitalId);
-            }
+            $subQuery =  $subQuery->groupBy(DB::raw('YEAR(login_date), MONTH(login_date), hospital_id'));
 
-           
-            if ($month) {
-                $userActivityQuery->where('login_date', '>=', Carbon::now()->subMonths($month)->startOfMonth());
-            } else {
-                $userActivityQuery->where('login_date', '>=', Carbon::now()->subMonths(11)->startOfMonth());
-            }
+            // Main query to sum the counts
+            $userActivityQuery = DB::table(DB::raw("({$subQuery->toSql()}) AS monthly_counts"))
+                ->mergeBindings($subQuery) // Merge bindings from the subquery
+                ->select(
+                    'year',
+                    'month',
+                    DB::raw('SUM(count) AS total_count')
+                )
+                ->groupBy('year', 'month')
+                ->orderByRaw('year DESC, month DESC');
 
-            if ($year) {
-                $userActivityQuery = $userActivityQuery->whereYear('login_date', $year);
-            }
-
-            
-            $userActivityQuery = $userActivityQuery->groupBy(DB::raw('YEAR(login_date)'), DB::raw('MONTH(login_date)'))
-                ->orderByRaw('YEAR(login_date) DESC, MONTH(login_date) DESC');
-
+                
             // Get results
             $userActivities = $userActivityQuery->get();
 
-            $startMonth = $month ?: Carbon::now()->month;
-            $startYear = $year ?: Carbon::now()->year;
-
             // Generate month and year in ascending order starting from the current month and year
-            $monthYearNames = collect(range(0, 11))->map(function ($i) use ($startMonth, $startYear) {
-                $date = Carbon::create($startYear, $startMonth, 1)->addMonths($i);
+            $startMonth = $month ?: Carbon::now()->month;
+            $monthYearNames = collect(range(0, 11))->map(function ($i) use ($startMonth, $year) {
+                $date = Carbon::create($year, $startMonth, 1)->addMonths($i);
                 return [
                     'month_year' => $date->format('M Y'),
                     'month' => $date->month,
@@ -205,17 +211,10 @@ class ReportController extends APIController
 
                 $userActivityRecord = $userActivities->firstWhere('month', $currentMonth);
 
-                if ($userActivityRecord && $userActivityRecord->year == $currentYear) {
-                    return [
-                        'month_year' => $monthYear['month_year'],
-                        'count' => $userActivityRecord->count,
-                    ];
-                } else {
-                    return [
-                        'month_year' => $monthYear['month_year'],
-                        'count' => 0,
-                    ];
-                }
+                return [
+                    'month_year' => $monthYear['month_year'],
+                    'count' => $userActivityRecord && $userActivityRecord->year == $currentYear ? (int)$userActivityRecord->total_count : 0,
+                ];
             });
 
             $monthYears = $data->pluck('month_year');
@@ -229,9 +228,10 @@ class ReportController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {
-            dd('Error in ReportController::reportChart (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
-
-            \Log::info('Error in ReportController::reportChart (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            \Log::error('Error in ReportController::reportChart: ' . $e->getMessage(), [
+                'code' => $e->getCode(),
+                'line' => $e->getLine(),
+            ]);
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }
     }
