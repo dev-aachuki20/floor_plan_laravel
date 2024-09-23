@@ -28,13 +28,13 @@ class AppServiceProvider extends ServiceProvider
             return new DatabaseChannel();
         });
 
-        if (!app()->runningInConsole() || !app()->runningUnitTests()) {
-            if (Schema::hasTable('settings')) {
-                $ttl = getSetting('lifespan_token') ? (int) getSetting('lifespan_token') : 60;
-                Config::set('jwt.ttl', (int) $ttl);
-            } else {
-                Config::set('jwt.ttl', 60);
-            }
+       
+        if (Schema::hasTable('settings')) {
+            $ttl = getSetting('lifespan_token') ? (int) getSetting('lifespan_token') : 60;
+            Config::set('jwt.ttl', (int) $ttl);
+        } else {
+            Config::set('jwt.ttl', 60);
         }
+        
     }
 }
