@@ -16,33 +16,33 @@
 - You can login to panel with default credentials __systemadmin@gmail.com__ - __12345678__
 - Deploye on live server then debug mode off. Please open .env file and replace the code APP_DEBUG=false
 
-# Setup the Cron Job
+## Setup the Cron Job
 
    To set up cron jobs for this project, follow these steps
 
-   * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+   #### * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
 
-  # Example :
+  ### Example :
 
-   * * * * * php8.3 /path-to-your-project/artisan schedule:run >> /dev/null 2>&1
+   #### * * * * * php8.3 /path-to-your-project/artisan schedule:run >> /dev/null 2>&1
 
    This runs Laravel's scheduler every minute, triggering tasks defined in Kernel.php.
 
-   # Manually Running Commands: You can manually run any scheduled command using artisan.
+   ## Manually Running Commands: You can manually run any scheduled command using artisan.
 
-   # To manually trigger the queue worker
+   ### To manually trigger the queue worker
     php artisan queue:work --stop-when-empty
 
-   # To manually send the first reminder
+   ### To manually send the first reminder
     php artisan notify:reminder first_reminder
    
-   # To manually send the final reminder
+   ### To manually send the final reminder
     php artisan notify:reminder final_reminder
 
-   # To manually assign the backup specialty
+   ### To manually assign the backup specialty
     php artisan notify:reminder assign_backup_speciality
 
-   # To manually check for backup specialty confirmations
+   ### To manually check for backup specialty confirmations
     php artisan check:backup-speciality-confirmation
 
 
