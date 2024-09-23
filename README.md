@@ -13,7 +13,7 @@
 - Run __php artisan migrate --seed__ (it has some seeded data for your testing)
 - Run __For install the password then run some command __ (it has some seeded data for your testing)
 - That's it: launch the main URL. 
-- You can login to panel with default credentials __systemadmin@gmail.com__ - __12345678__
+- You can login to panel with default credentials __systemadmin@sobex.io__ - __123123123__
 - Deploye on live server then debug mode off. Please open .env file and replace the code APP_DEBUG=false
 
 ## Setup the Cron Job
