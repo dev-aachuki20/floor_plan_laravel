@@ -40,8 +40,8 @@ class UpdateRequest extends FormRequest
             'trust'          => ['nullable', 'exists:trust,id'],
             'hospital'       => ['required', 'array'],
             'hospital.*'     => ['exists:hospital,id,deleted_at,NULL'],
-            'speciality'     => ['required', 'exists:speciality,id,deleted_at,NULL'],
-            'sub_speciality' => ['required', 'exists:sub_speciality,id,deleted_at,NULL'],
+            'speciality'     => ['nullable', 'exists:speciality,id,deleted_at,NULL'],
+            'sub_speciality' => ['nullable', 'exists:sub_speciality,id,deleted_at,NULL'],
         ];
 
         if ($user->is_system_admin) {

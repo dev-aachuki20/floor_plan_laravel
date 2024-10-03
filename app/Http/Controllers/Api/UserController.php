@@ -168,11 +168,15 @@ class UserController extends APIController
             $user->getHospitals()->attach($request->hospital, ['trust_id' => $trustId]);
 
             if(($user->primary_role != config('constant.roles.booker'))){
-                $specialities = [
-                    $request->speciality => ['sub_speciality_id' => $request->sub_speciality],
-                ];
-                // Sync specialities with additional pivot data
-                $user->specialityDetail()->sync($specialities);
+
+                if($request->speciality){
+                    $specialities = [
+                        $request->speciality => ['sub_speciality_id' => $request->sub_speciality ?? null],
+                    ];
+                    // Sync specialities with additional pivot data
+                    $user->specialityDetail()->sync($specialities);
+                }
+               
             }
 
             DB::commit();
@@ -312,17 +316,21 @@ class UserController extends APIController
                 }
 
                 $newSpeciality = $request->speciality;
-                $specialities = [
-                    $newSpeciality => ['sub_speciality_id' => $request->sub_speciality],
-                ];
-                $user->specialityDetail()->sync($specialities);
+                if($newSpeciality){
+                    $specialities = [
+                        $newSpeciality => ['sub_speciality_id' => $request->sub_speciality ?? null],
+                    ];
+                    $user->specialityDetail()->sync($specialities);
+                }else{
+                    $user->specialityDetail()->sync([]);
+                }
 
                 if (!in_array($newSpeciality, $currentSpecialities)) {
                     if ($user->rotaSessions()->exists()) {
                         $user->rotaSessions()->sync([]);
                     }
                 }
-
+                
             }else{
                 $user->specialityDetail()->sync([]);
             }
@@ -342,6 +350,7 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
+            // dd('Error in UserController::update (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             \Log::info('Error in UserController::update (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }

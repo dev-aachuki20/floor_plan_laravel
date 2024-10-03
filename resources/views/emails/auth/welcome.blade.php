@@ -13,6 +13,8 @@
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">If you have any questions, feel free to reach out to us.</p>
 
+    <a href="{{ config('app.site_url') }}/login">{{ config('app.site_url') }}/login</a>
+
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Thank you for using our application!</p>
 
     <div class="regards" style="color: #000; font-weight: 700; font-size: 16px;margin-bottom: 20px;">Regards,<br> {{ config('app.name') }}</div>
