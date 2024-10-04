@@ -293,6 +293,18 @@ if (!function_exists('isDateInQuarter')) {
     }
 }
 
+if (!function_exists('generateOtp')) {
+
+	function generateOtp()
+	{
+		// Generate a 6-digit OTP
+		$otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+		
+		return $otp;
+	}
+}
+
+
 
 
 

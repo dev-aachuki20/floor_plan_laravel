@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('google2fa_secret')->nullable()->after('user_email');
-            $table->string('mfa_token')->nullable()->after('google2fa_secret');
-            $table->datetime('mfa_expires_at')->nullable()->after('mfa_token');
+            $table->string('otp')->nullable()->after('google2fa_secret');
+            $table->datetime('otp_expires_at')->nullable()->after('otp');
         });
     }
 
@@ -25,8 +25,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('google2fa_secret');
-            $table->dropColumn('mfa_token');
-            $table->dropColumn('mfa_expires_at');
+            $table->dropColumn('otp');
+            $table->dropColumn('otp_expires_at');
         });
     }
 };

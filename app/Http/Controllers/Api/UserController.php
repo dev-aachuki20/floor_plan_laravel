@@ -236,7 +236,6 @@ class UserController extends APIController
                 'data'      => $user_details,
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
-            DB::rollBack();
             \Log::info('Error in UserController::show (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }

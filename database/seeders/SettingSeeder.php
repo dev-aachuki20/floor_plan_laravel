@@ -141,10 +141,10 @@ class SettingSeeder extends Seeder
             ],
 
             [
-                'key'           => 'mfa_token_expire_time',
+                'key'           => 'otp_expire_time',
                 'value'         => '10',
                 'type'          => 'number',
-                'display_name'  => 'MFA Token Expire Time',
+                'display_name'  => 'OTP Expire Time',
                 'group'         => 'site',
                 'details'       => 'Time should be in minutes',
                 'status'        => 1,

@@ -54,8 +54,9 @@ return [
     'unauthorize'  => 'You are not authorized to perform this action.',
     'account_suspended' => 'Your account has been suspended!',
 
-    'mfa_required' => 'MFA required',
-    'mfa_verified' => 'MFA verified',
+    'otp_sent'     => 'OTP sent successfully!',      
+    'mfa_required' => 'OTP is required',
+    'mfa_verified' => 'OTP verified successfully',
     'google_authenticator_not_setup' => 'MFA setup required',
     'invalid_token' => 'Invalid token',
     'invalid_otp'   => 'Invalid OTP',

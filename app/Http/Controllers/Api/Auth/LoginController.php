@@ -53,25 +53,25 @@ class LoginController extends APIController
             }
 
             $mfaMethod          = getSetting('mfa_method');
-            $mfaTokenExpireTime = getSetting('mfa_token_expire_time') ? (int)getSetting('mfa_token_expire_time') : 10;
+            $otpTokenExpireTime = getSetting('otp_expire_time') ? (int)getSetting('otp_expire_time') : 10;
 
             $auth_user = User::where('user_email', $credentials['user_email'])->first();
 
             if ($mfaMethod === 'email') {
                 
-                $mfaToken = \Str::random(8);
-                $expiry = now()->addMinutes($mfaTokenExpireTime); 
+                $otp = generateOtp();
+                $expiry = now()->addMinutes($otpTokenExpireTime); 
 
-                $auth_user->mfa_token = $mfaToken;
-                $auth_user->mfa_expires_at = $expiry;
+                $auth_user->otp = $otp;
+                $auth_user->otp_expires_at = $expiry;
                 $auth_user->save();
 
                
-                Mail::to($auth_user->user_email)->queue(new MfaTokenMail($auth_user->full_name, $mfaToken,$mfaTokenExpireTime));
+                Mail::to($auth_user->user_email)->queue(new MfaTokenMail($auth_user->full_name, $otp, $otpTokenExpireTime));
                 DB::commit();
                 return $this->respondOk([
                     'status'     => true,
-                    'message'    => trans('auth.mfa_required'),
+                    'message'    => trans('auth.otp_sent'),
                     'mfa_method' => $mfaMethod
                 ])->setStatusCode(Response::HTTP_OK);
 
@@ -170,9 +170,8 @@ class LoginController extends APIController
 
         $request->validate([
             'user_email' => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
-            'mfa_token'  => 'required|string',
+            'otp'  => 'required|numeric',
         ],[],[
-            'mfa_token' => $method == 'email' ? 'token' : 'otp',
             'user_email' => 'email',
         ]);
 
@@ -187,8 +186,8 @@ class LoginController extends APIController
 
             if ($method === 'email') {
                
-                if ($user->mfa_token !== $request->mfa_token || now()->gt($user->mfa_expires_at)) {
-                    return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_token'));
+                if ($user->otp !== $request->otp || now()->gt($user->otp_expires_at)) {
+                    return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
                 }
 
             } 
@@ -204,8 +203,8 @@ class LoginController extends APIController
 
             }*/
 
-            $user->mfa_token = null;
-            $user->mfa_expires_at = null;
+            $user->otp = null;
+            $user->otp_expires_at = null;
             $user->last_login_at = now();
             $user->save();
 

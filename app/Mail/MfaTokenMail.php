@@ -10,21 +10,21 @@ class MfaTokenMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $name, $token, $tokenExpire;
+    public $name, $otp, $otpExpire;
 
-    public function __construct($name,$token,$tokenExpire)
+    public function __construct($name,$otp,$otpExpire)
     {
         $this->name  = $name;
-        $this->token = $token;
-        $this->tokenExpire = $tokenExpire;
+        $this->otp = $otp;
+        $this->otpExpire = $otpExpire;
     }
 
     public function build()
     {
         return $this->markdown('emails.auth.mfa_token', [
             'name'  => $this->name,
-            'token' => $this->token,
-            'tokenExpire' => $this->tokenExpire
+            'otp'   => $this->otp,
+            'otpExpire' => $this->otpExpire
         ])->subject('Verify Your Account');
     }
 }
