@@ -118,7 +118,40 @@ class SettingSeeder extends Seeder
                 'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
             ],
 
+            [
+                'key'           => 'mfa_method',
+                'value'         => 'email', // email, google
+                'type'          => 'text',
+                'display_name'  => 'MFA Method',
+                'group'         => 'site',
+                'details'       => null,
+                'status'        => 1,
+                'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
+            ],
 
+            [
+                'key'           => 'mfa_time_duration',
+                'value'         => '720',//In hours
+                'type'          => 'number',
+                'display_name'  => 'MFA Time Duration',
+                'group'         => 'site',
+                'details'       => 'Time should be in hours',
+                'status'        => 1,
+                'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
+            ],
+
+            [
+                'key'           => 'mfa_token_expire_time',
+                'value'         => '10',
+                'type'          => 'number',
+                'display_name'  => 'MFA Token Expire Time',
+                'group'         => 'site',
+                'details'       => 'Time should be in minutes',
+                'status'        => 1,
+                'created_at'    => Carbon::now()->format('Y-m-d H:i:s'),
+            ],
+
+             
 
         ];
 

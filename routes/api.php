@@ -39,6 +39,17 @@ Route::group(['namespace' => 'Api'], function () {
     */
     Route::post('login', [LoginController::class, 'login']);
 
+    /*
+    |--------------------------------------------------------------------------
+    | Verify MFA API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route 		: http://localhost:8000/api/verify-mfa
+    | Parameter 	: Multiple
+    | Method 		: Post
+    |
+    */
+    Route::post('verify-mfa', [LoginController::class, 'verifyMfa']);
 
     /*
     |--------------------------------------------------------------------------

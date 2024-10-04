@@ -54,4 +54,13 @@ return [
     'unauthorize'  => 'You are not authorized to perform this action.',
     'account_suspended' => 'Your account has been suspended!',
 
+    'mfa_required' => 'MFA required',
+    'mfa_verified' => 'MFA verified',
+    'google_authenticator_not_setup' => 'MFA setup required',
+    'invalid_token' => 'Invalid token',
+    'invalid_otp'   => 'Invalid OTP',
+    'verification_failed' => 'Verification failed',
+    
+
+
 ];
