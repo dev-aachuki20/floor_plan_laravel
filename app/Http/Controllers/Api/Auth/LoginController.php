@@ -208,7 +208,7 @@ class LoginController extends APIController
                     if (!$valid) {
                         return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
                     }
-                }else{
+                }else if(is_null($user->google2fa_secret)){
                     return $this->setStatusCode(400)->respondWithError(trans('auth.google_authenticator_not_setup'));
                 }
                 
