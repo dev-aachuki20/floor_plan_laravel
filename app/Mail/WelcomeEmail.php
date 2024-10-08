@@ -31,6 +31,6 @@ class WelcomeEmail extends Mailable
 
     public function build()
     {
-        return $this->markdown('emails.auth.welcome', ['user' => $this->user, 'mfaMethod' => $this->mfaMethod,'setPasswordUrl'=>$this->setPasswordUrl,'otp'=>$this->otp, 'otp_expiry'=>$otp_expiry,'qrCodeImageUrl' => $this->qrCodeImageUrl])->subject($this->subject);
+        return $this->markdown('emails.auth.welcome', ['user' => $this->user, 'mfaMethod' => $this->mfaMethod,'setPasswordUrl'=>$this->setPasswordUrl,'otp'=>$this->otp, 'otp_expiry'=>$this->otp_expiry,'qrCodeImageUrl' => $this->qrCodeImageUrl])->subject($this->subject);
     }
 }

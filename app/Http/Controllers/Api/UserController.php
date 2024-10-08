@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Hospital;
 use Illuminate\Http\Request;
@@ -161,7 +162,7 @@ class UserController extends APIController
 
             //Set Password Url
             $token = generateRandomString(64);
-            $set_password_url = config('app.site_url').'/reset-password?token='.$token;
+            $setPasswordUrl = config('app.site_url').'/reset-password?token='.$token;
 
             DB::table('password_reset_tokens')
             ->where('email', $user->user_email)
@@ -176,6 +177,7 @@ class UserController extends APIController
 
             //MFA Method
             $mfaMethod = getSetting('mfa_method');
+            $otpTokenExpireTime = getSetting('otp_expire_time') ? (int)getSetting('otp_expire_time') : 10;
             $otp = null;
             $otp_expiry = null;
             $base64QRCode = null;
@@ -227,6 +229,9 @@ class UserController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            dd('Error in UserController::store (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+
             \Log::info('Error in UserController::store (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         }

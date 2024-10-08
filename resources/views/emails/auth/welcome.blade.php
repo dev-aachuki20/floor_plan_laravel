@@ -37,7 +37,8 @@
 
     <a href="{{ config('app.site_url') }}/login" style="font-family: 'Barlow', sans-serif; color:#fff; text-transform: uppercase; font-size:18px; line-height: 13px; border-radius: 5px; background-color: #006AF2;box-shadow:8px 6px 15px 0px rgba(0, 97, 222, 0.25); padding: 21px 28px; display: inline-block; text-decoration: none;margin-bottom: 27px;">Login</a>
 
-    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">If you're having trouble click the below link for "Reset Password" or Copy and Paste below URL into your web browser  <a href="{{ $setPasswordUrl }}">{{ $setPasswordUrl }}</a></p>
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">If you're having trouble click the below link for "Reset Password" or Copy and Paste below URL into your web browser </p>
+    <p><a href="{{ $setPasswordUrl }}">{{ $setPasswordUrl }}</a></p>
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">If you have any questions, feel free to reach out to us.</p>
 
