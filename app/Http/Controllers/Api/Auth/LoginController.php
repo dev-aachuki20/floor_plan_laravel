@@ -82,6 +82,7 @@ class LoginController extends APIController
 
                     $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
 
+                    DB::commit();
                     return $this->respondOk([
                         'status'     => true,
                         'message'    => trans('auth.google_authenticator_not_setup'),
@@ -208,7 +209,7 @@ class LoginController extends APIController
                     if (!$valid) {
                         return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
                     }
-                }else if(is_null($user->google2fa_secret)){
+                }else{
                     return $this->setStatusCode(400)->respondWithError(trans('auth.google_authenticator_not_setup'));
                 }
                 
