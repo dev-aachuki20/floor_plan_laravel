@@ -174,7 +174,7 @@ class LoginController extends APIController
 
         $request->validate([
             'user_email' => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
-            'otp'  => 'required|numeric',
+            'otp'  => 'required',
         ],[],[
             'user_email' => 'email',
         ]);
