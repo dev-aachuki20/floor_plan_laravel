@@ -297,11 +297,25 @@ if (!function_exists('generateOtp')) {
 
 	function generateOtp()
 	{
-		// Generate a 6-digit OTP
-		$otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+		// Generate a 8-digit OTP
+		$otp = str_pad(rand(0, 999999), 8, '0', STR_PAD_LEFT);
 		
 		return $otp;
 	}
+}
+
+if (!function_exists('generateToken')) {
+    function generateToken($length = 8) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+
+        return $randomString;
+    }
 }
 
 

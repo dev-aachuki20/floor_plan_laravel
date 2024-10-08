@@ -14,19 +14,23 @@ class WelcomeEmail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
-    public $password;
+    public $mfaMethod, $setPasswordUrl, $otp,$otp_expiry,$qrCodeImageUrl;
     /**
      * Create a new message instance.
      */
-    public function __construct($user, $password)
+    public function __construct($user,  $mfaMethod, $setPasswordUrl,$otp=null,$otp_expiry=null,$qrCodeImageUrl=null)
     {
-        $this->subject = 'Welcome Email';
-        $this->user = $user;
-        $this->password = $password;
+        $this->subject   = 'Welcome Email';
+        $this->user      = $user;
+        $this->mfaMethod = $mfaMethod;
+        $this->otp       = $otp;
+        $this->otp_expiry = $otp_expiry;
+        $this->setPasswordUrl = $setPasswordUrl;
+        $this->qrCodeImageUrl = $qrCodeImageUrl;
     }
 
     public function build()
     {
-        return $this->markdown('emails.auth.welcome', ['user' => $this->user, 'password' => $this->password])->subject($this->subject);
+        return $this->markdown('emails.auth.welcome', ['user' => $this->user, 'mfaMethod' => $this->mfaMethod,'setPasswordUrl'=>$this->setPasswordUrl,'otp'=>$this->otp, 'otp_expiry'=>$otp_expiry,'qrCodeImageUrl' => $this->qrCodeImageUrl])->subject($this->subject);
     }
 }

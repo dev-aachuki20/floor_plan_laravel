@@ -20,6 +20,7 @@ use App\Mail\UserDeletedMail;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Notifications\SendNotification;
+use PragmaRX\Google2FAQRCode\Google2FA; 
 
 
 
@@ -158,8 +159,47 @@ class UserController extends APIController
                 'email_verified_at' => now(),
             ]);
 
+            //Set Password Url
+            $token = generateRandomString(64);
+            $set_password_url = config('app.site_url').'/reset-password?token='.$token;
+
+            DB::table('password_reset_tokens')
+            ->where('email', $user->user_email)
+            ->delete();
+
+            DB::table('password_reset_tokens')->insert([
+                'email' => $user->user_email,
+                'token' => $token,
+                'created_at' => Carbon::now()
+            ]);
+            //End Set Password Url
+
+            //MFA Method
+            $mfaMethod = getSetting('mfa_method');
+            $otp = null;
+            $otp_expiry = null;
+            $base64QRCode = null;
+            if ($mfaMethod === 'email') {
+                
+                $otp = generateToken(8);
+                $otp_expiry = now()->addMinutes($otpTokenExpireTime); 
+
+                $user->otp = $otp;
+                $user->otp_expires_at = $otp_expiry;
+                $user->save();
+
+            } elseif ($mfaMethod === 'google') {
+
+                if (!$user->google2fa_secret) {
+                    $qrcodeUrl = $this->generateGoogle2faSecret($user);
+                    $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                }
+
+            }
+            //End MFA Method
+
             // Send welcome email
-            Mail::to($user->user_email)->queue(new WelcomeEmail($user, $password));
+            Mail::to($user->user_email)->queue(new WelcomeEmail($user, $mfaMethod,$setPasswordUrl, $otp, $otp_expiry, $base64QRCode));
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();

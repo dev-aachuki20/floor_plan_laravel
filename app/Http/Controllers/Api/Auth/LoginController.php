@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use DB;
-use Google2FA;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Mail\MfaTokenMail;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
+use PragmaRX\Google2FAQRCode\Google2FA; 
 
 
 class LoginController extends APIController
@@ -59,7 +59,7 @@ class LoginController extends APIController
 
             if ($mfaMethod === 'email') {
                 
-                $otp = generateOtp();
+                $otp = generateToken(8);
                 $expiry = now()->addMinutes($otpTokenExpireTime); 
 
                 $auth_user->otp = $otp;
@@ -75,18 +75,18 @@ class LoginController extends APIController
                     'mfa_method' => $mfaMethod
                 ])->setStatusCode(Response::HTTP_OK);
 
-            } 
-            
-            /*elseif ($mfaMethod === 'google') {
+            } elseif ($mfaMethod === 'google') {
 
                 if (!$auth_user->google2fa_secret) {
                     $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
+
+                    $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
 
                     return $this->respondOk([
                         'status'     => true,
                         'message'    => trans('auth.google_authenticator_not_setup'),
                         'mfa_method' => $mfaMethod,
-                        'qrcodeUrl'  => $qrcodeUrl
+                        'qrcodeUrl'  => $base64QRCode
 
                     ])->setStatusCode(Response::HTTP_OK);
                 }
@@ -95,12 +95,16 @@ class LoginController extends APIController
                     'status'     => true,
                     'message'    => trans('auth.mfa_required'),
                     'mfa_method' => $mfaMethod,
+                    'qrcodeUrl'  => null
                 ])->setStatusCode(Response::HTTP_OK);
 
-            }*/
+            }
 
         } catch (Exception $e) {
             DB::rollBack();
+            
+            // dd('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+
             \Log::info('Error in LoginController::login (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         } catch (JWTException $e) {
@@ -190,21 +194,26 @@ class LoginController extends APIController
                     return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
                 }
 
-            } 
-            
-            /*elseif ($method === 'google') {
+                $user->otp = null;
+                $user->otp_expires_at = null;
 
-                $google2fa = new \PragmaRX\Google2FALaravel\Google2FA();
-                $valid = $google2fa->verifyKey($user->google2fa_secret, $request->mfa_token);
+            }elseif ($method === 'google') {
 
-                if (!$valid) {
-                    return response()->json(['message' => trans('auth.invalid_google_authenticator_token')], 400);
+                $google2fa = new Google2FA();
+               
+                if($user->google2fa_secret){
+                    $secretKey = $user->google2fa_secret;
+                    $isValid = $google2fa->verifyKey($secretKey, $request->otp);
+    
+                    if (!$valid) {
+                        return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
+                    }
+                }else{
+                    return $this->setStatusCode(400)->respondWithError(trans('auth.google_authenticator_not_setup'));
                 }
+                
+            }
 
-            }*/
-
-            $user->otp = null;
-            $user->otp_expires_at = null;
             $user->last_login_at = now();
             $user->save();
 
