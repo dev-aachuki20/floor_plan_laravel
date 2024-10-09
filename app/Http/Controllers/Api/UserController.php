@@ -162,7 +162,7 @@ class UserController extends APIController
 
             //Set Password Url
             $token = generateRandomString(64);
-            $setPasswordUrl = config('app.site_url').'/reset-password?token='.$token;
+            $setPasswordUrl = config('app.site_url').'/set-password?token='.$token;
 
             DB::table('password_reset_tokens')
             ->where('email', $user->user_email)

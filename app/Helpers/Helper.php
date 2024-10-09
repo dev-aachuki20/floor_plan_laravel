@@ -306,15 +306,22 @@ if (!function_exists('generateOtp')) {
 
 if (!function_exists('generateToken')) {
     function generateToken($length = 8) {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $randomString = '';
+		$digits    = '0123456789';
+		$lowercase = 'abcdefghijklmnopqrstuvwxyz';
+		$uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
+		$randomString = $digits[rand(0, strlen($digits) - 1)]
+					. $lowercase[rand(0, strlen($lowercase) - 1)]
+					. $uppercase[rand(0, strlen($uppercase) - 1)];
 
-        return $randomString;
+		$characters = $digits . $lowercase . $uppercase;
+		$charactersLength = strlen($characters);
+
+		for ($i = 3; $i < $length; $i++) {
+			$randomString .= $characters[rand(0, $charactersLength - 1)];
+		}
+
+		return str_shuffle($randomString);
     }
 }
 

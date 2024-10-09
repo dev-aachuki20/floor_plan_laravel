@@ -53,6 +53,18 @@ Route::group(['namespace' => 'Api'], function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Reset Google Authenticator API Routes
+    |--------------------------------------------------------------------------
+    |
+    | Route 		: http://localhost:8000/api/reset-google-authenticator
+    | Parameter 	: Multiple
+    | Method 		: Post
+    |
+    */
+    Route::post('reset-google-authenticator', [LoginController::class, 'resetGoogle2FA']);
+
+    /*
+    |--------------------------------------------------------------------------
     | Forgot Password API Routes
     |--------------------------------------------------------------------------
     |

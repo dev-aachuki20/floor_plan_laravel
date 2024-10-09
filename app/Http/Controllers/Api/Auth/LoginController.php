@@ -39,7 +39,6 @@ class LoginController extends APIController
             'user_email' => 'email',
         ]);
 
-
         try {
             DB::beginTransaction();
             $deletedUser = User::where('user_email', $credentials['user_email'])->onlyTrashed()->first();
@@ -66,7 +65,6 @@ class LoginController extends APIController
                 $auth_user->otp_expires_at = $expiry;
                 $auth_user->save();
 
-               
                 Mail::to($auth_user->user_email)->queue(new MfaTokenMail($auth_user->full_name, $otp, $otpTokenExpireTime));
                 DB::commit();
                 return $this->respondOk([
@@ -277,6 +275,55 @@ class LoginController extends APIController
             return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
         } 
     }
+
+
+    public function resetGoogle2FA(Request $request)
+    {
+        $mfaMethod  = getSetting('mfa_method');
+        $request->validate([
+            'user_email' => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
+        ],[],[
+            'user_email' => 'email',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            if($mfaMethod == 'google'){
+
+                $deletedUser = User::where('user_email', $request->user_email)->onlyTrashed()->first();
+                if ($deletedUser && $deletedUser->deleted_at) {
+                    return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
+                }
+    
+                $auth_user = User::where('user_email', $request->user_email)->first();
+    
+                $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
+    
+                $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+    
+                DB::commit();
+
+                return $this->respondOk([
+                    'status'     => true,
+                    'message'    => trans('auth.reset_google_authenticator_success'),
+                    'mfa_method' => $mfaMethod,
+                    'qrcodeUrl'  => $base64QRCode
+    
+                ])->setStatusCode(Response::HTTP_OK);
+            }
+
+            return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_mfa_method_google'));
+            
+        } catch (Exception $e) {
+            DB::rollBack();
+            
+            // dd('Error in LoginController::resetGoogle2FA (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+
+            \Log::info('Error in LoginController::resetGoogle2FA (' . $e->getCode() . '): ' . $e->getMessage() . ' at line ' . $e->getLine());
+            return $this->setStatusCode(500)->respondWithError(trans('messages.error_message'));
+        }
+    }
+
 
     public function getAuthenticatedUser()
     {
