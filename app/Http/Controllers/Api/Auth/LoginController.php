@@ -206,7 +206,7 @@ class LoginController extends APIController
                     $secretKey = $user->google2fa_secret;
                     $isValid = $google2fa->verifyKey($secretKey, $request->otp);
     
-                    if (!$valid) {
+                    if (!$isValid) {
                         return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
                     }
                 }else{
