@@ -140,4 +140,6 @@ return [
 
     'unauthorized_access' => 'You do not have permission to access this resource.',
 
+    'password_regex' => 'The password must be at least 8 characters long, contain at least one letter, one number, one special character (e.g. @$!%*?&), and must not contain any spaces.',
+
 ];

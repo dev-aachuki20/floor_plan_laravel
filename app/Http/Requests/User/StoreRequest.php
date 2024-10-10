@@ -31,7 +31,7 @@ class StoreRequest extends FormRequest
             'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
             'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*\s)(?!.*[\/]).+@.+\..+$/i', 'unique:users,user_email,NULL,id'],
 
-            'password'          => ['required', 'string', 'min:8'],
+            'password'          => ['required', 'string', 'min:8','regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'],
             'password_confirmation'  => ['required', 'string', 'min:8','same:password'],
             
             'role'              => ['required', 
@@ -60,7 +60,9 @@ class StoreRequest extends FormRequest
 
     public function messages()
     {
-        return [];
+        return [
+            'password.regex' => trans('messages.password_regex')
+        ];
     }
 
     public function attributes()

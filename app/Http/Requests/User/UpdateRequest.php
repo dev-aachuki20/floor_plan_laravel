@@ -33,7 +33,7 @@ class UpdateRequest extends FormRequest
         $rules = [
             'full_name'      => ['required', 'string', 'max:255', new TitleValidationRule],
             'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*\s)(?!.*[\/]).+@.+\..+$/i', Rule::unique('users')->ignore($editUserId)],
-            'password'       => ['nullable', 'string', 'min:8'],
+            'password'       => ['nullable', 'string', 'min:8','regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'],
             'role'              => ['required', 
                 Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
             ],
@@ -63,7 +63,9 @@ class UpdateRequest extends FormRequest
 
     public function messages()
     {
-        return [];
+        return [
+            'password.regex' => trans('messages.password_regex')
+        ];
     }
 
     public function attributes()
