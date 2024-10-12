@@ -164,7 +164,10 @@ class LoginController extends APIController
         $user->google2fa_secret = $secret;
         $user->save();
 
-        return $google2fa->getQRCodeInline(config('app.name'), $user->user_email, $secret);
+        $appName = config('app.name');
+        $appName = str_replace(' ', '', $appName);
+        
+        return $google2fa->getQRCodeInline($appName, $user->user_email, $secret);
     }
 
     public function verifyMfa(Request $request)
@@ -307,7 +310,7 @@ class LoginController extends APIController
                     'status'     => true,
                     'message'    => trans('auth.reset_google_authenticator_success'),
                     'mfa_method' => $mfaMethod,
-                    'qrcodeUrl'  => $base64QRCode
+                    'qrcodeUrl'  => $base64QRCode,
     
                 ])->setStatusCode(Response::HTTP_OK);
             }

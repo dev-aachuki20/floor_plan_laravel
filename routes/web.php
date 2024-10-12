@@ -21,3 +21,12 @@ Route::get('/', function () {
 Route::get('/api', function () {
     return redirect(config('app.site_url').'/login');
 });
+
+
+Route::get('/phpinfo', function(){
+    ob_start();
+    phpinfo();
+    $phpInfo = ob_get_clean();
+
+    echo $phpInfo;
+});
