@@ -6,6 +6,7 @@ use DB;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Mail\MfaTokenMail;
+use App\Mail\MfaGoogleMail;
 use App\Models\UserActivity;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -16,6 +17,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use PragmaRX\Google2FAQRCode\Google2FA; 
+
 
 
 class LoginController extends APIController
@@ -31,12 +33,14 @@ class LoginController extends APIController
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'user_email'    => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
-            'password' => 'required|min:8',
+            'user_email' => ['required', 'email', 'regex:/^(?!.*[\/]).+@(?!.*[\/]).+\.(?!.*[\/]).+$/i', 'exists:users,user_email'],
+            'password'   => 'required|min:8',
+            'is_set'     => 'required|boolean',
         ], [
             'user_email.exists' => trans('messages.wrong_credentials'),
         ], [
             'user_email' => 'email',
+            'is_set'     => 'set',
         ]);
 
         try {
@@ -47,6 +51,8 @@ class LoginController extends APIController
                 return $this->setStatusCode(403)->respondWithError(trans('auth.account_suspended'));
             }
 
+           
+            $credentials = collect($credentials)->except('is_set')->toArray();
             if (!$token = JWTAuth::attempt($credentials)) {
                 return $this->setStatusCode(400)->respondWithError(trans('auth.failed'));
             }
@@ -56,7 +62,7 @@ class LoginController extends APIController
 
             $auth_user = User::where('user_email', $credentials['user_email'])->first();
 
-            if ($mfaMethod === 'email') {
+            if (($mfaMethod === 'email') && $request->is_set == false) {
                 
                 $otp = generateToken(8);
                 $expiry = now()->addMinutes($otpTokenExpireTime); 
@@ -73,28 +79,25 @@ class LoginController extends APIController
                     'mfa_method' => $mfaMethod
                 ])->setStatusCode(Response::HTTP_OK);
 
-            } elseif ($mfaMethod === 'google') {
+            } elseif (($mfaMethod === 'google') && ($request->is_set == false)) {
 
-                if (!$auth_user->google2fa_secret) {
+               /* if (!$auth_user->google2fa_secret) {
                     $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
-
-                    $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
 
                     DB::commit();
                     return $this->respondOk([
                         'status'     => true,
                         'message'    => trans('auth.google_authenticator_not_setup'),
                         'mfa_method' => $mfaMethod,
-                        'qrcodeUrl'  => $base64QRCode
+                        'qrcodeUrl'  => $qrcodeUrl
 
                     ])->setStatusCode(Response::HTTP_OK);
-                }
+                }*/
     
                 return $this->respondOk([
                     'status'     => true,
                     'message'    => trans('auth.mfa_required'),
                     'mfa_method' => $mfaMethod,
-                    'qrcodeUrl'  => null
                 ])->setStatusCode(Response::HTTP_OK);
 
             }
@@ -219,10 +222,10 @@ class LoginController extends APIController
             $user->last_login_at = now();
             $user->save();
 
+            $mfaTimeDuration    = getSetting('mfa_time_duration') ? 60 * (int)getSetting('mfa_time_duration') : 10;
+
             $rememberMe = $request->has('remember_me') && $request->remember_me == true;
             if ($rememberMe) {
-                $mfaTimeDuration    = getSetting('mfa_time_duration') ? 60 * (int)getSetting('mfa_time_duration') : 10;
-
                 // Extend the token's lifetime to 30 days (43200 minutes)
                 JWTAuth::factory()->setTTL($mfaTimeDuration);
             } else {
@@ -267,6 +270,7 @@ class LoginController extends APIController
                 'message'       => trans('messages.login_success'),
                 'token_type'    => 'Bearer',
                 'access_token'  => $token,
+                'mfa_duration'  => $mfaTimeDuration,
                 'data'          => $data
             ];
     
@@ -301,30 +305,16 @@ class LoginController extends APIController
                 $auth_user = User::where('user_email', $request->user_email)->first();
     
                 $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
-    
-                // $qrcodeUrl = mb_convert_encoding($qrcodeUrl, 'UTF-8', 'auto');
-
-                // $base64QRCode = 'data:image/svg+xml;charset=UTF-8;base64,' . base64_encode($qrcodeUrl);
 
                 $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
-
-                // $base64QRCode = base64_encode($qrcodeUrl);
-
-                /*
-                $cleanSvgContent = preg_replace('/<\?xml.*?\?>\n/', '', $qrcodeUrl);
-
-                $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
-                */
-
     
+                Mail::to($auth_user->user_email)->queue(new MfaGoogleMail($auth_user->full_name, $base64QRCode));
+
                 DB::commit();
 
                 return $this->respondOk([
                     'status'     => true,
                     'message'    => trans('auth.reset_google_authenticator_success'),
-                    'mfa_method' => $mfaMethod,
-                    'qrcodeUrl'  => $base64QRCode,
-    
                 ])->setStatusCode(Response::HTTP_OK);
             }
 

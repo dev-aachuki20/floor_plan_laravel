@@ -195,6 +195,7 @@ class UserController extends APIController
                 if (!$user->google2fa_secret) {
                     $qrcodeUrl = $this->generateGoogle2faSecret($user);
                     $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                    // $base64QRCode = $qrcodeUrl;
                 }
 
             }
