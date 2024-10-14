@@ -61,7 +61,7 @@ return [
     'invalid_token' => 'Invalid token',
     'invalid_otp'   => 'Invalid OTP',
     'verification_failed' => 'Verification failed',
-    'reset_google_authenticator_success' => 'Google Authenticator has been reset successfully.',
+    'reset_google_authenticator_success' => 'Google Authenticator has been reset successfully. Please check your mail!',
     'invalid_mfa_method_google' => 'MFA method should be google', 
     
 
