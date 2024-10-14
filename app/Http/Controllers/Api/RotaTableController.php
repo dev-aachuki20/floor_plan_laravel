@@ -112,7 +112,7 @@ class RotaTableController extends APIController
                 foreach ($timeSlots as $timeSlot) {
                     foreach ($weekDays as $key => $date) {
 
-                        if($authUser->is_speciality_lead && $listType != 'rotatable'){
+                        if($authUser->is_speciality_lead){
 
                             $specialities = $authUser->specialityDetail()->pluck('id')->toArray();
 

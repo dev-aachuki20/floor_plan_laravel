@@ -306,9 +306,10 @@ class LoginController extends APIController
 
                 // $base64QRCode = 'data:image/svg+xml;charset=UTF-8;base64,' . base64_encode($qrcodeUrl);
 
-                // $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
 
-                $base64QRCode = base64_encode($qrcodeUrl);
+                // $base64QRCode = base64_encode($qrcodeUrl);
+
     
                 DB::commit();
 
