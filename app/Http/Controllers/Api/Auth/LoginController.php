@@ -302,7 +302,13 @@ class LoginController extends APIController
     
                 $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
     
-                $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                // $qrcodeUrl = mb_convert_encoding($qrcodeUrl, 'UTF-8', 'auto');
+
+                // $base64QRCode = 'data:image/svg+xml;charset=UTF-8;base64,' . base64_encode($qrcodeUrl);
+
+                // $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+
+                $base64QRCode = base64_encode($qrcodeUrl);
     
                 DB::commit();
 

@@ -316,6 +316,9 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         | Method        : GET
         */
         Route::get('user/delete/{uuid}', [UserController::class, 'destroy']);
+    });
+
+    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin'),config('constant.roles.chair')])]], function () {
 
         /*
         |--------------------------------------------------------------------------
@@ -345,9 +348,6 @@ Route::group(['namespace' => 'App\Http\Controllers\Api', 'middleware' => ['auth:
         */
         Route::post('/rota-table/save', [RotaTableController::class, 'saveRota']);
 
-    });
-
-    Route::group(['middleware' => ['role:' . implode(',', [config('constant.roles.system_admin'), config('constant.roles.trust_admin'), config('constant.roles.hospital_admin'),config('constant.roles.chair')])]], function () {
 
         Route::get('get-trusts', [HomeController::class, 'getTrusts']);
 

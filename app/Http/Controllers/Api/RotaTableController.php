@@ -33,13 +33,14 @@ class RotaTableController extends APIController
             'filter_value'   => 'nullable|array',
             'filter_value.*' => 'integer',
             'time_slot'      => 'nullable',
+            'type'           => 'nullable',
         ]);
 
         try {
 
             $authUser  = auth()->user();
-
             $timeSlots = config('constant.time_slots');
+            $listType = $request->type ?? '';
 
             $adminRoles = [
                 config('constant.roles.system_admin'),
@@ -62,7 +63,7 @@ class RotaTableController extends APIController
                 $formattedDate = $carbonDate->format('D, j M');
                 $days_of_week[$key]['date'] = $formattedDate;
 
-                if (in_array($authUser->primary_role, $adminRoles)) {
+                if (in_array($authUser->primary_role, $adminRoles) || $listType == 'rotatable') {
                     $days_of_week[$key]['statistics']['overall'] = calculateRotaTableStatistics($hospitalId,$date);
                     $days_of_week[$key]['statistics']['speciality'] = calculateRotaTableStatistics($hospitalId,$date, config('constant.roles.speciality_lead'));
                     $days_of_week[$key]['statistics']['anesthetic'] = calculateRotaTableStatistics($hospitalId,$date, config('constant.roles.anesthetic_lead'));
@@ -111,7 +112,7 @@ class RotaTableController extends APIController
                 foreach ($timeSlots as $timeSlot) {
                     foreach ($weekDays as $key => $date) {
 
-                        if($authUser->is_speciality_lead){
+                        if($authUser->is_speciality_lead && $listType != 'rotatable'){
 
                             $specialities = $authUser->specialityDetail()->pluck('id')->toArray();
 
@@ -201,10 +202,12 @@ class RotaTableController extends APIController
                             'staff_coordinator' => '',
                         ];
 
-                        if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
-                            $rolesStatus = [
-                                'is_available' => '',
-                            ];
+                        if($listType != 'rotatable'){
+                            if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
+                                $rolesStatus = [
+                                    'is_available' => '',
+                                ];
+                            }
                         }
 
                         // Group users by their role and check status
@@ -234,7 +237,7 @@ class RotaTableController extends APIController
                                 foreach ($users as $user) {
                                     $status = $user->pivot->status;
 
-                                    if ($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) {
+                                    if (($authUser->is_speciality_lead || $authUser->is_anesthetic_lead || $authUser->is_staff_coordinator) && $listType != 'rotatable') {
                                         if ($authUser->primary_role == $user->pivot->role_id) {
                                             $rolesStatus['is_available'] = ($status == 1);
                                         }
