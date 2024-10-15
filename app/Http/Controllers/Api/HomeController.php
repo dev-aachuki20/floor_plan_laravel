@@ -108,7 +108,7 @@ class HomeController extends APIController
         ];
 
         if($request->password){
-            $validateData['password']   = ['nullable', 'string', 'min:8','regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'];
+            $validateData['password']   = ['nullable', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$/'];
         }
 
 
