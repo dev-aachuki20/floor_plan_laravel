@@ -31,8 +31,8 @@ class StoreRequest extends FormRequest
             'full_name'         => ['required', 'string', 'max:255',new TitleValidationRule],
             'user_email'        => ['required', 'email:dns', 'regex:/^(?!.*\s)(?!.*[\/]).+@.+\..+$/i', 'unique:users,user_email,NULL,id'],
 
-            'password'          => ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$/'],
-            'password_confirmation'  => ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$/','same:password'],
+            'password'          => ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/'],
+            'password_confirmation'  => ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/','same:password'],
             
             'role'              => ['required', 
                 Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))

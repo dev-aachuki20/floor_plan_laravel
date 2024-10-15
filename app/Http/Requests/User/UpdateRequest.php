@@ -33,7 +33,7 @@ class UpdateRequest extends FormRequest
         $rules = [
             'full_name'      => ['required', 'string', 'max:255', new TitleValidationRule],
             'user_email'     => ['required', 'email:dns', 'regex:/^(?!.*\s)(?!.*[\/]).+@.+\..+$/i', Rule::unique('users')->ignore($editUserId)],
-            'password'       => ['nullable', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$/'],
+            'password'       => ['nullable', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/'],
             'role'              => ['required', 
                 Rule::exists('roles', 'id')->whereNot('id', config('constant.roles.system_admin'))
             ],
@@ -54,7 +54,7 @@ class UpdateRequest extends FormRequest
         }
 
         if($this->password){
-            $rules['password_confirmation']  = ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[A-Za-z\d\W_]{8,}$/','same:password'];
+            $rules['password_confirmation']  = ['required', 'string', 'min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/','same:password'];
         }
 
         return $rules;
