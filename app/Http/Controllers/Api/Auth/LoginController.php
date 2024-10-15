@@ -71,7 +71,7 @@ class LoginController extends APIController
                 $auth_user->otp_expires_at = $expiry;
                 $auth_user->save();
 
-                Mail::to($auth_user->user_email)->queue(new MfaTokenMail($auth_user->full_name, $otp, $otpTokenExpireTime));
+                Mail::to($auth_user->user_email)->send(new MfaTokenMail($auth_user->full_name, $otp, $otpTokenExpireTime));
                 DB::commit();
                 return $this->respondOk([
                     'status'     => true,
@@ -308,7 +308,7 @@ class LoginController extends APIController
 
                 $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
     
-                Mail::to($auth_user->user_email)->queue(new MfaGoogleMail($auth_user->full_name, $base64QRCode));
+                Mail::to($auth_user->user_email)->send(new MfaGoogleMail($auth_user->full_name, $base64QRCode));
 
                 DB::commit();
 

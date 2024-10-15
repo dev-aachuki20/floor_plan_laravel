@@ -202,7 +202,21 @@ class UserController extends APIController
             //End MFA Method
 
             // Send welcome email
-            Mail::to($user->user_email)->queue(new WelcomeEmail($user, $mfaMethod,$setPasswordUrl, $otp, $otp_expiry, $base64QRCode));
+            $mailData = [
+                'mfaMethod'  => $mfaMethod,
+                'otp'        => $otp,
+                'otp_expiry' => $otp_expiry,
+                'base64QRCode' => $base64QRCode,
+                'setPasswordUrl' => $setPasswordUrl
+            ];
+          /* \Log::info('Sending WelcomeEmail', [
+                'mfaMethod'      => $mfaMethod,
+                'setPasswordUrl' => $setPasswordUrl,
+                'otp'            => $otp,
+                'otp_expiry'     => $otp_expiry,
+                'base64QRCode'   => $base64QRCode,
+            ]);*/
+            Mail::to($user->user_email)->send(new WelcomeEmail($user, $mailData));
 
             //Verification mail sent
             // $user->NotificationSendToVerifyEmail();
