@@ -92,8 +92,8 @@ class PasswordResetController  extends APIController
 
         $validated = $request->validate([
             'token'    => 'required',
-            'password' => 'required|string|min:8',
-            'password_confirmation' => 'required|string|min:8|same:password',
+            'password' => ['required','string','min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/'],
+            'password_confirmation' => ['required','string','min:8','regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s)[A-Za-z\d\W_]{8,}$/','same:password']
 
         ], getCommonValidationRuleMsgs());
 

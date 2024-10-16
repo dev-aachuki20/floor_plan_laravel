@@ -151,12 +151,12 @@ class UserController extends APIController
     {
         try {
             DB::beginTransaction();
-            $password = $request->password;
+            // $password = $request->password;
             $user = User::create([
                 'primary_role' => $request->role,
                 'full_name'    => $request->full_name,
                 'user_email'   => $request->user_email,
-                'password'     => Hash::make($password),
+                // 'password'     => Hash::make($password),
                 'email_verified_at' => now(),
             ]);
 
@@ -339,7 +339,7 @@ class UserController extends APIController
                 'primary_role' => $request->role,
                 'full_name'    => $request->full_name ?? $user->full_name,
                 'user_email'   => $request->user_email ?? $user->user_email,
-                'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
+                // 'password'     => $request->filled('password') ? Hash::make($request->password) : $user->password,
             ]);
 
             $user = User::where('uuid', $uuid)->first();

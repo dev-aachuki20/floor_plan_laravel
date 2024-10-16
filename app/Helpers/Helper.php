@@ -24,8 +24,8 @@ if (!function_exists('getCommonValidationRuleMsgs')) {
 			'email.exists' => "Please Enter Valid Registered Email!",
 			'password_confirmation.same' => 'The confirm password and new password must match.',
 
-			'password.regex' => 'The :attribute must be at least 8 characters and contain at least one uppercase character, one number, and one special character.',
-			'password.regex' => 'The :attribute must be at least 8 characters and contain at least one uppercase character, one number, and one special character.',
+			'password.regex' => 'The :attribute must be at least 8 characters long, contain at least one lowercase letter, one uppercase letter, one number, one special character, and must not contain any spaces.',
+			'password_confirmation.regex' => 'The :attribute must be at least 8 characters long, contain at least one lowercase letter, one uppercase letter, one number, one special character, and must not contain any spaces.',
 		];
 	}
 }

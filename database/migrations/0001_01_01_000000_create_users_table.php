@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('hospital')->nullable();
          
             $table->string('user_email');
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->string('full_name')->nullable();
             $table->string('phone')->nullable();
 
