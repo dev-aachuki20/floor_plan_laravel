@@ -306,8 +306,14 @@ class LoginController extends APIController
     
                 $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
 
-                $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                // $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
+                $base64QRCode = $qrcodeUrl;
+
     
+                \Log::info('Sending WelcomeEmail', [
+                    'user'           => $auth_user->full_name,
+                    'qrcodeUrl'      => $base64QRCode,
+                ]);
                 Mail::to($auth_user->user_email)->send(new MfaGoogleMail($auth_user->full_name, $base64QRCode));
 
                 DB::commit();

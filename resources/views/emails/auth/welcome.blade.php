@@ -1,9 +1,11 @@
 @extends('emails.layouts.admin')
 
 @section('email-content')
-    <h4 style="font-family: 'Barlow', sans-serif; color: #000; font-weight: 700; font-size: 16px;margin-top: 20px;">Hello, {{ $user->full_name ?? ''}}</h4>
+    <h4 style="font-family: 'Barlow', sans-serif; color: #000; font-weight: 700; font-size: 16px;margin-top: 20px;">Dear, {{ $user->full_name ?? ''}}</h4>
 
-    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Welcome to {{ config('app.name') }}! You are receiving this email because the {{ config('app.name') }} system admin added you as a user.</p>
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Welcome to your team's FLOORPLAN. We are excited to have you on board.
+        Please Follow the steps below to on-board the FLOORPLAN platfrom.
+    </p>
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 10px;margin-top: 10px;">Here are your account details:</p>
     <ul style="list-style: none;padding: 0;margin: 0 0 25px;">

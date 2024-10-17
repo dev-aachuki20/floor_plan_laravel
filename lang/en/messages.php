@@ -103,18 +103,18 @@ return [
     ],
 
     'notify_subject' => [
-        'confirmation'      => 'A session awaits your confirmation',
-        'remove_speciality' => 'You have been removed from a session',
-        'quarter_available'  => 'Quarter :quarterNo - :quarterYear is now available',
-        'quarter_saved'      => 'Quarter :quarterNo - :quarterYear saved successfully',
-        'confirmed_booking'  =>  'Session is confirmed for booking',
+        'confirmation'      => 'FLOORPLAN®: Session Confirmation Request',
+        'remove_speciality' => 'FLOORPLAN®: You have been removed from a session',
+        'quarter_available'  => 'FLOORPLAN®: Quarter :quarterNo - :quarterYear is now available',
+        'quarter_saved'      => 'FLOORPLAN®: Quarter :quarterNo - :quarterYear saved successfully',
+        'confirmed_booking'  =>  'FLOORPLAN®: Session Confirmation Request',
         'admin_updated_own_user'  =>  'Your Profile updated',
         'user_deleted_by_own'     => ':user_name requested to delete own account.',
         'user_deleted_by_admin'   => ':admin_name deleted :user_name',
-        'first_reminder'          => 'Reminder: A session awaits your confirmation',
-        'final_reminder'          => 'Final Reminder: A session awaits your confirmation',
-        'session_closed'          => 'Session Closed',
-        'session_failed'          => 'Session Closed',
+        'first_reminder'          => 'FLOORPLAN®: Reminder a session awaits your confirmation',
+        'final_reminder'          => 'FLOORPLAN®: Final reminder session awaits your confirmation',
+        'session_closed'          => 'FLOORPLAN®: Session Closed Notification',
+        'session_failed'          => 'FLOORPLAN®: Session Failed Notification',
     ],
 
     'notification' => [
@@ -127,15 +127,15 @@ return [
     ],
 
     'mail_content' => [
-        'quarter_saved' => "We are pleased to inform you that the session schedule for Quarter :quarterNo of :quarterYear is now available. You can now view and manage the hospital room sessions for this quarter.
+        'quarter_saved' => "We are pleased to inform you that the tbeatre session schedule for Quarter :quarterNo of :quarterYear is now available.
 
-        Please make sure to review the scheduled sessions and confirm the details as soon as possible to ensure smooth operations.",
+        You can now view and manage these sessions accordingly.",
 
         'admin_updated_own_user' => 'Your user data was updated',
 
         'user_deleted_by_own'   => 'This is to inform you that :user_name has requested to delete their account associated with the email address :user_email.',
 
-        'user_deleted_by_admin' => 'We are writing to inform you that your account associated with :user_name - :user_email has been deleted by :admin_name'
+        'user_deleted_by_admin' => 'This is to inform you that :user_name - :user_email FLOORPLAN account has been deleted by :admin_name'
     ],
 
     'unauthorized_access' => 'You do not have permission to access this resource.',

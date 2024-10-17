@@ -11,7 +11,8 @@
 </head>
 <body style="font-family: Arial, Helvetica, sans-serif;font-size: 16px;">
 	<div style="max-width: 620px;margin: 0 auto;">
-		<h1 style="background-color: #ecf1f5;padding: 20px 10px;font-size: 24px;text-align: center;color: #295597;margin: 0;">{{ config('app.name') }}</h1>
+		<h1 style="background-color: #ecf1f5;padding: 20px 10px;font-size: 24px;text-align: center;color: #295597;margin: 0;">FLOORPLAN</h1>
+		<!-- <h1 style="background-color: #ecf1f5;padding: 20px 10px;font-size: 24px;text-align: center;color: #295597;margin: 0;">{{ config('app.name') }}</h1> -->
 
 		@yield('email-content') 
 
