@@ -194,8 +194,17 @@ class UserController extends APIController
 
                 if (!$user->google2fa_secret) {
                     $qrcodeUrl = $this->generateGoogle2faSecret($user);
-                    // $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
-                    $base64QRCode = $qrcodeUrl;
+            
+                    // Save the SVG to a file
+                    $uploadId = null;
+                    $actionType = 'save';
+                    if($qrCodeImageRecord = $user->qrCodeImage){
+                        $uploadId = $qrCodeImageRecord->id;
+                        $actionType = 'update';
+                    }
+
+                    $qrCodeImage = uploadQRcodeImage($user, $qrcodeUrl, $actionType, $uploadId);
+                    $base64QRCode = $qrCodeImage->file_url;
                 }
 
             }

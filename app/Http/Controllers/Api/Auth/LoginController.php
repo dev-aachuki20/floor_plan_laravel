@@ -18,8 +18,6 @@ use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use PragmaRX\Google2FAQRCode\Google2FA; 
 
-
-
 class LoginController extends APIController
 {
 
@@ -306,18 +304,23 @@ class LoginController extends APIController
     
                 $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
 
-                // $base64QRCode = 'data:image/svg+xml;base64,' . base64_encode($qrcodeUrl);
-                $base64QRCode = $qrcodeUrl;
+                // Save the SVG to a file
+                $uploadId = null;
+                $actionType = 'save';
+                if($qrCodeImageRecord = $auth_user->qrCodeImage){
+                    $uploadId = $qrCodeImageRecord->id;
+                    $actionType = 'update';
+                }
 
-    
-                \Log::info('Sending WelcomeEmail', [
-                    'user'           => $auth_user->full_name,
-                    'qrcodeUrl'      => $base64QRCode,
-                ]);
-                Mail::to($auth_user->user_email)->send(new MfaGoogleMail($auth_user->full_name, $base64QRCode));
+                $qrCodeImage = uploadQRcodeImage($auth_user, $qrcodeUrl, $actionType, $uploadId);
+              
+                // \Log::info('Sending WelcomeEmail', [
+                //     'user'           => $auth_user->full_name,
+                //     'qrcodeUrl'      => $base64QRCode,
+                // ]);
+                Mail::to($auth_user->user_email)->send(new MfaGoogleMail($auth_user->full_name, $qrCodeImage->file_url));
 
                 DB::commit();
-
                 return $this->respondOk([
                     'status'     => true,
                     'message'    => trans('auth.reset_google_authenticator_success'),

@@ -154,11 +154,6 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         return $this->morphMany(Uploads::class, 'uploadsable');
     }
 
-    public function profileImage()
-    {
-        return $this->morphOne(Uploads::class, 'uploadsable')->where('type', 'user_profile');
-    }
-
 
     public function createdBy()
     {
@@ -219,6 +214,19 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function notificationSender()
     {
         return $this->hasMany(Notification::class, 'created_by');
+    }
+ 
+    public function qrCodeImage()
+    {
+        return $this->morphOne(Uploads::class, 'uploadsable')->where('type', 'qr_code');
+    }
+
+    public function getQrCodeImageUrlAttribute()
+    {
+        if ($this->qrCodeImage) {
+            return $this->qrCodeImage->file_url;
+        }
+        return "";
     }
    
 }

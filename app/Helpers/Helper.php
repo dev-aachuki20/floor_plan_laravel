@@ -325,6 +325,101 @@ if (!function_exists('generateToken')) {
     }
 }
 
+if (!function_exists('uploadImage')) {
+	/**
+	 * Upload Image.
+	 *
+	 * @param array $input
+	 *
+	 * @return array $input
+	 */
+	function uploadImage($directory, $file, $folder, $type="profile", $fileType="jpg",$actionType="save",$uploadId=null,$orientation=null)
+	{
+		$oldFile = null;
+        if($actionType == "save"){
+			$upload               		= new Uploads;
+		}else{
+			$upload               		= Uploads::find($uploadId);
+			$oldFile = $upload->file_path;
+		}
+        $upload->file_path      	= $file->store($folder, 'public');
+		$upload->extension      	= $file->getClientOriginalExtension();
+		$upload->original_file_name = $file->getClientOriginalName();
+		$upload->type 				= $type;
+		$upload->file_type 			= $fileType;
+		$upload->orientation 		= $orientation;
+		$response             		= $directory->uploads()->save($upload);
+        // delete old file
+        if ($oldFile) {
+            Storage::disk('public')->delete($oldFile);
+        }
+
+		return $upload;
+	}
+}
+
+if (!function_exists('deleteFile')) {
+	/**
+	 * Destroy Old Image.	 *
+	 * @param int $id
+	 */
+	function deleteFile($upload_id)
+	{
+		$upload = Uploads::find($upload_id);
+		Storage::disk('public')->delete($upload->file_path);
+		$upload->delete();
+		return true;
+	}
+}
+
+if (!function_exists('uploadQRcodeImage')) {
+	/**
+	 * Upload Image.
+	 *
+	 * @param array $input
+	 *
+	 * @return array $input
+	 */
+
+	function uploadQRcodeImage($user, $qrcodeUrl, $actionType = "save", $uploadId = null)
+	{
+		$oldFile = null;
+
+		// $qrCodeImagePath = 'qr_codes/qr_code_'.generateRandomString(10).rand(0,99999). '.svg'; 
+		$qrCodeImagePath = 'qr_codes/qr_code_'.$user->uuid. '.svg'; 
+		$filePath = storage_path('app/public/' . $qrCodeImagePath); 
+
+		if (!file_exists(dirname($filePath))) {
+			mkdir(dirname($filePath), 0755, true); 
+		}
+
+		file_put_contents($filePath, $qrcodeUrl);
+
+		if ($actionType == "save") {
+			$upload = new Uploads;
+		} else {
+			$upload = Uploads::find($uploadId);
+			$oldFile = $upload->file_path;
+		}
+
+		$upload->file_path = $qrCodeImagePath; 
+		$upload->extension = pathinfo($qrCodeImagePath, PATHINFO_EXTENSION); 
+		$upload->original_file_name = basename($qrCodeImagePath); 
+		$upload->type = 'qr_code'; 
+		$upload->file_type = 'image/svg+xml'; 
+		// $upload->orientation = $orientation; // Uncomment if needed
+
+		$response = $user->uploads()->save($upload);
+
+		// if ($oldFile) {
+		// 	Storage::disk('public')->delete($oldFile);
+		// }
+
+		return $upload;
+	}
+
+}
+
 
 
 
