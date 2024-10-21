@@ -389,11 +389,17 @@ if (!function_exists('uploadQRcodeImage')) {
 		$qrCodeImagePath = 'qr_codes/qr_code_'.$user->uuid. '.svg'; 
 		$filePath = storage_path('app/public/' . $qrCodeImagePath); 
 
+		// Remove the XML declaration if it exists
+		$svgContent = preg_replace('/^<\?xml.*\?>/', '', $qrcodeUrl);
+
+		// Remove newline characters
+		$svgContent = str_replace("\n", '', $svgContent);
+
 		if (!file_exists(dirname($filePath))) {
 			mkdir(dirname($filePath), 0755, true); 
 		}
 
-		file_put_contents($filePath, $qrcodeUrl);
+		file_put_contents($filePath, $svgContent);
 
 		if ($actionType == "save") {
 			$upload = new Uploads;
