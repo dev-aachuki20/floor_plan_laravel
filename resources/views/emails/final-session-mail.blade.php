@@ -15,7 +15,7 @@
         <li style="display: block;color: #000;"><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
     </ul>
 
-    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Access to your FLOORPLAN: {{ config('app.url') }}</p>
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Access to your FLOORPLAN: <a href="{{ config('app.url') }}">{{ config('app.url') }}</a></p>
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal;color: #000; margin-bottom: 0px;">Please log in to your account to approve the following session request:</p>
 
