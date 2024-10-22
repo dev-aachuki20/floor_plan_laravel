@@ -193,8 +193,12 @@ class UserController extends APIController
             } elseif ($mfaMethod === 'google') {
 
                 if (!$user->google2fa_secret) {
-                    $qrcodeUrl = $this->generateGoogle2faSecret($user);
-            
+                   
+                    $google2fa = new Google2FA();
+                    $secret = $google2fa->generateSecretKey();
+                    $user->google2fa_secret = $secret;
+                    $user->save();
+                
                     // Save the SVG to a file
                     $uploadId = null;
                     $actionType = 'save';
@@ -202,8 +206,8 @@ class UserController extends APIController
                         $uploadId = $qrCodeImageRecord->id;
                         $actionType = 'update';
                     }
-
-                    $qrCodeImage = uploadQRcodeImage($user, $qrcodeUrl, $actionType, $uploadId);
+ 
+                    $qrCodeImage = uploadQRcodeImage($user, $secret, $actionType, $uploadId);
                     $base64QRCode = $qrCodeImage->file_url;
                 }
 

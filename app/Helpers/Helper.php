@@ -7,6 +7,7 @@ use App\Models\RotaSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str as Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 if (!function_exists('getCommonValidationRuleMsgs')) {
 	function getCommonValidationRuleMsgs()
@@ -381,25 +382,24 @@ if (!function_exists('uploadQRcodeImage')) {
 	 * @return array $input
 	 */
 
-	function uploadQRcodeImage($user, $qrcodeUrl, $actionType = "save", $uploadId = null)
+	function uploadQRcodeImage($user, $secret, $actionType = "save", $uploadId = null)
 	{
 		$oldFile = null;
 
-		// $qrCodeImagePath = 'qr_codes/qr_code_'.generateRandomString(10).rand(0,99999). '.svg'; 
-		$qrCodeImagePath = 'qr_codes/qr_code_'.$user->uuid. '.svg'; 
-		$filePath = storage_path('app/public/' . $qrCodeImagePath); 
+        $issuer = config('app.name');  
+        $accountName = $user->user_email;
+      
+        $qrcodeUrl = "otpauth://totp/{$issuer}:{$accountName}?secret={$secret}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
 
-		// Remove the XML declaration if it exists
-		$svgContent = preg_replace('/^<\?xml.*\?>/', '', $qrcodeUrl);
-
-		// Remove newline characters
-		$svgContent = str_replace("\n", '', $svgContent);
-
-		if (!file_exists(dirname($filePath))) {
+        // Generate QR code image using Simple QrCode
+        $qrCodeImagePath = 'qr_codes/qr_code_'.$user->uuid. '.png'; 
+        $filePath = storage_path('app/public/' . $qrCodeImagePath); 
+        
+        if (!file_exists(dirname($filePath))) {
 			mkdir(dirname($filePath), 0755, true); 
 		}
-
-		file_put_contents($filePath, $svgContent);
+        QrCode::size(300)->format('png')->generate($qrcodeUrl, $filePath);
+                
 
 		if ($actionType == "save") {
 			$upload = new Uploads;
@@ -412,7 +412,7 @@ if (!function_exists('uploadQRcodeImage')) {
 		$upload->extension = pathinfo($qrCodeImagePath, PATHINFO_EXTENSION); 
 		$upload->original_file_name = basename($qrCodeImagePath); 
 		$upload->type = 'qr_code'; 
-		$upload->file_type = 'image/svg+xml'; 
+		$upload->file_type = 'image/png'; 
 		// $upload->orientation = $orientation; // Uncomment if needed
 
 		$response = $user->uploads()->save($upload);

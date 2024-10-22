@@ -17,6 +17,8 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Api\APIController;
 use Symfony\Component\HttpFoundation\Response;
 use PragmaRX\Google2FAQRCode\Google2FA; 
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
 
 class LoginController extends APIController
 {
@@ -302,7 +304,11 @@ class LoginController extends APIController
     
                 $auth_user = User::where('user_email', $request->user_email)->first();
     
-                $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
+                $google2fa = new Google2FA();
+                $secret = $google2fa->generateSecretKey();
+                $auth_user->google2fa_secret = $secret;
+                $auth_user->save();
+        
 
                 // Save the SVG to a file
                 $uploadId = null;
@@ -312,14 +318,10 @@ class LoginController extends APIController
                     $actionType = 'update';
                 }
 
-                $qrCodeImage = uploadQRcodeImage($auth_user, $qrcodeUrl, $actionType, $uploadId);
+                $qrCodeImage = uploadQRcodeImage($auth_user, $secret, $actionType, $uploadId);
               
-                // \Log::info('Sending WelcomeEmail', [
-                //     'user'           => $auth_user->full_name,
-                //     'qrcodeUrl'      => $base64QRCode,
-                // ]);
                 Mail::to($auth_user->user_email)->send(new MfaGoogleMail($auth_user->full_name, $qrCodeImage->file_url));
-
+                
                 DB::commit();
                 return $this->respondOk([
                     'status'     => true,

@@ -1,0 +1,72 @@
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:51 UTC] PHP Warning:  require(/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php): Failed to open stream: No such file or directory in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41
+[04-Oct-2024 10:46:51 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/../symfony/polyfill-php72/bootstrap.php' (include_path='.:/opt/cpanel/ea-php82/root/usr/share/pear') in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php(45): {closure}('25072dd6e247008...', '/home/hiplstagi...')
+#1 /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/autoload.php(25): ComposerAutoloaderInit19b091128417e4e2f32e821e3ce38b61::getLoader()
+#2 /home/hiplstaging3/floorplan.hipl-staging3.com/public/index.php(13): require('/home/hiplstagi...')
+#3 /home/hiplstaging3/floorplan.hipl-staging3.com/server.php(21): require_once('/home/hiplstagi...')
+#4 {main}
+  thrown in /home/hiplstaging3/floorplan.hipl-staging3.com/vendor/composer/autoload_real.php on line 41

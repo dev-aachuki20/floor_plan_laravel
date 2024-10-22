@@ -6,13 +6,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "bacon/bacon-qr-code": "^3.0",
         "cviebrock/eloquent-sluggable": "^11.0",
         "laravel/framework": "^11.19",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.5",
         "maatwebsite/excel": "^3.1",
         "pragmarx/google2fa-laravel": "*",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "tymon/jwt-auth": "^2.1",
         "yajra/laravel-datatables": "11.0"
     },
