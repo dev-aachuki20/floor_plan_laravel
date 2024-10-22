@@ -81,19 +81,6 @@ class LoginController extends APIController
 
             } elseif (($mfaMethod === 'google') && ($request->is_set == false)) {
 
-               /* if (!$auth_user->google2fa_secret) {
-                    $qrcodeUrl = $this->generateGoogle2faSecret($auth_user);
-
-                    DB::commit();
-                    return $this->respondOk([
-                        'status'     => true,
-                        'message'    => trans('auth.google_authenticator_not_setup'),
-                        'mfa_method' => $mfaMethod,
-                        'qrcodeUrl'  => $qrcodeUrl
-
-                    ])->setStatusCode(Response::HTTP_OK);
-                }*/
-    
                 return $this->respondOk([
                     'status'     => true,
                     'message'    => trans('auth.mfa_required'),
@@ -159,19 +146,6 @@ class LoginController extends APIController
         return $this->setStatusCode(200)->respondOk($reponseData);
     }
     
-    
-    public function generateGoogle2faSecret($user)
-    {
-        $google2fa = new Google2FA();
-        $secret = $google2fa->generateSecretKey();
-        $user->google2fa_secret = $secret;
-        $user->save();
-
-        $appName = config('app.name');
-        $appName = str_replace(' ', '', $appName);
-        
-        return $google2fa->getQRCodeInline($appName, $user->user_email, $secret);
-    }
 
     public function verifyMfa(Request $request)
     {
@@ -208,7 +182,7 @@ class LoginController extends APIController
                
                 if($user->google2fa_secret){
                     $secretKey = $user->google2fa_secret;
-                    $isValid = $google2fa->verifyKey($secretKey, $request->otp);
+                    $isValid = $google2fa->verifyKey($secretKey, $request->otp,1);
     
                     if (!$isValid) {
                         return $this->setStatusCode(400)->respondWithError(trans('auth.invalid_otp'));
@@ -309,8 +283,6 @@ class LoginController extends APIController
                 $auth_user->google2fa_secret = $secret;
                 $auth_user->save();
         
-
-                // Save the SVG to a file
                 $uploadId = null;
                 $actionType = 'save';
                 if($qrCodeImageRecord = $auth_user->qrCodeImage){

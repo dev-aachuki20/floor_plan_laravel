@@ -389,7 +389,8 @@ if (!function_exists('uploadQRcodeImage')) {
         $issuer = config('app.name');  
         $accountName = $user->user_email;
       
-        $qrcodeUrl = "otpauth://totp/{$issuer}:{$accountName}?secret={$secret}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
+        // $qrcodeUrl = "otpauth://totp/{$issuer}:{$accountName}?secret={$secret}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
+		$qrcodeUrl = "otpauth://totp/{$issuer}:{$accountName}?secret={$secret}&issuer={$issuer}";
 
         // Generate QR code image using Simple QrCode
         $qrCodeImagePath = 'qr_codes/qr_code_'.$user->uuid. '.png'; 

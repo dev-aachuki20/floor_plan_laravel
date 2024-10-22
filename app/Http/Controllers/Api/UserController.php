@@ -654,17 +654,5 @@ class UserController extends APIController
 
     }
 
-    public function generateGoogle2faSecret($user)
-    {
-        $google2fa = new Google2FA();
-        $secret = $google2fa->generateSecretKey();
-        $user->google2fa_secret = $secret;
-        $user->save();
-
-        $appName = config('app.name');
-        $appName = str_replace(' ', '', $appName);
-        
-        return $google2fa->getQRCodeInline($appName, $user->user_email, $secret);
-    }
 }
 
