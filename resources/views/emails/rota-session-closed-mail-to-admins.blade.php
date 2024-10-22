@@ -2,8 +2,8 @@
 
 @section('email-content')
         <h4 style="font-family: 'Barlow', sans-serif; color: #000; font-weight: 700; font-size: 16px;margin-top: 20px;">Hello, {{ $user->full_name ?? ''}}</h4>
-        <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px;">I hope this mail finds you well.</p>
-        <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Please note that the scheduled sessions for the hospital rooms have been closed.</p>
+        <!-- <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px;">I hope this mail finds you well.</p> -->
+        <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 27px;margin-top: 10px;">Please note that this scheduled session has been closed.</p>
         <h4 style="font-family: 'Barlow', sans-serif; color: #000; font-weight: 700; font-size: 16px;margin-top: 20px;">Hospital: <span style="color: #295597">{{ $hospitalName }}</span></h4>
         <table style="width: 100%;border-color: #ecf1f5;" border="1" cellpadding="0" cellspacing="0">
             <thead>
