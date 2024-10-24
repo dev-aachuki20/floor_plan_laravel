@@ -137,15 +137,13 @@ class ReportController extends APIController
             // Set the start date based on the month
             $startDate = Carbon::now()->subMonths($month ?? 11)->startOfMonth()->format('Y-m-d');
 
-            // Create the subquery for counting distinct users
             $subQuery = DB::table('user_activities')
                 ->select(
                     DB::raw('YEAR(login_date) AS year'),
                     DB::raw('MONTH(login_date) AS month'),
-                    'hospital_id',
-                    DB::raw('COUNT(DISTINCT user_id) AS count')
+                    'user_id'
                 )
-                ->whereIn('hospital_id', $allHospitalIds)
+                ->whereIn('hospital_id', $allHospitalIds) 
                 ->where('login_date', '>=', $startDate)
                 ->when($year, function ($query) use ($year) {
                     return $query->whereYear('login_date', $year);
@@ -154,41 +152,41 @@ class ReportController extends APIController
                     return $query->where('hospital_id', $hospitalId);
                 });
 
-                if (!$user->is_system_admin) {
-                    $subQuery->whereIn('user_id', function ($query) use ($user) {
-                        $query->select('id')->from('users')
-                            ->when($user->is_trust_admin, function ($q) {
-                                $q->whereNotIn('primary_role', [config('constant.roles.trust_admin')]);
-                            })
-                            ->when($user->is_hospital_admin, function ($q) {
-                                $q->whereNotIn('primary_role', [
-                                    config('constant.roles.trust_admin'), 
-                                    config('constant.roles.hospital_admin'),
-                                    config('constant.roles.chair')
-                                ]);
-                            })
-                            ->when($user->is_chair, function ($q) {
-                                $q->whereNotIn('primary_role', [
-                                    config('constant.roles.trust_admin'), 
-                                    config('constant.roles.chair')
-                                ]);
-                            });
-                    });
-                }
+            if (!$user->is_system_admin) {
+                $subQuery->whereIn('user_id', function ($query) use ($user) {
+                    $query->select('id')->from('users')
+                        ->when($user->is_trust_admin, function ($q) {
+                            $q->whereNotIn('primary_role', [config('constant.roles.trust_admin')]);
+                        })
+                        ->when($user->is_hospital_admin, function ($q) {
+                            $q->whereNotIn('primary_role', [
+                                config('constant.roles.trust_admin'), 
+                                config('constant.roles.hospital_admin'),
+                                config('constant.roles.chair')
+                            ]);
+                        })
+                        ->when($user->is_chair, function ($q) {
+                            $q->whereNotIn('primary_role', [
+                                config('constant.roles.trust_admin'), 
+                                config('constant.roles.chair')
+                            ]);
+                        });
+                });
+            }
 
-            $subQuery =  $subQuery->groupBy(DB::raw('YEAR(login_date), MONTH(login_date), hospital_id'));
+            // Group by year, month, and user_id
+            $subQuery = $subQuery->groupBy(DB::raw('YEAR(login_date), MONTH(login_date), user_id'));
 
-            // Main query to sum the counts
+            // Main query to count distinct user IDs
             $userActivityQuery = DB::table(DB::raw("({$subQuery->toSql()}) AS monthly_counts"))
-                ->mergeBindings($subQuery) // Merge bindings from the subquery
+                ->mergeBindings($subQuery) 
                 ->select(
                     'year',
                     'month',
-                    DB::raw('SUM(count) AS total_count')
+                    DB::raw('COUNT(DISTINCT user_id) AS total_count') 
                 )
                 ->groupBy('year', 'month')
                 ->orderByRaw('year DESC, month DESC');
-
                 
             // Get results
             $userActivities = $userActivityQuery->get();
@@ -228,6 +226,7 @@ class ReportController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {
+            dd($e->getMessage());
             \Log::error('Error in ReportController::reportChart: ' . $e->getMessage(), [
                 'code' => $e->getCode(),
                 'line' => $e->getLine(),
