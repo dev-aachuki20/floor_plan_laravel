@@ -226,7 +226,7 @@ class ReportController extends APIController
             ])->setStatusCode(Response::HTTP_OK);
 
         } catch (\Exception $e) {
-            dd($e->getMessage());
+            // dd($e->getMessage());
             \Log::error('Error in ReportController::reportChart: ' . $e->getMessage(), [
                 'code' => $e->getCode(),
                 'line' => $e->getLine(),
