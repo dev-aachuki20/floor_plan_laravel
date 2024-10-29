@@ -16,7 +16,7 @@
         <li style="display: block;color: #000;"><strong>Date:</strong> {{ dateFormat($rota_session_detail->week_day_date,'d-m-Y') }}</li>
     </ul>
 
-    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal;color: #000; margin-bottom: 27px;margin-top: 10px;">Access to your FLOORPLAN: {{ config('app.url') }}</p>
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal;color: #000; margin-bottom: 27px;margin-top: 10px;">Access to your FLOORPLAN: <a href="{{ config('app.site_url') }}">{{ config('app.site_url') }}</a></p>
 
     <p style="font-size: 16px; line-height: 25.5px; font-weight: 600;color: #000; margin-bottom: 0; margin-top:27px;">Thank you</p>
     <div class="regards" style="color: #000; font-weight: 700; font-size: 16px;margin-bottom: 20px;">FLOORPLAN Support Team</div>

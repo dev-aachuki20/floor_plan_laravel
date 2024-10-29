@@ -19,7 +19,7 @@
     @if(isset($remainingRolesToConfirm))
     <!-- <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px; margin-top:20px;">The session has closed because {{ isset($remainingRolesToConfirm) ? $remainingRolesToConfirm : '' }} did not confirm </p> -->
     <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px; margin-top:20px;">Please login to your account for more details</p>
-    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px; margin-top:20px;">Access to your FLOORPLAN: {{ config('app.url') }}</p>
+    <p style="font-size: 16px; line-height: 25.5px; font-weight: normal; font-family: 'Nunito Sans', sans-serif; color: #000; margin-bottom: 0px; margin-top:20px;">Access to your FLOORPLAN: <a href="{{ config('app.site_url') }}">{{ config('app.site_url') }}</a></p>
     @endif    
 
 
