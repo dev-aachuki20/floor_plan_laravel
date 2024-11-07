@@ -441,7 +441,6 @@ if (!function_exists('SendPushNotification')) {
 		$firebase = (new Factory)->withServiceAccount($configJsonFile);
 		$messaging = $firebase->createMessaging();
 
-
 		// Define the FCM tokens you want to send the message to
 		$fcmTokens = User::where('id', $userId)->whereNotNull('device_token')->pluck('device_token')->toArray();
 
@@ -456,11 +455,13 @@ if (!function_exists('SendPushNotification')) {
 		// Send the message to the FCM tokens
 		try {
 			$messaging->sendMulticast($messageData, $fcmTokens);
-			\Log::info('Push Notification Sent Successfully!');
+			// \Log::info('Push Notification Sent Successfully!');
 		} catch (\Kreait\Firebase\Exception\MessagingException $e) {
-			Log::info('Error sending firebase message:', $e->getMessage());
+		  //  \Log::info('Error sending firebase message:', ['MessagingException' => $e->getMessage()]);
+
 		} catch (\Kreait\Firebase\Exception\FirebaseException $e) {
-			Log::info('Firebase error:', $e->getMessage());
+		
+			//\Log::info('Firebase error:', ['FirebaseException' => $e->getMessage()]);
 		}
 	}
 }

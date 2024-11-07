@@ -16,19 +16,19 @@ class DatabaseChannel
         $user_id = $notifiable->id;
         $user = auth()->user();
         if (auth()->check()) {
-            \Log::info('Start To Send Push Notification-'.$user_id);
+            // \Log::info('Start To Send Push Notification-'.$user_id);
 
             SendPushNotification($user_id, $data['subject'], $data['message']);
 
-            \Log::info('End To Send Push Notification');
+            // \Log::info('End To Send Push Notification');
             
         } else if(isset($data['task_type']) && $data['task_type'] == 'cron'){
     
-            \Log::info('Start To Send Push Notification-'.$user_id);
+            // \Log::info('Start To Send Push Notification-'.$user_id);
 
             SendPushNotification($user_id, $data['subject'], $data['message']);
             
-            \Log::info('End To Send Push Notification');
+            // \Log::info('End To Send Push Notification');
         }
 
         $created_by = $data['created_by'] ?? null;
