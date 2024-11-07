@@ -69,7 +69,8 @@ return [
         'at_risk' => 1,
         'closed'  => 2,
         'failed'  => 3,
-    ]
+    ],
 
+    'firebase_json_file' => storage_path('app/firebase-auth.json'),
 
 ];

@@ -344,9 +344,9 @@ class UserController extends APIController
                 $updatedFields['user_email'] = true;
             }
 
-            if ($request->filled('password') && !Hash::check($request->password, $user->password)) {
-                $updatedFields['password'] = true;
-            }
+            // if ($request->filled('password') && !Hash::check($request->password, $user->password)) {
+            //     $updatedFields['password'] = true;
+            // }
 
            $user->update([
                 'primary_role' => $request->role,

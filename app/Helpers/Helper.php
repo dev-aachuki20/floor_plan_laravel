@@ -8,6 +8,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str as Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+
 
 if (!function_exists('getCommonValidationRuleMsgs')) {
 	function getCommonValidationRuleMsgs()
@@ -425,6 +429,40 @@ if (!function_exists('uploadQRcodeImage')) {
 		return $upload;
 	}
 
+}
+
+if (!function_exists('SendPushNotification')) {
+	function SendPushNotification($userId, $title, $message)
+	{
+		$fcmTokens = [];
+
+		$configJsonFile = config('constant.firebase_json_file');
+		
+		$firebase = (new Factory)->withServiceAccount($configJsonFile);
+		$messaging = $firebase->createMessaging();
+
+
+		// Define the FCM tokens you want to send the message to
+		$fcmTokens = User::where('id', $userId)->whereNotNull('device_token')->pluck('device_token')->toArray();
+
+		// Create the notification
+		$notification = Notification::create()
+			->withTitle($title)
+			->withBody($message);
+
+		// Create the message
+		$messageData = CloudMessage::new()->withNotification($notification); // Optional: Add custom data
+
+		// Send the message to the FCM tokens
+		try {
+			$messaging->sendMulticast($messageData, $fcmTokens);
+			\Log::info('Push Notification Sent Successfully!');
+		} catch (\Kreait\Firebase\Exception\MessagingException $e) {
+			Log::info('Error sending firebase message:', $e->getMessage());
+		} catch (\Kreait\Firebase\Exception\FirebaseException $e) {
+			Log::info('Firebase error:', $e->getMessage());
+		}
+	}
 }
 
 

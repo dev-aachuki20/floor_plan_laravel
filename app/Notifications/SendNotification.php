@@ -27,6 +27,7 @@ class SendNotification extends Notification implements ShouldQueue
     public function __construct($data)
     {
         $this->data = $data;
+        $this->data['task_type'] = 'cron';
     }
 
     /**
@@ -46,7 +47,6 @@ class SendNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable)
     {
-
         $subject = $this->data['subject'];
         $userName = $notifiable->full_name;
         $message = $this->data['message'];
