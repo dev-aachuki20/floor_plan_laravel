@@ -26,7 +26,7 @@ class WelcomeEmail extends Mailable
      */
     public function __construct($user,  $mailData)
     {
-        $this->subject    = 'Welcome Email';
+        $this->subject    = 'Welcome to FLOORPLAN®';
         $this->user       = $user;
         $this->mfaMethod  = isset($mailData['mfaMethod']) ? $mailData['mfaMethod'] : null;
         $this->otp        = isset($mailData['otp']) ? $mailData['otp'] : null;
