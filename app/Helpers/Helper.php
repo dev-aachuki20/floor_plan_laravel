@@ -123,8 +123,8 @@ if (!function_exists('calculateRotaTableStatistics')) {
 			$totaRotaSession = (int)$totaRotaSession * 3;
 		}
 
-		$result = $totalConfirmedUsers > 0 ? round(($totalConfirmedUsers / $totaRotaSession) * 100, 2) : 0;
-
+		$result = $totalConfirmedUsers > 0 ? min(round(($totalConfirmedUsers / $totaRotaSession) * 100, 2), 100) : 0;
+		
 		return $result;
 	}
 }
@@ -178,8 +178,8 @@ if (!function_exists('rotaTableReportStatistics')) {
 			$totaRotaSession = (int)$totaRotaSession * 3;
 		}
 
-		$result = $totalConfirmedUsers > 0 ? round(($totalConfirmedUsers / $totaRotaSession) * 100, 2) : 0;
-
+		$result = $totalConfirmedUsers > 0 ? min(round(($totalConfirmedUsers / $totaRotaSession) * 100, 2), 100) : 0;
+		
 		return $result;
 	}
 }
