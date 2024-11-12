@@ -193,7 +193,10 @@ class LoginController extends APIController
                 
             }
 
-            $user->device_token = isset($request->device_token) && $request->device_token ? $request->device_token : null;
+            if(isset($request->device_token)){
+                $user->device_token =  $request->device_token ? $request->device_token : null;
+            }
+            
             $user->last_login_at = now();
             $user->save();
 
